@@ -6,7 +6,11 @@ export function setAuthToken(token) {
 }
 
 async function request(path, options = {}) {
-  const headers = { "Content-Type": "application/json", Accept: "application/json", ...(options.headers || {}) };
+  const headers = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    ...(options.headers || {}),
+  };
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
 
   const res = await fetch(`${BASE_URL}/api${path}`, { ...options, headers });
@@ -24,8 +28,10 @@ async function request(path, options = {}) {
 }
 
 export const authApi = {
-  register: (data) => request(`/register`, { method: "POST", body: JSON.stringify(data) }),
-  login: (data) => request(`/login`, { method: "POST", body: JSON.stringify(data) }),
+  register: (data) =>
+    request(`/register`, { method: "POST", body: JSON.stringify(data) }),
+  login: (data) =>
+    request(`/login`, { method: "POST", body: JSON.stringify(data) }),
   logout: () => request(`/logout`, { method: "POST" }),
   me: () => request(`/me`),
 };
@@ -36,17 +42,32 @@ export const api = {
     return request(`/campaigns${qs ? `?${qs}` : ""}`);
   },
   getCampaign: (id) => request(`/campaigns/${id}`),
-  createCampaign: (data) => request(`/campaigns`, { method: "POST", body: JSON.stringify(data) }),
-  updateCampaign: (id, data) => request(`/campaigns/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  createCampaign: (data) =>
+    request(`/campaigns`, { method: "POST", body: JSON.stringify(data) }),
+  updateCampaign: (id, data) =>
+    request(`/campaigns/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   deleteCampaign: (id) => request(`/campaigns/${id}`, { method: "DELETE" }),
-  match: (focusTags = []) => request(`/match?focus=${encodeURIComponent(focusTags.join(","))}`),
+  match: (focusTags = []) =>
+    request(`/match?focus=${encodeURIComponent(focusTags.join(","))}`),
   listDonations: (id) => request(`/campaigns/${id}/donations`),
-  createDonation: (id, data) => request(`/campaigns/${id}/donations`, { method: "POST", body: JSON.stringify(data) }),
+  createDonation: (id, data) =>
+    request(`/campaigns/${id}/donations`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
   listReports: (id) => request(`/campaigns/${id}/reports`),
-  createReport: (id, data) => request(`/campaigns/${id}/reports`, { method: "POST", body: JSON.stringify(data) }),
+  createReport: (id, data) =>
+    request(`/campaigns/${id}/reports`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
   stats: () => request(`/stats`),
 };
 
 export function formatRupiah(amount) {
-  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(amount || 0);
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(amount || 0);
 }
