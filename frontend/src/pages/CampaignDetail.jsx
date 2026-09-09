@@ -17,6 +17,7 @@ export default function CampaignDetail() {
   const [status, setStatus] = useState("");
 
   const [amount, setAmount] = useState(100000);
+  const [paymentMethod, setPaymentMethod] = useState("transfer_bank");
   const [message, setMessage] = useState("");
 
   const [reportTitle, setReportTitle] = useState("");
@@ -44,7 +45,11 @@ export default function CampaignDetail() {
     e.preventDefault();
     setError("");
     try {
-      await api.createDonation(id, { amount: Number(amount), message });
+      await api.createDonation(id, {
+        amount: Number(amount),
+        payment_method: paymentMethod,
+        message,
+      });
       setStatus("Terima kasih! Donasi Anda tercatat.");
       setMessage("");
       load();
@@ -85,22 +90,20 @@ export default function CampaignDetail() {
     );
 
   return (
-    <div className="max-w-5xl mx-auto px-5 py-12 grid md:grid-cols-[1.6fr_1fr] gap-10">
+    <div className="mx-auto grid max-w-[1180px] gap-8 px-5 py-10 lg:grid-cols-[1.35fr_0.65fr] lg:px-8">
       <div>
-        <Link to="/kampanye" className="text-sm text-ink-light hover:text-ink">
-          &larr; Kembali ke daftar
-        </Link>
+        <Link to="/kampanye" className="text-sm text-[#667085] hover:text-[#17365d]">← Kembali ke kebutuhan sekolah</Link>
 
         <div className="flex items-start justify-between gap-4 mt-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-ink-light">
+            <p className="text-xs uppercase tracking-wide text-[#667085]">
               {campaign.category} · {campaign.location}
             </p>
-            <h1 className="font-display text-3xl mt-1">{campaign.title}</h1>
-            <p className="text-ink-light mt-1">
+            <h1 className="mt-2 font-display text-4xl leading-tight text-[#17365d]">{campaign.title}</h1>
+            <p className="mt-2 text-[#667085]">
               {campaign.school_name} · {campaign.student_count} siswa terdampak
             </p>
-            <p className="mt-2 text-sm text-ink-light">
+            <p className="mt-2 text-sm text-[#667085]">
               Periode bantuan:{" "}
               {campaign.start_date
                 ? new Date(campaign.start_date).toLocaleDateString("id-ID")
@@ -118,7 +121,7 @@ export default function CampaignDetail() {
           />
         </div>
 
-        <p className="mt-6 prose-measure leading-relaxed">
+        <p className="mt-7 max-w-[680px] text-base leading-8 text-[#53677f]">
           {campaign.description}
         </p>
 
@@ -133,7 +136,7 @@ export default function CampaignDetail() {
           ))}
         </div>
 
-        <section className="mt-12">
+        <section className="mt-12 border-t border-[#e7ebf0] pt-8">
           <h2 className="font-display text-xl">Laporan Dampak</h2>
           {reports.length === 0 && (
             <p className="text-sm text-ink-light mt-2">
@@ -185,7 +188,7 @@ export default function CampaignDetail() {
           )}
         </section>
 
-        <section className="mt-12">
+        <section className="mt-12 border-t border-[#e7ebf0] pt-8">
           <h2 className="font-display text-xl">Donasi Terbaru</h2>
           {donations.length === 0 && (
             <p className="text-sm text-ink-light mt-2">
@@ -206,36 +209,37 @@ export default function CampaignDetail() {
         </section>
       </div>
 
-      <aside className="bg-navy text-paper p-6 h-fit sticky top-24">
-        <div className="h-2 bg-paper/20 rounded-full overflow-hidden">
+      <aside className="h-fit rounded-[14px] border border-[#dfe6ee] bg-white p-6 shadow-[0_10px_30px_rgba(23,54,93,0.08)] lg:sticky lg:top-24">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#667085]">Dukungan terkumpul</p>
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#e9edf2]">
           <div
-            className="h-full bg-marigold"
+            className="h-full bg-[#2d83c6]"
             style={{ width: `${campaign.progress_percent}%` }}
           />
         </div>
-        <div className="flex justify-between text-sm mt-2">
-          <span className="font-display text-lg">
+        <div className="mt-3 flex items-end justify-between gap-3">
+          <span className="font-display text-2xl text-[#17365d]">
             {formatRupiah(campaign.raised_amount)}
           </span>
-          <span className="text-paper/60">
+          <span className="text-right text-xs text-[#667085]">
             dari {formatRupiah(campaign.target_amount)}
           </span>
         </div>
+        <p className="mt-2 text-xs text-[#667085]">{campaign.progress_percent}% dari target bantuan</p>
+        <div className="mt-5 grid grid-cols-2 gap-3 border-y border-[#edf0f4] py-4 text-center"><div><strong className="block text-lg text-[#17365d]">{donations.length}</strong><span className="text-xs text-[#667085]">donasi tercatat</span></div><div><strong className="block text-lg text-[#17365d]">{campaign.end_date ? new Date(campaign.end_date).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : "-"}</strong><span className="text-xs text-[#667085]">batas donasi</span></div></div>
 
         {!user && (
           <div className="mt-6 text-sm">
-            <p className="text-paper/80">
-              Masuk sebagai individu, perusahaan, atau pemerintah untuk
-              menyalurkan bantuan.
-            </p>
-            <div className="flex gap-3 mt-3">
+            <p className="text-[#53677f]">Anda dapat melihat kebutuhan ini tanpa masuk. Untuk mencatat donasi, silakan masuk atau buat akun terlebih dahulu.</p>
+            <div className="mt-4 flex gap-3">
               <Link
                 to="/masuk"
-                className="bg-marigold text-navy px-4 py-2 font-medium"
+                state={{ from: `/kampanye/${id}` }}
+                className="rounded-[8px] bg-[#17365d] px-4 py-2 font-medium text-white"
               >
                 Masuk
               </Link>
-              <Link to="/daftar" className="border border-paper/40 px-4 py-2">
+              <Link to="/daftar" state={{ from: `/kampanye/${id}` }} className="rounded-[8px] border border-[#cbd5e1] px-4 py-2 text-[#17365d]">
                 Daftar
               </Link>
             </div>
@@ -243,26 +247,26 @@ export default function CampaignDetail() {
         )}
 
         {user && !donorRoles.includes(user.role) && (
-          <p className="mt-6 text-sm text-paper/80">
+          <p className="mt-6 text-sm text-[#667085]">
             Akun berperan "{user.role}" tidak dapat berdonasi. Donasi hanya
             untuk akun individu, perusahaan, atau pemerintah.
           </p>
         )}
 
         {user && donorRoles.includes(user.role) && (
-          <form onSubmit={submitDonation} className="mt-6 space-y-3">
-            <p className="text-xs text-paper/60">
+          <form onSubmit={submitDonation} className="mt-6 space-y-4">
+            <p className="text-xs text-[#667085]">
               Berdonasi sebagai {user.organization_name || user.name}
             </p>
             <div>
-              <label className="text-xs text-paper/70">Nominal donasi</label>
-              <div className="flex flex-wrap gap-2 mt-1">
+              <label className="text-sm font-semibold text-[#344054]">Nominal donasi</label>
+              <div className="mt-2 grid grid-cols-2 gap-2">
                 {donationPresets.map((p) => (
                   <button
                     type="button"
                     key={p}
                     onClick={() => setAmount(p)}
-                    className={`text-xs px-2 py-1 border ${amount === p ? "bg-marigold border-marigold text-navy" : "border-paper/30 text-paper/80"}`}
+                    className={`border px-2 py-2 text-xs ${amount === p ? "border-[#17365d] bg-[#edf4fb] text-[#17365d]" : "border-[#d5dfe9] text-[#53677f]"}`}
                   >
                     {formatRupiah(p)}
                   </button>
@@ -274,20 +278,25 @@ export default function CampaignDetail() {
                 required
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full mt-2 px-3 py-2 bg-paper text-ink text-sm"
+                className="mt-2 w-full rounded-[8px] border border-[#d5dfe9] px-3 py-2 text-sm text-[#17365d]"
               />
             </div>
             <div>
-              <label className="text-xs text-paper/70">Pesan (opsional)</label>
+              <label className="text-sm font-semibold text-[#344054]">Metode pembayaran</label>
+              <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="mt-2 w-full rounded-[8px] border border-[#d5dfe9] bg-white px-3 py-2 text-sm text-[#17365d]"><option value="transfer_bank">Transfer bank</option><option value="e_wallet">E-wallet</option></select>
+              <p className="mt-1 text-[11px] text-[#8a98a8]">Pembayaran akan diarahkan setelah donasi dikonfirmasi.</p>
+            </div>
+            <div>
+                <label className="text-sm font-semibold text-[#344054]">Pesan (opsional)</label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="w-full mt-1 px-3 py-2 bg-paper text-ink text-sm"
+                className="mt-2 w-full rounded-[8px] border border-[#d5dfe9] px-3 py-2 text-sm text-[#17365d]"
                 rows={2}
               />
             </div>
-            <button className="w-full bg-marigold text-navy font-medium py-2.5 hover:bg-paper transition-colors">
-              Salurkan bantuan
+            <button className="w-full rounded-[8px] bg-[#e3a22f] py-3 font-semibold text-[#17365d] hover:bg-[#f0b94f] transition-colors">
+              Donasi Sekarang
             </button>
             {status && <p className="text-sage text-sm">{status}</p>}
             {error && <p className="text-clay text-sm">{error}</p>}
