@@ -44,25 +44,25 @@ export default function Nav() {
           </NavLink>
           {(!user || user.role === "sekolah") && (
             <NavLink to="/ajukan" className={linkClass}>
-              Ajukan Bantuan
+              Ajukan Kebutuhan
             </NavLink>
           )}
           {(!user ||
             ["individu", "perusahaan", "pemerintah"].includes(user.role)) && (
             <NavLink to="/cocok" className={linkClass}>
-              Rekomendasi Donatur
+              Rekomendasi
             </NavLink>
           )}
-          {(!user || user.role === "admin") && (
-            <NavLink to="/admin" className={linkClass}>
-              Tentang Kami
-            </NavLink>
-          )}
+          <a href="#footer" className={linkClass}>
+            Tentang Kami
+          </a>
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
           <div className="flex items-center gap-2 border-b border-[#cfd5dd] px-1 py-2">
-            <span className="text-sm text-[#667085]">Search</span>
+            <span aria-hidden="true" className="text-sm text-[#667085]">
+              ⌕
+            </span>
             <input
               aria-label="Cari sekolah, lokasi, atau kebutuhan"
               placeholder="Cari kebutuhan"

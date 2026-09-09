@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import { Link } from "react-router-dom";
-import { api, formatRupiah } from "../api";
+import { api } from "../api";
 import childrenImage from "../assets/children.jpg";
 
 const mapPoints = [
@@ -28,10 +28,9 @@ const sampleCampaigns = [
     title: "Perbaikan Atap dan Lantai Kelas yang Bocor",
     school: "SDN 03 Wamena Tengah",
     location: "Wamena, Papua Pegunungan",
-    amount: 87000000,
-    target: 130000000,
-    donors: 532,
-    days: 12,
+    students: 320,
+    category: "Infrastruktur",
+    priorityScore: 87,
     priority: "Sangat Prioritas",
     accent: "#dc2626",
     image:
@@ -41,10 +40,9 @@ const sampleCampaigns = [
     title: "Penyediaan Perpustakaan dan Buku Bacaan",
     school: "SMPN 1 Lumbis",
     location: "Nunukan, Kalimantan Utara",
-    amount: 45000000,
-    target: 100000000,
-    donors: 318,
-    days: 12,
+    students: 210,
+    category: "Buku & Literasi",
+    priorityScore: 76,
     priority: "Prioritas",
     accent: "#f59e0b",
     image:
@@ -54,10 +52,9 @@ const sampleCampaigns = [
     title: "Pengadaan Komputer untuk Siswa",
     school: "SMA Negeri 1 Timur Tengah",
     location: "Tangerang, Banten",
-    amount: 76000000,
-    target: 200000000,
-    donors: 421,
-    days: 20,
+    students: 187,
+    category: "Teknologi",
+    priorityScore: 72,
     priority: "Prioritas",
     accent: "#2563eb",
     image:
@@ -67,12 +64,11 @@ const sampleCampaigns = [
     title: "Akses Internet untuk Pembelajaran Digital",
     school: "SMP Negeri 1 Nusa Tana",
     location: "Kupang, NTT",
-    amount: 10400000,
-    target: 20000000,
-    donors: 289,
-    days: 25,
-    priority: "Prioritas",
-    accent: "#22c55e",
+    students: 156,
+    category: "Sanitasi & Air Bersih",
+    priorityScore: 65,
+    priority: "Cukup Prioritas",
+    accent: "#2563eb",
     image:
       "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=900&q=80",
   },
@@ -105,10 +101,9 @@ export default function Home() {
               title: item.title,
               school: item.school_name,
               location: item.location,
-              amount: Number(item.raised_amount || 0),
-              target: Number(item.target_amount || 1000000),
-              donors: item.donors ?? 120,
-              days: item.days ?? 12,
+              students: item.students ?? 120,
+              category: item.category || "Infrastruktur",
+              priorityScore: item.priority_score ?? 72,
               priority: item.priority_label || "Prioritas",
               image: sampleCampaigns[idx % sampleCampaigns.length].image,
               accent: sampleCampaigns[idx % sampleCampaigns.length].accent,
@@ -122,273 +117,444 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="bg-[#F5F2EE] text-[#1E2432]">
-      <section className="w-full px-4 pb-8 pt-6 sm:px-8 lg:px-12 xl:px-16">
-        <div className="border-y border-[#dfe3e8] bg-[#f8f7f4] py-6 lg:py-8">
-          <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
-            <div className="px-2 sm:px-6 lg:px-10">
-              <div className="mb-5 inline-block border-l-2 border-[#c47d20] pl-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#3f4d66]">
-                BERSAMA UNTUK PENDIDIKAN YANG LEBIH MERATA
-              </div>
-
-              <h1 className="max-w-[580px] font-display text-[2.9rem] leading-[0.96] tracking-[-0.04em] text-[#1d273a] sm:text-[4rem]">
-                Menjembatani
-                <br />
-                Setiap Anak untuk
-                <br />
-                Masa Depan yang Lebih Baik
-              </h1>
-
-              <p className="mt-5 max-w-[620px] text-base leading-7 text-[#48576d]">
-                EducationBridge menghubungkan sekolah yang membutuhkan dengan
-                individu, perusahaan, dan pemerintah untuk menciptakan peluang
-                pendidikan yang lebih merata di seluruh Indonesia.
-              </p>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  to="/kampanye"
-                  className="rounded-xl bg-[#1a2d4d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#22365e]"
-                >
-                  Jelajahi Kebutuhan
-                </Link>
-                <Link
-                  to="/kampanye"
-                  className="rounded-xl border border-[#d9dfe8] bg-white px-5 py-3 text-sm font-semibold text-[#1d273a] transition hover:bg-[#eef3ff]"
-                >
-                  Mulai Berdonasi
-                </Link>
-              </div>
-            </div>
-
-            <div className="relative overflow-hidden rounded-lg bg-[#dfe7ef]">
-              <img
-                src={childrenImage}
-                alt="Anak-anak sekolah menyambut dukungan pendidikan"
-                className="h-[460px] w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#1d273a]/15 via-transparent to-[#1d273a]/10" />
-              <div className="absolute right-5 top-5 max-w-[220px] bg-[#ebf1f4]/90 px-4 py-3 text-right shadow-sm backdrop-blur-sm">
-                <span className="font-display text-[2.1rem] leading-none text-[#24354f]">
-                  Pendidikan
-                </span>
-                <span className="mt-2 block font-display text-[1.85rem] leading-none text-[#24354f]">
-                  untuk Peluang
-                </span>
-                <span className="mt-2 block font-display text-[1.85rem] leading-none text-[#24354f]">
-                  yang Sama.
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="w-full px-4 pb-8 sm:px-8 lg:px-12 xl:px-16">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          {heroMetrics.map((item) => (
-            <div
-              key={item.label}
-              className="border border-[#dfe2e8] bg-white p-4"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[13px] text-[#4e5b73]">{item.label}</p>
-                  <p className="mt-3 text-[2rem] font-semibold leading-none text-[#1d273a]">
-                    {item.value}
-                  </p>
-                </div>
-                <div className="h-2 w-2 rounded-full bg-[#c47d20]" />
-              </div>
-              <p className="mt-3 text-sm font-medium text-[#1ca36a]">
-                {item.delta}
-              </p>
-            </div>
-          ))}
-
-          <div className="bg-[#1a2d4d] p-5 text-white">
-            <p className="text-[12px] uppercase tracking-[0.14em] text-[#dfe9ff]">
-              Mau Membantu Sekolah?
+    <div className="bg-[#f7f9fc] text-[#172b4d]">
+      <section className="relative overflow-hidden bg-[#edf6ff] px-4 sm:px-8 lg:px-12 xl:px-16">
+        <div className="mx-auto grid min-h-[610px] max-w-[1560px] items-center gap-10 py-12 lg:grid-cols-[0.9fr_1.1fr] lg:py-16">
+          <div className="relative z-10">
+            <p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-[#55718f]">
+              Bersama untuk pendidikan yang lebih merata
             </p>
-            <p className="mt-4 text-[15px] leading-6 text-[#edf3ff]">
-              Setiap kontribusi Anda membantu menyiapkan masa depan bagi siswa
-              di seluruh Indonesia.
+            <h1 className="max-w-[620px] font-display text-[3.25rem] leading-[0.98] text-[#17365d] sm:text-[4.5rem]">
+              Memahami Kebutuhan.
+              <br />
+              <span className="text-[#1d62b5]">Menghubungkan Dukungan.</span>
+              <br />
+              Membangun Pendidikan.
+            </h1>
+            <p className="mt-6 max-w-[590px] text-base leading-7 text-[#506985]">
+              EducationBridge menjembatani sekolah yang membutuhkan dengan
+              individu, perusahaan, dan mitra untuk menciptakan kesempatan
+              pendidikan yang lebih merata di seluruh Indonesia.
             </p>
-            <Link
-              to="/kampanye"
-              className="mt-6 inline-flex items-center bg-[#f3c36b] px-4 py-3 text-sm font-semibold text-[#1a2d4d] transition hover:bg-[#f7d58f]"
-            >
-              Donasi Sekarang
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="w-full px-4 py-4 sm:px-8 lg:px-12 xl:px-16">
-        <div className="grid gap-6 xl:grid-cols-[1.65fr_0.75fr]">
-          <div>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-display text-[2.1rem] text-[#1d273a]">
-                Campaign Prioritas
-              </h2>
+            <div className="mt-7 flex flex-wrap gap-3">
               <Link
                 to="/kampanye"
-                className="text-sm font-semibold text-[#1a2d4d]"
+                className="bg-[#17365d] px-5 py-3 text-sm font-semibold text-white hover:bg-[#1d4d83]"
               >
-                Lihat Semua →
+                Jelajahi Kebutuhan <span className="ml-2">→</span>
+              </Link>
+              <Link
+                to="/ajukan"
+                className="border border-[#718aa8] bg-white/70 px-5 py-3 text-sm font-semibold text-[#17365d] hover:bg-white"
+              >
+                Ajukan Kebutuhan Sekolah
               </Link>
             </div>
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
-              {featured.map((campaign, index) => (
-                <Link
-                  key={`${campaign.title}-${index}`}
-                  to={`/kampanye/${index + 1}`}
-                  className="overflow-hidden border border-[#dee3ea] bg-white transition hover:border-[#9aa7ba]"
+            <div className="mt-12 grid max-w-[600px] gap-5 sm:grid-cols-3">
+              {[
+                {
+                  title: "Tepat Sasaran",
+                  text: "Berbasis data & priority score",
+                },
+                {
+                  title: "Transparan",
+                  text: "Dapat dipantau oleh semua pihak",
+                },
+                {
+                  title: "Berdampak Nyata",
+                  text: "Untuk pendidikan yang lebih merata",
+                },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="border-l-2 border-[#d6a331] pl-3"
                 >
-                  <div className="relative">
-                    <img
-                      src={campaign.image}
-                      alt={campaign.title}
-                      className="h-52 w-full object-cover"
-                    />
-                    <span
-                      className="absolute left-3 top-3 inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold text-white"
-                      style={{ backgroundColor: campaign.accent }}
-                    >
-                      {campaign.priority}
-                    </span>
-                  </div>
-
-                  <div className="p-4">
-                    <h3 className="font-display text-[1.45rem] leading-tight text-[#1d273a]">
-                      {campaign.title}
-                    </h3>
-                    <p className="mt-2 text-sm text-[#53627d]">
-                      {campaign.school}
-                    </p>
-                    <p className="mt-1 text-sm text-[#53627d]">
-                      {campaign.location}
-                    </p>
-
-                    <div className="mt-3 h-1 overflow-hidden bg-[#eef1f5]">
-                      <div
-                        className="h-full"
-                        style={{
-                          width: `${Math.min((campaign.amount / campaign.target) * 100, 100)}%`,
-                          backgroundColor: campaign.accent,
-                        }}
-                      />
-                    </div>
-
-                    <div className="mt-3 flex items-center justify-between text-sm text-[#4b586f]">
-                      <span>
-                        {Math.round((campaign.amount / campaign.target) * 100)}%
-                      </span>
-                      <span>{campaign.donors} donor</span>
-                    </div>
-
-                    <div className="mt-4 flex items-end justify-between gap-3">
-                      <div>
-                        <p className="text-[12px] text-[#64748b]">Terkumpul</p>
-                        <p className="text-lg font-semibold text-[#1d273a]">
-                          {formatRupiah(campaign.amount)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[12px] text-[#64748b]">Target</p>
-                        <p className="text-lg font-semibold text-[#1d273a]">
-                          {formatRupiah(campaign.target)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
+                  <p className="text-sm font-bold text-[#17365d]">
+                    {item.title}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-[#60758d]">
+                    {item.text}
+                  </p>
+                </div>
               ))}
             </div>
           </div>
-
-          <div className="space-y-5">
-            <div className="border border-[#dfe5ee] bg-[#1a2d4d] p-5 text-white">
-              <div className="flex items-center justify-between">
-                <h3 className="font-display text-[2rem] text-white">
-                  Peta Sebaran Kebutuhan
-                </h3>
-                <Link
-                  to="/kampanye"
-                  className="text-sm font-medium text-[#dfe9ff]"
-                >
-                  Lihat Peta →
-                </Link>
-              </div>
-
-              <div className="mt-5 overflow-hidden border border-[#dfe8ff] bg-[#e8eef9]">
-                <div className="map-shell">
-                  <MapContainer
-                    center={[-2.5, 118]}
-                    zoom={5}
-                    scrollWheelZoom={false}
-                    style={{ height: "220px", width: "100%" }}
-                  >
-                    <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    {mapPoints.map((point) => (
-                      <Marker key={point.name} position={point.position}>
-                        <Popup>
-                          <div className="text-sm font-medium text-[#1d273a]">
-                            {point.name}
-                          </div>
-                        </Popup>
-                      </Marker>
-                    ))}
-                  </MapContainer>
+          <div className="relative min-h-[500px] overflow-hidden rounded-[16px] bg-[#d7e8f8]">
+            <img
+              src={childrenImage}
+              alt="Siswa Indonesia di lingkungan sekolah"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#edf6ff]/75 via-transparent to-[#17365d]/10" />
+            <div className="absolute right-5 top-5 max-w-[240px] bg-white/90 p-4 text-right shadow-lg">
+              <p className="font-display text-2xl leading-tight text-[#17365d]">
+                Pendidikan yang lebih merata membuka lebih banyak kemungkinan.
+              </p>
+            </div>
+            <div className="absolute bottom-5 left-5 max-w-[350px] bg-white p-4 shadow-lg">
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7a8798]">
+                Kebutuhan paling mendesak saat ini
+              </p>
+              <div className="mt-3 flex gap-3">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-[#df3f3f] text-xl font-bold text-[#df3f3f]">
+                  87
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-[#17365d]">
+                    Perbaikan Atap dan Lantai Kelas yang Bocor
+                  </p>
+                  <p className="mt-1 text-xs text-[#6b7d91]">
+                    SDN 03 Wamena Tengah
+                    <br />
+                    Wamena, Papua Pegunungan
+                  </p>
+                  <span className="mt-2 inline-block text-[10px] font-bold text-[#df3f3f]">
+                    Sangat Prioritas
+                  </span>
                 </div>
               </div>
-
-              <div className="mt-5 flex gap-4 text-sm text-[#e8efff]">
-                <span className="flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-[#ff5a36]" /> Sangat
-                  Prioritas
-                </span>
-                <span className="flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-[#fbbf24]" />{" "}
-                  Prioritas
-                </span>
-              </div>
-            </div>
-
-            <div className="border border-[#dfe5ee] bg-white p-5">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="font-display text-[1.7rem] text-[#1d273a]">
-                  Aktivitas Terbaru
-                </h3>
-                <Link
-                  to="/kampanye"
-                  className="text-sm font-semibold text-[#1a2d4d]"
-                >
-                  Lihat Semua →
-                </Link>
-              </div>
-
-              <ul className="space-y-3">
-                {[
-                  "PM Jaya Bersama berdonasi Rp 50.000.000 untuk Komputer di Nusa Tenggara Timur",
-                  "Siti A. berdonasi Rp 100.000 untuk Buku Bacaan",
-                  "SDN 1 Lumbis menghantarkan laporan penggunaan dana dan hasil pembelajaran",
-                ].map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-start gap-3 border-b border-[#eef1f5] pb-3 last:border-b-0 last:pb-0"
-                  >
-                    <span className="mt-1 h-2.5 w-2.5 rounded-full bg-[#1a2d4d]" />
-                    <p className="text-sm leading-6 text-[#4b586f]">{item}</p>
-                  </li>
-                ))}
-              </ul>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-8 sm:px-8 lg:px-12 xl:px-16">
+        <div className="mx-auto grid max-w-[1560px] gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            {
+              icon: "▦",
+              value: "127",
+              label: "Sekolah Terdaftar",
+              delta: "+12% dari bulan lalu",
+            },
+            {
+              icon: "♧",
+              value: "12.450",
+              label: "Siswa Terdampak",
+              delta: "+8% dari bulan lalu",
+            },
+            {
+              icon: "▤",
+              value: "42",
+              label: "Kebutuhan Prioritas Tinggi",
+              delta: "+5% dari bulan lalu",
+            },
+            {
+              icon: "⌖",
+              value: "18",
+              label: "Provinsi Terjangkau",
+              delta: "+3% dari bulan lalu",
+            },
+          ].map((item, index) => (
+            <div
+              key={item.label}
+              className="flex items-start gap-3 border border-[#e2e8f0] bg-white p-5"
+            >
+              <span
+                className={`flex h-10 w-10 items-center justify-center text-xl ${["bg-[#e8f2ff] text-[#2867b2]", "bg-[#eaf8f1] text-[#258a5b]", "bg-[#fff6e5] text-[#c17a15]", "bg-[#fff0f0] text-[#d74747]"][index]}`}
+              >
+                {item.icon}
+              </span>
+              <div>
+                <p className="text-2xl font-bold text-[#17365d]">
+                  {item.value}
+                </p>
+                <p className="text-xs font-semibold text-[#4e6480]">
+                  {item.label}
+                </p>
+                <p className="mt-1 text-[10px] text-[#1f9d61]">{item.delta}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="px-4 py-8 sm:px-8 lg:px-12 xl:px-16">
+        <div className="mx-auto max-w-[1560px]">
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#52708f]">
+                Priority score
+              </p>
+              <h2 className="mt-2 font-display text-3xl text-[#17365d] sm:text-4xl">
+                Kebutuhan Pendidikan Paling Prioritas
+              </h2>
+              <p className="mt-2 text-sm text-[#687d95]">
+                Berdasarkan tingkat kebutuhan, urgensi, kondisi fasilitas,
+                lokasi, dan jumlah siswa terdampak.
+              </p>
+            </div>
+            <Link
+              to="/kampanye"
+              className="hidden text-sm font-bold text-[#1d62b5] sm:block"
+            >
+              Lihat Semua →
+            </Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {featured.map((campaign, index) => (
+              <Link
+                key={`${campaign.title}-${index}`}
+                to={`/kampanye/${index + 1}`}
+                className="group overflow-hidden border border-[#e0e7ef] bg-white transition hover:-translate-y-0.5 hover:border-[#8da8c5]"
+              >
+                <div className="relative">
+                  <img
+                    src={campaign.image}
+                    alt={campaign.title}
+                    className="h-44 w-full object-cover"
+                  />
+                  <span
+                    className="absolute left-3 top-3 bg-white px-2 py-1 text-[10px] font-bold"
+                    style={{ color: campaign.accent }}
+                  >
+                    {campaign.priority}
+                  </span>
+                  <span
+                    className="absolute bottom-3 right-3 flex h-12 w-12 items-center justify-center rounded-full border-2 bg-white text-lg font-bold"
+                    style={{
+                      borderColor: campaign.accent,
+                      color: campaign.accent,
+                    }}
+                  >
+                    {campaign.priorityScore}
+                  </span>
+                </div>
+                <div className="p-4">
+                  <h3 className="min-h-[44px] text-sm font-bold leading-5 text-[#17365d]">
+                    {campaign.title}
+                  </h3>
+                  <p className="mt-2 text-xs font-semibold text-[#3f5874]">
+                    {campaign.school}
+                  </p>
+                  <p className="mt-1 text-xs text-[#74859a]">
+                    ⌖ {campaign.location}
+                  </p>
+                  <div className="mt-4 grid grid-cols-2 gap-2 border-t border-[#edf0f4] pt-3 text-[11px] text-[#60748d]">
+                    <span>♙ {campaign.students} siswa terdampak</span>
+                    <span>▦ {campaign.category}</span>
+                  </div>
+                  <span className="mt-4 flex items-center justify-center bg-[#f3f6fa] py-2 text-xs font-bold text-[#17365d] group-hover:bg-[#e7f0fb]">
+                    Lihat Kebutuhan <span className="ml-2">→</span>
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-8 sm:px-8 lg:px-12 xl:px-16">
+        <div className="mx-auto grid max-w-[1560px] gap-5 xl:grid-cols-[1.5fr_0.75fr]">
+          <div className="border border-[#dce6f1] bg-[#edf6ff] p-5 sm:p-7">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-2xl text-[#17365d]">
+                Peta Sebaran Kebutuhan Pendidikan
+              </h2>
+              <Link to="/kampanye" className="text-xs font-bold text-[#1d62b5]">
+                Lihat Peta Lengkap →
+              </Link>
+            </div>
+            <div className="mt-5 overflow-hidden border border-white bg-white">
+              <div className="map-shell">
+                <MapContainer
+                  center={[-2.5, 118]}
+                  zoom={5}
+                  scrollWheelZoom={false}
+                  style={{ height: "300px", width: "100%" }}
+                >
+                  <TileLayer
+                    attribution="&copy; OpenStreetMap contributors"
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  {mapPoints.map((point) => (
+                    <Marker key={point.name} position={point.position}>
+                      <Popup>
+                        <div className="text-sm font-medium text-[#17365d]">
+                          {point.name}
+                          <br />
+                          <span className="text-xs font-normal">
+                            Kebutuhan prioritas terpantau
+                          </span>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-4 text-xs text-[#526983]">
+              <span>
+                ● <span className="text-[#df3f3f]">Sangat Prioritas</span>
+              </span>
+              <span>
+                ● <span className="text-[#e49a18]">Prioritas</span>
+              </span>
+              <span>
+                ● <span className="text-[#2d78c4]">Kebutuhan lainnya</span>
+              </span>
+            </div>
+          </div>
+          <div className="border border-[#dce6f1] bg-white p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#52708f]">
+              Smart matching
+            </p>
+            <h2 className="mt-2 font-display text-2xl text-[#17365d]">
+              Temukan Kebutuhan Sesuai Minat Anda
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-[#687d95]">
+              Pilih bidang yang ingin Anda dukung dan kami akan merekomendasikan
+              kebutuhan yang sesuai.
+            </p>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              {[
+                "Infrastruktur",
+                "Teknologi",
+                "Buku & Literasi",
+                "Beasiswa",
+                "Sanitasi & Air Bersih",
+                "Lainnya",
+              ].map((category) => (
+                <span
+                  key={category}
+                  className="border border-[#d9e2ed] px-3 py-2 text-xs font-semibold text-[#49617d]"
+                >
+                  {category}
+                </span>
+              ))}
+            </div>
+            <Link
+              to="/cocok"
+              className="mt-5 inline-flex bg-[#17365d] px-4 py-3 text-xs font-bold text-white"
+            >
+              Lihat Rekomendasi →
+            </Link>
+            <p className="mt-3 text-[11px] text-[#8795a5]">
+              Masuk untuk mendapatkan rekomendasi yang dipersonalisasi.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-8 sm:px-8 lg:px-12 xl:px-16">
+        <div className="mx-auto grid max-w-[1560px] gap-4 md:grid-cols-2">
+          <div className="flex min-h-[220px] items-end justify-between gap-5 border border-[#dce6f1] bg-white p-6">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#2867b2]">
+                Untuk Perusahaan / CSR
+              </p>
+              <h2 className="mt-3 max-w-md font-display text-3xl text-[#17365d]">
+                Salurkan Program CSR Anda dengan Dampak Nyata
+              </h2>
+              <p className="mt-3 max-w-md text-sm leading-6 text-[#687d95]">
+                Temukan sekolah yang sesuai dengan fokus CSR perusahaan
+                berdasarkan lokasi, bidang bantuan, dan tingkat kebutuhan.
+              </p>
+              <a
+                href="#footer"
+                className="mt-5 inline-block text-xs font-bold text-[#1d62b5]"
+              >
+                Pelajari Program CSR →
+              </a>
+            </div>
+            <div className="hidden h-24 w-24 bg-[#e8f2ff] md:block" />
+          </div>
+          <div className="flex min-h-[220px] items-end justify-between gap-5 border border-[#eadfca] bg-[#fffaf0] p-6">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#b87416]">
+                Untuk Sekolah
+              </p>
+              <h2 className="mt-3 max-w-md font-display text-3xl text-[#17365d]">
+                Sekolah Membutuhkan Dukungan?
+              </h2>
+              <p className="mt-3 max-w-md text-sm leading-6 text-[#687d95]">
+                Ajukan kebutuhan pendidikan sekolah Anda. Tim EducationBridge
+                akan melakukan verifikasi sebelum kebutuhan dipublikasikan.
+              </p>
+              <Link
+                to="/ajukan"
+                className="mt-5 inline-block text-xs font-bold text-[#b87416]"
+              >
+                Ajukan Kebutuhan →
+              </Link>
+            </div>
+            <div className="hidden h-24 w-24 bg-[#f4e5bd] md:block" />
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-8 sm:px-8 lg:px-12 xl:px-16">
+        <div className="mx-auto grid max-w-[1560px] gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+          <div className="border border-[#e0e7ef] bg-white p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-2xl text-[#17365d]">
+                Dampak yang Telah Dicapai
+              </h2>
+              <span className="text-xs font-bold text-[#1d62b5]">
+                Lihat Selengkapnya →
+              </span>
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                ["87", "Sekolah terbantu"],
+                ["12.450", "Siswa terdampak"],
+                ["240", "Ruang belajar diperbaiki"],
+                ["15", "Provinsi terjangkau"],
+              ].map(([value, label]) => (
+                <div key={label} className="bg-[#f7faff] p-4">
+                  <p className="text-2xl font-bold text-[#17365d]">{value}</p>
+                  <p className="mt-1 text-xs leading-5 text-[#667b92]">
+                    {label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="border border-[#e0e7ef] bg-white p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-2xl text-[#17365d]">
+                Berita & Pembaruan
+              </h2>
+              <span className="text-xs font-bold text-[#1d62b5]">
+                Lihat Semua →
+              </span>
+            </div>
+            <div className="mt-4 space-y-3">
+              {[
+                ["Kolaborasi untuk Pendidikan di Papua", "12 Agustus 2026"],
+                ["Pentingnya Akses Teknologi di Daerah 3T", "5 Agustus 2026"],
+                ["Perkembangan Program EducationBridge", "28 Juli 2026"],
+              ].map(([title, date]) => (
+                <div
+                  key={title}
+                  className="border-b border-[#edf0f4] pb-3 last:border-0"
+                >
+                  <p className="text-xs font-bold text-[#17365d]">{title}</p>
+                  <p className="mt-1 text-[10px] text-[#8795a5]">{date}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-8 sm:px-8 lg:px-12 xl:px-16">
+        <div className="mx-auto flex max-w-[1560px] flex-col items-start justify-between gap-5 bg-[#17365d] px-6 py-8 text-white sm:flex-row sm:items-center sm:px-10">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#bed2e9]">
+              Jadi bagian dari perubahan
+            </p>
+            <h2 className="mt-2 max-w-2xl font-display text-3xl leading-tight">
+              Bersama, kita bisa menghadirkan pendidikan yang lebih merata untuk
+              seluruh anak Indonesia.
+            </h2>
+          </div>
+          <Link
+            to="/daftar"
+            className="shrink-0 bg-[#f3bd35] px-5 py-3 text-xs font-bold text-[#17365d]"
+          >
+            Mulai Berkontribusi →
+          </Link>
         </div>
       </section>
     </div>
