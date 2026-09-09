@@ -17,6 +17,8 @@ class Campaign extends Model
         'tags',
         'title',
         'description',
+        'start_date',
+        'end_date',
         'target_amount',
         'raised_amount',
         'student_count',
@@ -30,6 +32,8 @@ class Campaign extends Model
 
     protected $casts = [
         'tags' => 'array',
+        'start_date' => 'date:Y-m-d',
+        'end_date' => 'date:Y-m-d',
     ];
 
     protected $appends = ['priority_label', 'progress_percent'];

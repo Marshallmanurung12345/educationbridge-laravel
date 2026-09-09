@@ -11,6 +11,11 @@ const fallbackNeeds = [
     location: "Wamena, Papua Pegunungan",
     students: 320,
     score: 87,
+    start_date: "2026-09-01",
+    end_date: "2026-10-31",
+    needed: 45000000,
+    raised: 125000000,
+    target: 200000000,
     status: "Sangat Prioritas",
     image:
       "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=80",
@@ -21,6 +26,11 @@ const fallbackNeeds = [
     location: "Nunukan, Kalimantan Utara",
     students: 210,
     score: 76,
+    start_date: "2026-09-05",
+    end_date: "2026-11-15",
+    needed: 30000000,
+    raised: 92000000,
+    target: 140000000,
     status: "Prioritas",
     image:
       "https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=900&q=80",
@@ -31,6 +41,11 @@ const fallbackNeeds = [
     location: "Tangerang, Banten",
     students: 187,
     score: 72,
+    start_date: "2026-09-10",
+    end_date: "2026-12-01",
+    needed: 28000000,
+    raised: 76000000,
+    target: 160000000,
     status: "Prioritas",
     image:
       "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
@@ -83,6 +98,15 @@ function Score({ value }) {
   );
 }
 
+function formatDate(value) {
+  if (!value) return "Deadline belum ditentukan";
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
 function NeedCard({ need, index }) {
   return (
     <Link
@@ -110,6 +134,9 @@ function NeedCard({ need, index }) {
         <p className="mt-4 text-xs text-[#687b90]">
           {need.students} siswa terdampak
         </p>
+        <p className="mt-2 text-xs text-[#687b90]">
+          Berakhir {formatDate(need.end_date)}
+        </p>
         <div className="mt-4">
           <Score value={need.score} />
         </div>
@@ -131,15 +158,18 @@ export default function PublicHome() {
       .then((rows) => {
         if (!Array.isArray(rows) || !rows.length) return;
         setNeeds(
-          rows
-            .slice(0, 3)
-            .map((item, index) => ({
-              ...fallbackNeeds[index],
-              title: item.title,
-              school: item.school_name || fallbackNeeds[index].school,
-              location: item.location || fallbackNeeds[index].location,
-              score: item.priority_score || fallbackNeeds[index].score,
-            })),
+          rows.slice(0, 3).map((item, index) => ({
+            ...fallbackNeeds[index],
+            title: item.title,
+            school: item.school_name || fallbackNeeds[index].school,
+            location: item.location || fallbackNeeds[index].location,
+            score: item.priority_score || fallbackNeeds[index].score,
+            start_date: item.start_date || fallbackNeeds[index].start_date,
+            end_date: item.end_date || fallbackNeeds[index].end_date,
+            needed: item.target_amount || fallbackNeeds[index].needed,
+            raised: item.raised_amount || fallbackNeeds[index].raised,
+            target: item.target_amount || fallbackNeeds[index].target,
+          })),
         );
       })
       .catch(() => {});
@@ -263,6 +293,78 @@ export default function PublicHome() {
             {needs.map((need, index) => (
               <NeedCard key={need.title} need={need} index={index} />
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-[#e5e9ee] bg-white px-5 py-14 sm:px-8 lg:px-12">
+        <div className="mx-auto grid max-w-[1100px] gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#b27a1d]">
+              Apa yang membentuk skor?
+            </p>
+            <h2 className="mt-3 font-display text-3xl text-[#17365d]">
+              Kenapa mereka diprioritaskan?
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-[#687b90]">
+              Priority Score menjelaskan tingkat kebutuhan dengan bahasa yang
+              mudah dipahami, bukan sekadar angka.
+            </p>
+          </div>
+          <div className="space-y-4">
+            {[
+              ["Lokasi 3T", "92%"],
+              ["Kondisi fasilitas", "96%"],
+              ["Siswa terdampak", "78%"],
+            ].map(([label, width]) => (
+              <div key={label}>
+                <div className="mb-2 flex justify-between text-xs font-semibold text-[#526a83]">
+                  <span>{label}</span>
+                  <span>tinggi</span>
+                </div>
+                <div className="h-2 bg-[#edf0f4]">
+                  <div className="h-full bg-[#e3a22f]" style={{ width }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-5 py-14 sm:px-8 lg:px-12">
+        <div className="mx-auto max-w-[1100px] border-y border-[#dce5ee] py-8">
+          <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#718096]">
+                Dukungan yang sedang berjalan
+              </p>
+              <h2 className="mt-3 font-display text-3xl text-[#17365d]">
+                Bantuan yang Sedang Berjalan
+              </h2>
+              <p className="mt-2 text-sm text-[#687b90]">
+                Lihat perkembangan dukungan untuk kebutuhan sekolah yang
+                dipilih.
+              </p>
+            </div>
+            <Link to="/kampanye/1" className="text-sm font-bold text-[#2767b1]">
+              Lihat detail →
+            </Link>
+          </div>
+          <div className="mt-7 flex flex-col gap-4 sm:flex-row sm:items-end">
+            <div>
+              <p className="text-3xl font-bold text-[#17365d]">Rp 125 Juta</p>
+              <p className="mt-1 text-xs text-[#718096]">
+                terkumpul dari Rp 200 Juta
+              </p>
+            </div>
+            <div className="flex-1">
+              <div className="h-3 bg-[#edf0f4]">
+                <div className="h-full w-[62.5%] bg-[#3479bd]" />
+              </div>
+              <p className="mt-2 text-right text-xs font-semibold text-[#526a83]">
+                62,5% terpenuhi
+              </p>
+            </div>
           </div>
         </div>
       </section>
