@@ -25,7 +25,7 @@ export default function Nav() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-[#e4e7eb] bg-[#ffffff]">
-      <div className="flex w-full items-center justify-between gap-4 px-4 py-4 sm:px-8 lg:px-12 xl:px-16">
+      <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between gap-4 px-4 py-4 sm:px-8 lg:px-10">
         <NavLink to="/" className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#1a2d4d] text-xs font-bold tracking-tight text-white">
             EB
