@@ -45,6 +45,7 @@ class CampaignController extends Controller
             'urgency' => 'required|integer|min:1|max:5',
             'facility_condition' => 'required|integer|min:1|max:5',
             'remoteness' => 'required|integer|min:1|max:5',
+            'access_score' => 'required|integer|min:1|max:5',
             'image_url' => 'nullable|string',
         ]);
 
@@ -83,6 +84,7 @@ class CampaignController extends Controller
             'urgency' => 'sometimes|integer|min:1|max:5',
             'facility_condition' => 'sometimes|integer|min:1|max:5',
             'remoteness' => 'sometimes|integer|min:1|max:5',
+            'access_score' => 'sometimes|integer|min:1|max:5',
             'image_url' => 'nullable|string',
         ];
 

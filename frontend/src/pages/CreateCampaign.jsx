@@ -24,6 +24,7 @@ const initialForm = {
   urgency: 3,
   facility_condition: 3,
   remoteness: 3,
+  access_score: 3,
 };
 
 export default function CreateCampaign() {
@@ -55,6 +56,7 @@ export default function CreateCampaign() {
         urgency: Number(form.urgency),
         facility_condition: Number(form.facility_condition),
         remoteness: Number(form.remoteness),
+        access_score: Number(form.access_score),
       });
       setSubmitted(created);
     } catch (err) {
@@ -90,7 +92,7 @@ export default function CreateCampaign() {
       </p>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-5">
-        <div className="grid sm:grid-cols-2 gap-5">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Nama sekolah">
             <input
               required
@@ -188,7 +190,7 @@ export default function CreateCampaign() {
           </Field>
         </div>
 
-        <div className="grid sm:grid-cols-3 gap-5">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <RangeField
             label="Urgensi"
             value={form.urgency}
@@ -206,6 +208,12 @@ export default function CreateCampaign() {
             value={form.remoteness}
             onChange={(v) => update("remoteness", v)}
             hint="1 = perkotaan, 5 = 3T"
+          />
+          <RangeField
+            label="Akses pendidikan"
+            value={form.access_score}
+            onChange={(v) => update("access_score", v)}
+            hint="1 = sangat terbatas, 5 = mudah"
           />
         </div>
 

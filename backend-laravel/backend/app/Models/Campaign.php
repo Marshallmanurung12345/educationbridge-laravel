@@ -25,6 +25,7 @@ class Campaign extends Model
         'urgency',
         'facility_condition',
         'remoteness',
+        'access_score',
         'image_url',
         'status',
         'priority_score',
@@ -36,7 +37,7 @@ class Campaign extends Model
         'end_date' => 'date:Y-m-d',
     ];
 
-    protected $appends = ['priority_label', 'progress_percent'];
+    protected $appends = ['priority_label', 'progress_percent', 'priority_breakdown'];
 
     protected static function booted(): void
     {
@@ -48,6 +49,7 @@ class Campaign extends Model
                 (int) $campaign->facility_condition,
                 (int) $campaign->remoteness,
                 (int) $campaign->student_count,
+                (int) $campaign->access_score,
             );
         });
     }
@@ -57,14 +59,26 @@ class Campaign extends Model
      *  35% urgensi, 25% kondisi fasilitas (makin buruk makin tinggi skor),
      *  25% keterpencilan lokasi (3T), 15% jumlah siswa terdampak (dinormalisasi, cap 1000).
      */
-    public static function computePriorityScore(int $urgency, int $facilityCondition, int $remoteness, int $studentCount): int
+    public static function computePriorityScore(int $urgency, int $facilityCondition, int $remoteness, int $studentCount, int $accessScore = 3): int
     {
-        $urgencyScore = ($urgency / 5) * 35;
+        $regionScore = ($remoteness / 5) * 25;
         $facilityScore = ((6 - $facilityCondition) / 5) * 25;
-        $remotenessScore = ($remoteness / 5) * 25;
-        $studentScore = (min($studentCount, 1000) / 1000) * 15;
+        $studentScore = (min($studentCount, 1000) / 1000) * 20;
+        $accessScore = (((6 - $accessScore) / 5) * 15);
+        $urgencyScore = ($urgency / 5) * 15;
 
-        return (int) round($urgencyScore + $facilityScore + $remotenessScore + $studentScore);
+        return (int) round($regionScore + $facilityScore + $studentScore + $accessScore + $urgencyScore);
+    }
+
+    public function getPriorityBreakdownAttribute(): array
+    {
+        return [
+            'wilayah_prioritas' => (int) round(((int) $this->remoteness / 5) * 25),
+            'kondisi_fasilitas' => (int) round((((6 - (int) $this->facility_condition) / 5) * 25)),
+            'siswa_terdampak' => (int) round((min((int) $this->student_count, 1000) / 1000) * 20),
+            'akses_pendidikan' => (int) round((((6 - (int) $this->access_score) / 5) * 15)),
+            'urgensi' => (int) round(((int) $this->urgency / 5) * 15),
+        ];
     }
 
     public function getPriorityLabelAttribute(): string

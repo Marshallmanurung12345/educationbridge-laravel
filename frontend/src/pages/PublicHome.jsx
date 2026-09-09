@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import { Link } from "react-router-dom";
 import { api } from "../api";
-import childrenImage from "../assets/children.jpg";
+import schoolImage from "../assets/sekolah1.jpeg";
 
 const fallbackNeeds = [
   {
@@ -181,7 +181,7 @@ export default function PublicHome() {
         <div className="mx-auto grid max-w-[1280px] items-center gap-10 lg:grid-cols-[0.82fr_1.18fr]">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#718096]">
-              Temukan sekolah yang membutuhkan dukungan
+              EducationBridge · Simulasi Demo
             </p>
             <h1 className="mt-5 max-w-[560px] font-display text-[3rem] leading-[1.04] text-[#17365d] sm:text-[4.15rem]">
               Setiap Sekolah Punya Kebutuhan.
@@ -210,8 +210,8 @@ export default function PublicHome() {
           </div>
           <div className="relative">
             <img
-              src={childrenImage}
-              alt="Anak-anak sekolah Indonesia"
+              src={schoolImage}
+              alt="Kegiatan belajar di sekolah wilayah 3T"
               className="aspect-[4/3] w-full rounded-[16px] object-cover"
             />
             <div className="absolute -bottom-5 left-5 max-w-[280px] rounded-[12px] bg-white p-4 shadow-[0_10px_25px_rgba(23,54,93,0.14)] sm:left-8">
@@ -280,7 +280,8 @@ export default function PublicHome() {
             </h2>
             <p className="mt-4 max-w-sm text-sm leading-6 text-[#687b90]">
               Temukan kebutuhan pendidikan yang paling mendesak dan lihat
-              bagaimana dukungan dapat memberikan dampak.
+              bagaimana dukungan dapat memberikan dampak. Data fundraising pada
+              demo ini adalah simulasi.
             </p>
             <Link
               to="/kampanye"
