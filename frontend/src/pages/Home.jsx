@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
+import childrenImage from "../assets/children.jpg";
 
 const mapPoints = [
   { name: "Wamena, Papua", position: [-4.1, 138.95], color: "#f97316" },
@@ -122,7 +123,7 @@ export default function Home() {
 
   return (
     <div className="bg-[#F5F2EE] text-[#1E2432]">
-      <section className="mx-auto max-w-[1400px] px-4 pb-8 pt-6">
+      <section className="w-full px-4 pb-8 pt-6 sm:px-8 lg:px-12 xl:px-16">
         <div className="border-y border-[#dfe3e8] bg-[#f8f7f4] py-6 lg:py-8">
           <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
             <div className="px-2 sm:px-6 lg:px-10">
@@ -162,8 +163,8 @@ export default function Home() {
 
             <div className="relative overflow-hidden rounded-lg bg-[#dfe7ef]">
               <img
-                src="https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=1200&q=80"
-                alt="Anak-anak sekolah"
+                src={childrenImage}
+                alt="Anak-anak sekolah menyambut dukungan pendidikan"
                 className="h-[460px] w-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-[#1d273a]/15 via-transparent to-[#1d273a]/10" />
@@ -183,7 +184,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[1400px] px-4 pb-8">
+      <section className="w-full px-4 pb-8 sm:px-8 lg:px-12 xl:px-16">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           {heroMetrics.map((item) => (
             <div
@@ -223,7 +224,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[1400px] px-4 py-4">
+      <section className="w-full px-4 py-4 sm:px-8 lg:px-12 xl:px-16">
         <div className="grid gap-6 xl:grid-cols-[1.65fr_0.75fr]">
           <div>
             <div className="mb-4 flex items-center justify-between">
