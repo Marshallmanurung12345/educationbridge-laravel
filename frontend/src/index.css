@@ -1,0 +1,59 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
+@import url("https://unpkg.com/leaflet@1.9.4/dist/leaflet.css");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-[#F5F2EE] text-[#1E2432] font-body;
+  font-feature-settings: "ss01";
+}
+
+.font-display {
+  font-family: "Fraunces", serif;
+}
+
+::selection {
+  background: #e3a23c;
+  color: #16233b;
+}
+
+:focus-visible {
+  outline: 2px solid #16233b;
+  outline-offset: 2px;
+}
+
+.prose-measure {
+  max-width: 65ch;
+}
+
+.input {
+  @apply w-full border border-[#dfe3ea] bg-white px-3 py-2.5 text-sm text-[#1d273a] focus:border-[#16233b] focus:outline-none;
+}
+
+img {
+  display: block;
+}
+
+.map-shell .leaflet-container {
+  height: 220px !important;
+  width: 100% !important;
+  background: #edf3ff;
+  border: 0;
+}
+
+.map-shell .leaflet-control-zoom {
+  border: 0 !important;
+  box-shadow: 0 10px 20px rgba(16, 24, 40, 0.08) !important;
+}
+
+.map-shell .leaflet-popup-content-wrapper,
+.map-shell .leaflet-popup-tip {
+  background: #ffffff;
+  color: #1d273a;
+}
