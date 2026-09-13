@@ -99,7 +99,7 @@ export default function PerusahaanDashboard() {
           "Penyaluran CSR Tepat Sasaran ke Sekolah Terverifikasi Kemendikdasmen",
           "Program Adopsi Fasilitas Sekolah Berbasis Wilayah 3T",
           "Penerbitan Sertifikat Kemitraan & Ringkasan Laporan Dampak ESG",
-          "Klaim Fasilitas Tax Deductible (Potongan Pajak Kemitraan Sosial)"
+          "Klaim Fasilitas Tax Deductible (Potongan Pajak Kemitraan Sosial)",
         ]}
       />
 

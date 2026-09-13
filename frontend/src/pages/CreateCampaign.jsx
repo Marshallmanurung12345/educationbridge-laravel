@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../context/AuthContext";
+import WelcomeOverlay from "../components/WelcomeOverlay";
 
 const categoryTags = {
   Fasilitas: ["renovasi", "infrastruktur"],
@@ -210,6 +211,19 @@ export default function CreateCampaign() {
 
   return (
     <div className="max-w-2xl mx-auto px-5 py-12">
+      <WelcomeOverlay
+        roleKey="sekolah"
+        roleBadge="🏫 Portal Pengajuan Sekolah"
+        title={`Selamat Datang, ${user?.organization_name || user?.name || "Pihak Sekolah"}`}
+        subtitle="Platform Resmi Pengajuan Bantuan Sarana Prasarana Pendidikan Terintegrasi Data Induk Kemendikdasmen"
+        features={[
+          "Identifikasi Otomatis NPSN & Wilayah Administrasi Resmi",
+          "Pengisian Deskripsi Kebutuhan Riil & Rencana Anggaran Biaya (RAB)",
+          "Lampiran Dokumen Surat Kepsek & Bukti Kondisi Lapangan",
+          "Pemantauan Status Verifikasi 4 Tahap oleh Tim Moderator",
+        ]}
+      />
+
       <h1 className="font-display text-3xl">Ajukan Kebutuhan Sekolah</h1>
       <p className="text-ink-light mt-2 prose-measure">
         Isi formulir berikut untuk mengajukan kebutuhan bantuan. Tim kami akan

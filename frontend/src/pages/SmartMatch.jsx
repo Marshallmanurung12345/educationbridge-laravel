@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
 import schoolImage from "../assets/sekolah1.jpeg";
+import WelcomeOverlay from "../components/WelcomeOverlay";
 
 const categories = [
   {
@@ -190,6 +191,19 @@ export default function SmartMatch() {
 
   return (
     <main className="min-h-screen bg-[#fbfbfa] text-[#344054]">
+      <WelcomeOverlay
+        roleKey="individu"
+        roleBadge="🤝 Rekomendasi Pintar Donatur"
+        title="Selamat Datang di Portal Rekomendasi Pintar"
+        subtitle="Temukan Kebutuhan Pendidikan Sekolah yang Paling Tepat Sasaran & Berdampak"
+        features={[
+          "Pilihan Kebutuhan Sekolah Terverifikasi Resmi Kemendikdasmen",
+          "Penetapan Urgensi Berbasis Priority Score (0-100)",
+          "Penyaluran Donasi Langsung & Transparan ke Akun Sekolah",
+          "Laporan Pertanggungjawaban & Pemantauan Dampak Penggunaan Dana",
+        ]}
+      />
+
       <div className="mx-auto max-w-[980px] px-5 py-10 sm:px-8 lg:py-14">
         <div className="border-b border-[#e3e6e9] pb-8">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#718096]">

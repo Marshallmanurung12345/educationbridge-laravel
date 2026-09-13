@@ -82,7 +82,9 @@ export default function AdminDashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] text-[#1e293b] pb-16">      <WelcomeOverlay
+    <main className="min-h-screen bg-[#f8fafc] text-[#1e293b] pb-16">
+      {" "}
+      <WelcomeOverlay
         roleKey="admin"
         roleBadge="⚡ Panel Admin & Verifikator"
         title="Selamat Datang di Panel Verifikasi EducationBridge"
@@ -91,7 +93,7 @@ export default function AdminDashboard() {
           "Verifikasi Kesesuaian NPSN Sekolah dengan Data Induk Kemendikdasmen",
           "Pemeriksaan Rencana Anggaran Biaya (RAB) & Dokumen Surat Kepsek",
           "Pengubahan Status Workflow (Pending → Perlu Perbaikan → Verified / Rejected)",
-          "Penetapan Priority Score Otomatis & Publikasi ke Rekomendasi"
+          "Penetapan Priority Score Otomatis & Publikasi ke Rekomendasi",
         ]}
       />
       {/* HEADER PANEL VERIFIKASI ADMIN */}
@@ -122,7 +124,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
-
       <div className="mx-auto max-w-[1280px] px-5 pt-8 sm:px-8">
         {/* WORKFLOW STEPPER BANNER */}
         <div className="mb-8 rounded-xl border border-purple-200 bg-purple-50/60 p-5">
@@ -291,7 +292,6 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
-
       {/* VERIFICATION DETAIL MODAL */}
       {selectedCampaign && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
