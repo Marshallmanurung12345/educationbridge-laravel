@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.png";
+import NotificationMenu from "./NotificationMenu";
 
 const linkClass = ({ isActive }) =>
   `px-3 py-2 text-sm font-medium transition-colors ${
@@ -148,6 +149,8 @@ export default function Nav() {
 
           {user ? (
             <div className="flex items-center gap-3 border-l border-[#e4e7eb] pl-3">
+              <NotificationMenu user={user} />
+
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1a2d4d] text-sm font-semibold text-white">
                 {user.name?.charAt(0)?.toUpperCase() || "U"}
               </div>

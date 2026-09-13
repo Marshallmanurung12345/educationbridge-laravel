@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Campaign;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 
 class DonationController extends Controller
@@ -41,6 +42,26 @@ class DonationController extends Controller
         ]);
 
         $campaign->increment('raised_amount', $data['amount']);
+
+        $formattedAmount = 'Rp ' . number_format($data['amount'], 0, ',', '.');
+
+        // Notifikasi untuk Sekolah Penerima Donasi
+        Notification::create([
+            'user_id' => $campaign->user_id,
+            'type' => 'donation_received',
+            'title' => '💰 Donasi Baru Diterima!',
+            'message' => "{$donation->donor_name} menyalurkan donasi sebesar {$formattedAmount} untuk '{$campaign->title}'.",
+            'campaign_id' => $campaign->id,
+        ]);
+
+        // Notifikasi untuk Admin
+        Notification::create([
+            'target_role' => 'admin',
+            'type' => 'donation_received',
+            'title' => '💳 Donasi Baru Tercatat',
+            'message' => "Donasi sebesar {$formattedAmount} disalurkan oleh {$donation->donor_name} ke '{$campaign->title}'.",
+            'campaign_id' => $campaign->id,
+        ]);
 
         return response()->json($donation, 201);
     }

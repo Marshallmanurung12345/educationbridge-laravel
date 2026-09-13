@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.png";
+import loginImg from "../assets/login.png";
 
 export default function Login() {
   const { login } = useAuth();
@@ -31,7 +32,7 @@ export default function Login() {
     <div className="mx-auto grid max-w-[1180px] gap-6 px-4 py-8 lg:grid-cols-[1fr_0.85fr] lg:py-14">
       <div className="relative hidden min-h-[600px] overflow-hidden rounded-[30px] bg-[#1a2d4d] lg:block">
         <img
-          src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=85"
+          src={loginImg}
           alt="Siswa belajar di kelas"
           className="absolute inset-0 h-full w-full object-cover opacity-75"
         />

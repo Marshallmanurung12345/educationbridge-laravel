@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Campaign;
+use App\Models\Notification;
 use App\Models\School;
 use Illuminate\Http\Request;
 
@@ -78,6 +79,24 @@ class CampaignController extends Controller
 
         $campaign = $user->campaigns()->create($data);
 
+        // Notifikasi untuk Admin (Ada pengajuan baru)
+        Notification::create([
+            'target_role' => 'admin',
+            'type' => 'campaign_submitted',
+            'title' => '📥 Pengajuan Campaign Baru',
+            'message' => "Sekolah {$campaign->school_name} mengajukan permohonan bantuan '{$campaign->title}'. Silakan lakukan pemeriksaan.",
+            'campaign_id' => $campaign->id,
+        ]);
+
+        // Notifikasi untuk Sekolah Pengaju
+        Notification::create([
+            'user_id' => $user->id,
+            'type' => 'campaign_submitted',
+            'title' => '⏳ Pengajuan Berhasil Terkirim',
+            'message' => "Permohonan bantuan '{$campaign->title}' berhasil diajukan dan sedang dalam proses verifikasi oleh Admin.",
+            'campaign_id' => $campaign->id,
+        ]);
+
         return response()->json($campaign->load(['school', 'user:id,name,organization_name']), 201);
     }
 
@@ -128,7 +147,37 @@ class CampaignController extends Controller
             unset($data['status']);
         }
 
+        $oldStatus = $campaign->status;
         $campaign->update($data);
+
+        // Notifikasi Perubahan Status dari Admin ke Sekolah
+        if ($isAdmin && isset($data['status']) && $data['status'] !== $oldStatus) {
+            if ($data['status'] === 'verified') {
+                Notification::create([
+                    'user_id' => $campaign->user_id,
+                    'type' => 'campaign_verified',
+                    'title' => '✅ Campaign Terverifikasi & Tayang!',
+                    'message' => "Selamat! Permohonan bantuan '{$campaign->title}' telah disetujui Admin dan sekarang dipublikasikan.",
+                    'campaign_id' => $campaign->id,
+                ]);
+            } elseif ($data['status'] === 'needs_revision') {
+                Notification::create([
+                    'user_id' => $campaign->user_id,
+                    'type' => 'campaign_needs_revision',
+                    'title' => '📝 Campaign Membutuhkan Perbaikan',
+                    'message' => "Admin meminta perbaikan pada '{$campaign->title}'. Catatan: " . ($campaign->verification_note ?: 'Mohon periksa dokumen.'),
+                    'campaign_id' => $campaign->id,
+                ]);
+            } elseif ($data['status'] === 'rejected') {
+                Notification::create([
+                    'user_id' => $campaign->user_id,
+                    'type' => 'campaign_rejected',
+                    'title' => '❌ Pengajuan Campaign Ditolak',
+                    'message' => "Pengajuan '{$campaign->title}' ditolak oleh Admin. Catatan: " . ($campaign->verification_note ?: 'Persyaratan belum terpenuhi.'),
+                    'campaign_id' => $campaign->id,
+                ]);
+            }
+        }
 
         return response()->json($campaign->fresh()->load(['school', 'user:id,name,organization_name']));
     }

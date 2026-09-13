@@ -67,6 +67,12 @@ export const api = {
       body: JSON.stringify(data),
     }),
   stats: () => request(`/stats`),
+  listNotifications: () => request(`/notifications`),
+  unreadNotificationCount: () => request(`/notifications/unread-count`),
+  markNotificationAsRead: (id) =>
+    request(`/notifications/${id}/read`, { method: "PUT" }),
+  markAllNotificationsAsRead: () =>
+    request(`/notifications/mark-all-read`, { method: "PUT" }),
 };
 
 export function formatRupiah(amount) {

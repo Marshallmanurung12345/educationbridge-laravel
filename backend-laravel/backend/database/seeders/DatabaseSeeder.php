@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Campaign;
+use App\Models\Notification;
 use App\Models\Report;
 use App\Models\School;
 use App\Models\User;
@@ -239,6 +240,27 @@ class DatabaseSeeder extends Seeder
                     'campaign_id' => $campaign->id,
                     'title' => 'Buku Telah Diterima dan Digunakan',
                     'narrative' => 'Buku bacaan telah diterima SD NEGERI CIKONENG 2 dan disusun di perpustakaan sekolah. Antusiasme membaca siswa meningkat.',
+                ]);
+            }
+
+            // Sample Notification for pending/verified campaigns
+            if ($campaign->status === 'pending') {
+                Notification::create([
+                    'target_role' => 'admin',
+                    'type' => 'campaign_submitted',
+                    'title' => '📥 Pengajuan Bantuan Baru',
+                    'message' => "Sekolah {$campaign->school_name} mengajukan permohonan bantuan '{$campaign->title}'. Perlu pemeriksaan verifikator.",
+                    'campaign_id' => $campaign->id,
+                    'is_read' => false,
+                ]);
+            } else {
+                Notification::create([
+                    'user_id' => $campaign->user_id,
+                    'type' => 'campaign_verified',
+                    'title' => '✅ Campaign Terverifikasi & Tayang!',
+                    'message' => "Permohonan bantuan '{$campaign->title}' di {$campaign->school_name} telah disetujui Admin dan dipublikasikan.",
+                    'campaign_id' => $campaign->id,
+                    'is_read' => false,
                 ]);
             }
         }

@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\MatchController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\StatsController;
@@ -43,4 +44,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Laporan dampak hanya bisa dibuat oleh sekolah pemilik campaign (dicek di controller)
     Route::post('/campaigns/{campaign}/reports', [ReportController::class, 'store'])->middleware('role:sekolah');
+
+    // Notifikasi Sistem
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::put('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 });

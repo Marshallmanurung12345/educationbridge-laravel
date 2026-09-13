@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Campaign;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 
 class ReportController extends Controller
@@ -28,6 +29,15 @@ class ReportController extends Controller
         ]);
 
         $report = $campaign->reports()->create($data);
+
+        // Notifikasi untuk Admin (Ada laporan dampak baru)
+        Notification::create([
+            'target_role' => 'admin',
+            'type' => 'report_created',
+            'title' => '📊 Laporan Dampak Baru',
+            'message' => "Sekolah {$campaign->school_name} mengunggah laporan dampak baru: '{$report->title}'.",
+            'campaign_id' => $campaign->id,
+        ]);
 
         return response()->json($report, 201);
     }
