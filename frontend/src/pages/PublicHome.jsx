@@ -6,47 +6,53 @@ import schoolImage from "../assets/sekolah1.jpeg";
 
 const fallbackNeeds = [
   {
-    title: "Perbaikan Atap dan Lantai Kelas",
-    school: "SDN 03 Wamena Tengah",
+    id: 1,
+    title: "Perbaikan Atap dan Lantai Kelas yang Bocor",
+    school: "SD NEGERI 1 WAMENA",
+    npsn: "60301416",
     location: "Wamena, Papua Pegunungan",
-    students: 320,
+    students: 342,
     score: 87,
     start_date: "2026-09-01",
     end_date: "2026-10-31",
     needed: 45000000,
-    raised: 125000000,
-    target: 200000000,
+    raised: 12500000,
+    target: 45000000,
     status: "Sangat Prioritas",
     image:
       "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=80",
   },
   {
-    title: "Pengadaan Perpustakaan dan Buku Bacaan",
-    school: "SMPN 1 Lumbis",
-    location: "Nunukan, Kalimantan Utara",
-    students: 210,
-    score: 76,
+    id: 2,
+    title: "Pengadaan Laptop dan Akses Internet (ANBK)",
+    school: "SMP NEGERI 1 KEPULAUAN SULA",
+    npsn: "60200843",
+    location: "Sanana, Maluku Utara",
+    students: 285,
+    score: 82,
     start_date: "2026-09-05",
     end_date: "2026-11-15",
-    needed: 30000000,
-    raised: 92000000,
-    target: 140000000,
-    status: "Prioritas",
+    needed: 60000000,
+    raised: 22000000,
+    target: 60000000,
+    status: "Sangat Prioritas",
     image:
       "https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=900&q=80",
   },
   {
-    title: "Pengadaan Komputer untuk Siswa",
-    school: "SMA Negeri 1 Timur Tengah",
-    location: "Tangerang, Banten",
-    students: 187,
-    score: 72,
+    id: 3,
+    title: "Pengadaan Buku Bacaan Perpustakaan Anak",
+    school: "SD NEGERI CIKONENG 2",
+    npsn: "20211543",
+    location: "Ciamis, Jawa Barat",
+    students: 174,
+    score: 64,
     start_date: "2026-09-10",
     end_date: "2026-12-01",
-    needed: 28000000,
-    raised: 76000000,
-    target: 160000000,
-    status: "Prioritas",
+    needed: 15000000,
+    raised: 15000000,
+    target: 15000000,
+    status: "Prioritas Tinggi",
     image:
       "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
   },
@@ -107,10 +113,10 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
-function NeedCard({ need, index }) {
+function NeedCard({ need }) {
   return (
     <Link
-      to={`/kampanye/${index + 1}`}
+      to={`/kampanye/${need.id}`}
       className="group overflow-hidden rounded-[14px] border border-[#e2e8ef] bg-white transition hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(23,54,93,0.1)]"
     >
       <img
@@ -228,7 +234,7 @@ export default function PublicHome() {
                     Perbaikan Atap Kelas
                   </p>
                   <p className="text-[10px] text-[#8290a0]">
-                    SDN 03 Wamena Tengah
+                    SD NEGERI 1 WAMENA (NPSN: 60301416)
                   </p>
                 </div>
               </div>
@@ -385,11 +391,11 @@ export default function PublicHome() {
               Di balik setiap kebutuhan, ada cerita yang perlu didengar.
             </h2>
             <p className="mt-5 text-sm leading-7 text-[#687b90]">
-              Atap ruang kelas SDN 03 Wamena Tengah mengalami kerusakan dan
-              membuat kegiatan belajar terganggu saat hujan.
+              Atap ruang kelas SD NEGERI 1 WAMENA (NPSN: 60301416) mengalami
+              kerusakan dan membuat kegiatan belajar terganggu saat hujan.
             </p>
             <p className="mt-4 text-sm font-semibold text-[#526a83]">
-              320 siswa terdampak
+              342 siswa terdampak
             </p>
             <Link
               to="/kampanye/1"

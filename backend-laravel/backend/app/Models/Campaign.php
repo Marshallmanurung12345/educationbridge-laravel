@@ -11,6 +11,7 @@ class Campaign extends Model
 
     protected $fillable = [
         'user_id',
+        'school_id',
         'school_name',
         'location',
         'category',
@@ -101,6 +102,11 @@ class Campaign extends Model
     }
 
     public function school()
+    {
+        return $this->belongsTo(School::class, 'school_id');
+    }
+
+    public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }

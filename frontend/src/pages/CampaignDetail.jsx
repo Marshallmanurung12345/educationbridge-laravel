@@ -131,25 +131,28 @@ export default function CampaignDetail() {
           </div>
           <div className="rounded-[16px] border border-[#e0e7ef] bg-white p-6 shadow-[0_8px_24px_rgba(23,54,93,0.06)] sm:p-7">
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-[#fce4e4] px-3 py-1.5 text-[11px] font-bold text-[#d84747]">
+              <span className="rounded bg-[#17365d] px-2.5 py-1 text-xs font-mono font-bold text-white">
+                NPSN: {campaign.school?.npsn || "Data belum tersedia"}
+              </span>
+              <span className="rounded-full bg-[#fce4e4] px-3 py-1 text-[11px] font-bold text-[#d84747]">
                 {campaign.priority_label || "Prioritas"}
               </span>
-              {tags.slice(0, 3).map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-[#eef3f8] px-3 py-1.5 text-[11px] text-[#667b91]"
-                >
-                  #{tag}
-                </span>
-              ))}
+              <span className="rounded-full bg-[#e0f2fe] px-3 py-1 text-[11px] font-semibold text-[#0369a1]">
+                ✓ Terverifikasi Official
+              </span>
             </div>
             <h1 className="mt-3 font-display text-3xl leading-tight text-[#17365d] sm:text-4xl">
               {campaign.title}
             </h1>
-            <p className="mt-3 text-sm text-[#5e7289]">
-              {campaign.school_name} · {campaign.student_count} siswa terdampak
+            <p className="mt-2 text-sm font-semibold text-[#334155]">
+              {campaign.school?.name || campaign.school_name}
             </p>
-            <p className="mt-2 text-xs text-[#718096]">● {campaign.location}</p>
+            <p className="mt-1 text-xs text-[#64748b]">
+              📍{" "}
+              {campaign.school
+                ? `${campaign.school.kecamatan}, ${campaign.school.kabupaten_kota}, ${campaign.school.provinsi}`
+                : campaign.location}
+            </p>
             <div className="mt-6 h-2 overflow-hidden rounded-full bg-[#e9edf2]">
               <div
                 className="h-full bg-[#2d83c6]"
@@ -295,6 +298,150 @@ export default function CampaignDetail() {
                 )}
               </form>
             )}
+          </div>
+        </section>
+
+        {/* SECTION: DATA INDUK SEKOLAH RESMI (PEMERINTAH) */}
+        <section className="mt-10 rounded-2xl border border-blue-200 bg-blue-50/50 p-6 sm:p-8">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-blue-200 pb-4">
+            <div>
+              <span className="inline-block rounded bg-blue-700 px-2.5 py-1 text-xs font-bold text-white uppercase tracking-wider">
+                Identitas Resmi Government
+              </span>
+              <h2 className="mt-2 text-2xl font-bold text-[#17365d]">
+                Data Induk Sekolah (Kemendikdasmen)
+              </h2>
+            </div>
+            <div className="text-right text-xs text-blue-900">
+              <span className="block font-semibold">Sumber Data Sekolah:</span>
+              <a
+                href={
+                  campaign.school?.source_url ||
+                  "https://data.kemendikdasmen.go.id/data-induk"
+                }
+                target="_blank"
+                rel="noreferrer"
+                className="font-bold text-blue-700 underline"
+              >
+                {campaign.school?.data_source ||
+                  "Data Induk Pendidikan Kemendikdasmen"}
+              </a>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 text-xs sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg bg-white p-3.5 border border-slate-200 shadow-sm">
+              <span className="block text-[11px] font-semibold text-slate-500 uppercase">
+                NPSN Asli
+              </span>
+              <strong className="mt-1 block font-mono text-base text-[#17365d]">
+                {campaign.school?.npsn || "Data belum tersedia"}
+              </strong>
+            </div>
+
+            <div className="rounded-lg bg-white p-3.5 border border-slate-200 shadow-sm">
+              <span className="block text-[11px] font-semibold text-slate-500 uppercase">
+                Nama Resmi Sekolah
+              </span>
+              <strong className="mt-1 block text-sm text-[#17365d]">
+                {campaign.school?.name ||
+                  campaign.school_name ||
+                  "Data belum tersedia"}
+              </strong>
+            </div>
+
+            <div className="rounded-lg bg-white p-3.5 border border-slate-200 shadow-sm">
+              <span className="block text-[11px] font-semibold text-slate-500 uppercase">
+                Jenjang & Status
+              </span>
+              <strong className="mt-1 block text-sm text-[#17365d]">
+                {campaign.school?.jenjang || "Data belum tersedia"} ·{" "}
+                {campaign.school?.status_sekolah || "Data belum tersedia"}
+              </strong>
+            </div>
+
+            <div className="rounded-lg bg-white p-3.5 border border-slate-200 shadow-sm">
+              <span className="block text-[11px] font-semibold text-slate-500 uppercase">
+                Status Wilayah 3T
+              </span>
+              <strong
+                className={`mt-1 block text-sm ${campaign.school?.is_3t ? "text-red-600 font-bold" : "text-slate-700"}`}
+              >
+                {campaign.school
+                  ? campaign.school.is_3t
+                    ? campaign.school.status_3t_detail || "Wilayah 3T Official"
+                    : "Bukan Wilayah 3T"
+                  : "Data belum tersedia"}
+              </strong>
+            </div>
+
+            <div className="rounded-lg bg-white p-3.5 border border-slate-200 shadow-sm lg:col-span-2">
+              <span className="block text-[11px] font-semibold text-slate-500 uppercase">
+                Wilayah Administrasi
+              </span>
+              <strong className="mt-1 block text-sm text-[#17365d]">
+                {campaign.school
+                  ? `Kec. ${campaign.school.kecamatan}, ${campaign.school.kabupaten_kota}, Prov. ${campaign.school.provinsi}`
+                  : "Data belum tersedia"}
+              </strong>
+            </div>
+
+            <div className="rounded-lg bg-white p-3.5 border border-slate-200 shadow-sm lg:col-span-2">
+              <span className="block text-[11px] font-semibold text-slate-500 uppercase">
+                Alamat Jalan
+              </span>
+              <strong className="mt-1 block text-sm text-[#17365d]">
+                {campaign.school?.alamat || "Data belum tersedia"}
+              </strong>
+            </div>
+
+            <div className="rounded-lg bg-white p-3.5 border border-slate-200 shadow-sm">
+              <span className="block text-[11px] font-semibold text-slate-500 uppercase">
+                Jumlah Siswa
+              </span>
+              <strong className="mt-1 block text-sm text-[#17365d]">
+                {campaign.school?.jumlah_siswa != null
+                  ? `${campaign.school.jumlah_siswa} Siswa`
+                  : "Data belum tersedia"}
+              </strong>
+            </div>
+
+            <div className="rounded-lg bg-white p-3.5 border border-slate-200 shadow-sm">
+              <span className="block text-[11px] font-semibold text-slate-500 uppercase">
+                Jumlah Guru
+              </span>
+              <strong className="mt-1 block text-sm text-[#17365d]">
+                {campaign.school?.jumlah_guru != null
+                  ? `${campaign.school.jumlah_guru} Guru`
+                  : "Data belum tersedia"}
+              </strong>
+            </div>
+
+            <div className="rounded-lg bg-white p-3.5 border border-slate-200 shadow-sm lg:col-span-2">
+              <span className="block text-[11px] font-semibold text-slate-500 uppercase">
+                Koordinat Lokasi
+              </span>
+              <strong className="mt-1 block font-mono text-xs text-[#17365d]">
+                {campaign.school?.latitude && campaign.school?.longitude
+                  ? `Lat: ${campaign.school.latitude}, Long: ${campaign.school.longitude}`
+                  : "Data belum tersedia"}
+              </strong>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-lg bg-white p-4 border border-slate-200 text-xs">
+            <span className="font-semibold text-slate-700 uppercase block mb-1">
+              Catatan Fasilitas Official (Data Induk):
+            </span>
+            <p className="text-slate-600">
+              {campaign.school?.fasilitas
+                ? typeof campaign.school.fasilitas === "object"
+                  ? Object.entries(campaign.school.fasilitas)
+                      .map(([k, v]) => `${k.replace("_", " ")}: ${v}`)
+                      .join(" | ")
+                  : campaign.school.fasilitas
+                : "Data belum tersedia"}
+            </p>
           </div>
         </section>
 

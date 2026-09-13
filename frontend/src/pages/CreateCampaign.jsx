@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../context/AuthContext";
@@ -12,6 +12,8 @@ const categoryTags = {
 };
 
 const initialForm = {
+  school_id: "",
+  npsn: "",
   school_name: "",
   location: "",
   category: "Fasilitas",
@@ -29,6 +31,7 @@ const initialForm = {
 
 export default function CreateCampaign() {
   const { user } = useAuth();
+  const [schoolsList, setSchoolsList] = useState([]);
   const [form, setForm] = useState({
     ...initialForm,
     school_name: user?.organization_name || "",
@@ -36,6 +39,44 @@ export default function CreateCampaign() {
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    api
+      .listSchools()
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setSchoolsList(data);
+          if (data.length > 0 && !form.school_id) {
+            const first = data[0];
+            setForm((f) => ({
+              ...f,
+              school_id: first.id,
+              npsn: first.npsn,
+              school_name: first.name,
+              location: `${first.kecamatan}, ${first.kabupaten_kota}, ${first.provinsi}`,
+              student_count: first.jumlah_siswa || f.student_count,
+              remoteness: first.is_3t ? 5 : 3,
+            }));
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  function handleSchoolSelect(schoolId) {
+    const selected = schoolsList.find((s) => String(s.id) === String(schoolId));
+    if (selected) {
+      setForm((f) => ({
+        ...f,
+        school_id: selected.id,
+        npsn: selected.npsn,
+        school_name: selected.name,
+        location: `${selected.kecamatan}, ${selected.kabupaten_kota}, ${selected.provinsi}`,
+        student_count: selected.jumlah_siswa || f.student_count,
+        remoteness: selected.is_3t ? 5 : 3,
+      }));
+    }
+  }
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -92,21 +133,45 @@ export default function CreateCampaign() {
       </p>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-5">
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label="Nama sekolah">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-xs text-blue-900 mb-4">
+          <p className="font-bold">
+            Verifikasi Identitas Sekolah Kemendikdasmen:
+          </p>
+          <p className="mt-1">
+            Pilih nama sekolah Anda yang terdaftar pada Data Induk Pendidikan
+            Kemendikdasmen. Data lokasi, NPSN, dan indikator 3T akan diambil
+            secara otomatis dari database resmi.
+          </p>
+        </div>
+
+        <Field label="Pilih Sekolah Terdaftar (Data Induk Kemendikdasmen)">
+          <select
+            value={form.school_id}
+            onChange={(e) => handleSchoolSelect(e.target.value)}
+            className="input font-semibold text-[#17365d]"
+          >
+            {schoolsList.map((s) => (
+              <option key={s.id} value={s.id}>
+                [{s.npsn}] {s.name} - {s.kabupaten_kota}, {s.provinsi}{" "}
+                {s.is_3t ? "(3T)" : ""}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="NPSN Official (Otomatis)">
             <input
-              required
-              value={form.school_name}
-              onChange={(e) => update("school_name", e.target.value)}
-              className="input"
+              readOnly
+              value={form.npsn || "Data belum tersedia"}
+              className="input bg-slate-100 font-mono font-bold"
             />
           </Field>
-          <Field label="Lokasi (kota/kabupaten, provinsi)">
+          <Field label="Lokasi Administrasi Official">
             <input
-              required
-              value={form.location}
-              onChange={(e) => update("location", e.target.value)}
-              className="input"
+              readOnly
+              value={form.location || "Data belum tersedia"}
+              className="input bg-slate-100"
             />
           </Field>
         </div>

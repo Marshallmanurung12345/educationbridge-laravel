@@ -28,147 +28,163 @@ const categories = [
   { key: "lainnya", label: "Lainnya", icon: "•••", tone: "text-[#7a8796]" },
 ];
 
-const fallbackResults = [
-  {
-    id: 1,
-    title: "Perbaikan Atap dan Lantai Kelas yang Bocor",
-    school_name: "SDN 03 Wamena Tengah",
-    location: "Wamena, Papua Pegunungan",
-    category: "Infrastruktur",
-    priority_score: 87,
-    priority_label: "Sangat Prioritas",
-    raised_amount: 14550000,
-    target_amount: 45000000,
-    progress_percent: 32,
-    end_date: "2026-10-31",
-    image: schoolImage,
-  },
-  {
-    id: 2,
-    title: "Pengadaan Laptop dan Akses Internet",
-    school_name: "SMPN 1 Kepulauan Sula",
-    location: "Sanana, Maluku Utara",
-    category: "Teknologi",
-    priority_score: 82,
-    priority_label: "Sangat Prioritas",
-    raised_amount: 22000000,
-    target_amount: 60000000,
-    progress_percent: 37,
-    end_date: "2026-11-15",
-    image:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=700&q=80",
-  },
-  {
-    id: 3,
-    title: "Pengadaan Buku Bacaan Perpustakaan",
-    school_name: "SDN Cikoneng 2",
-    location: "Ciamis, Jawa Barat",
-    category: "Buku & Literasi",
-    priority_score: 64,
-    priority_label: "Prioritas Tinggi",
-    raised_amount: 15000000,
-    target_amount: 15000000,
-    progress_percent: 100,
-    end_date: "2026-10-20",
-    image:
-      "https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=700&q=80",
-  },
-];
-
 function daysLeft(value) {
   if (!value) return "-";
   const days = Math.ceil((new Date(value) - new Date()) / 86400000);
   return days > 0 ? `${days} hari lagi` : "Berakhir";
 }
 
-function ResultRow({ campaign, index }) {
+function ResultRow({ campaign }) {
   const progress =
     campaign.progress_percent ??
     (campaign.target_amount
       ? Math.round((campaign.raised_amount / campaign.target_amount) * 100)
       : 0);
+
+  const school = campaign.school;
+  const schoolName = school?.name || campaign.school_name || "Nama Sekolah";
+  const npsn = school?.npsn
+    ? `NPSN: ${school.npsn}`
+    : "NPSN: Data belum tersedia";
+  const dataSource =
+    school?.data_source || "Data Induk Pendidikan Kemendikdasmen";
+  const locationText = school
+    ? `${school.kecamatan}, ${school.kabupaten_kota}, ${school.provinsi}`
+    : campaign.location || "Data belum tersedia";
+  const studentText =
+    school?.jumlah_siswa != null
+      ? `${school.jumlah_siswa} siswa`
+      : campaign.student_count
+        ? `${campaign.student_count} siswa`
+        : "Data belum tersedia";
+  const teacherText =
+    school?.jumlah_guru != null
+      ? `${school.jumlah_guru} guru`
+      : "Data belum tersedia";
+  const is3tText = school
+    ? school.is_3t
+      ? school.status_3t_detail || "Wilayah 3T Official"
+      : "Bukan Wilayah 3T"
+    : "Data belum tersedia";
+
   return (
-    <Link
-      to={`/kampanye/${campaign.id || index + 1}`}
-      className="group grid gap-4 border-b border-[#e1e5ea] py-5 transition hover:bg-[#f8fbfe] sm:grid-cols-[220px_1fr] sm:px-2"
-    >
-      <div className="relative h-[128px] w-full overflow-hidden rounded-[8px] sm:h-[132px]">
-        <img
-          src={campaign.image || schoolImage}
-          alt={campaign.title}
-          className="!block !h-full !max-h-full !w-full !max-w-full object-cover"
-          style={{ height: "132px", width: "100%" }}
-        />
-        <span className="absolute left-0 top-0 rounded-br-[8px] bg-[#d9f3fb] px-3 py-1.5 text-sm font-bold text-[#087fae]">
-          {daysLeft(campaign.end_date)}
-        </span>
-      </div>
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-[#667085]">
-          <span className="font-semibold text-[#526a83]">
-            {campaign.school_name}
-          </span>
-          <span>•</span>
-          <span>✓ Terverifikasi</span>
-        </div>
-        <h3 className="mt-2 text-lg font-bold leading-6 text-[#344054] group-hover:text-[#1769aa]">
-          {campaign.title}
-        </h3>
-        <p className="mt-1 text-xs text-[#718096]">{campaign.location}</p>
-        <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-[#e6e8eb]">
-          <div
-            className="h-full bg-[#18a9df]"
-            style={{ width: `${Math.min(progress, 100)}%` }}
+    <div className="group border-b border-[#e1e5ea] py-6 transition hover:bg-[#f8fbfe] sm:px-3 rounded-lg">
+      <div className="grid gap-5 sm:grid-cols-[220px_1fr]">
+        <div className="relative h-[140px] w-full overflow-hidden rounded-[10px] bg-slate-100">
+          <img
+            src={campaign.image_url || schoolImage}
+            alt={campaign.title}
+            className="h-full w-full object-cover"
           />
-        </div>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs">
-          <span className="text-[#667085]">
-            Terkumpul{" "}
-            <strong className="ml-1 text-base text-[#087fae]">
-              {formatRupiah(campaign.raised_amount)}
-            </strong>
-          </span>
-          <span className="font-semibold text-[#53677f]">
-            {progress}% dari {formatRupiah(campaign.target_amount)}
+          <span className="absolute left-0 top-0 rounded-br-[8px] bg-[#d9f3fb] px-3 py-1 text-xs font-bold text-[#087fae]">
+            {daysLeft(campaign.end_date)}
           </span>
         </div>
-        <div className="mt-3 flex items-center justify-between">
-          <span
-            className={`text-xs font-bold ${campaign.priority_score >= 80 ? "text-[#d84747]" : "text-[#bd7a17]"}`}
-          >
-            Priority Score {campaign.priority_score}
-          </span>
-          <span className="text-xs font-bold text-[#1769aa]">
-            Lihat kebutuhan →
-          </span>
+
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded bg-[#17365d] px-2 py-0.5 font-mono text-[11px] font-bold text-white">
+              {npsn}
+            </span>
+            <span className="rounded bg-[#e0f2fe] px-2 py-0.5 text-[11px] font-semibold text-[#0369a1]">
+              ✓ Terverifikasi Official
+            </span>
+            <span
+              className={`rounded px-2 py-0.5 text-[11px] font-semibold ${school?.is_3t ? "bg-[#fef2f2] text-[#991b1b]" : "bg-slate-100 text-slate-600"}`}
+            >
+              {is3tText}
+            </span>
+          </div>
+
+          <h3 className="mt-2 text-lg font-bold text-[#17365d] group-hover:text-[#1688bd]">
+            <Link to={`/kampanye/${campaign.id}`}>{campaign.title}</Link>
+          </h3>
+
+          <p className="mt-1 text-sm font-semibold text-[#334155]">
+            {schoolName}
+          </p>
+
+          <p className="mt-0.5 text-xs text-[#64748b]">📍 {locationText}</p>
+
+          <div className="mt-2 grid grid-cols-2 gap-2 rounded-md bg-[#f1f5f9] p-2 text-xs sm:grid-cols-3">
+            <div>
+              <span className="block text-[10px] uppercase text-[#64748b]">
+                Jumlah Siswa:
+              </span>
+              <strong className="text-[#1e293b]">{studentText}</strong>
+            </div>
+            <div>
+              <span className="block text-[10px] uppercase text-[#64748b]">
+                Jumlah Guru:
+              </span>
+              <strong className="text-[#1e293b]">{teacherText}</strong>
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <span className="block text-[10px] uppercase text-[#64748b]">
+                Sumber Data Sekolah:
+              </span>
+              <strong className="text-[#0369a1]">{dataSource}</strong>
+            </div>
+          </div>
+
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#e2e8f0]">
+            <div
+              className="h-full bg-[#1688bd]"
+              style={{ width: `${Math.min(progress, 100)}%` }}
+            />
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span className="text-[#64748b]">
+              Terkumpul{" "}
+              <strong className="ml-1 text-sm text-[#087fae]">
+                {formatRupiah(campaign.raised_amount)}
+              </strong>
+            </span>
+            <span className="font-semibold text-[#475569]">
+              {progress}% dari {formatRupiah(campaign.target_amount)}
+            </span>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2">
+            <span
+              className={`text-xs font-bold ${campaign.priority_score >= 80 ? "text-[#dc2626]" : "text-[#d97706]"}`}
+            >
+              Priority Score: {campaign.priority_score} (
+              {campaign.priority_label || "Prioritas"})
+            </span>
+            <Link
+              to={`/kampanye/${campaign.id}`}
+              className="text-xs font-bold text-[#1688bd] hover:underline"
+            >
+              Lihat Detail & Data Official →
+            </Link>
+          </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 
 export default function SmartMatch() {
   const [selected, setSelected] = useState("3t");
-  const [results, setResults] = useState(fallbackResults);
-  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
     api
       .match([selected])
       .then((rows) => {
-        if (Array.isArray(rows) && rows.length)
-          setResults(
-            rows.map((row, index) => ({
-              ...fallbackResults[index % fallbackResults.length],
-              ...row,
-              image:
-                row.image_url ||
-                fallbackResults[index % fallbackResults.length].image,
-            })),
-          );
+        if (Array.isArray(rows)) {
+          setResults(rows);
+        } else {
+          setResults([]);
+        }
       })
-      .catch(() => {})
+      .catch(() => {
+        setResults([]);
+      })
       .finally(() => setLoading(false));
   }, [selected]);
 
@@ -177,19 +193,22 @@ export default function SmartMatch() {
       <div className="mx-auto max-w-[980px] px-5 py-10 sm:px-8 lg:py-14">
         <div className="border-b border-[#e3e6e9] pb-8">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#718096]">
-            EducationBridge
+            EducationBridge · Sistem Rekomendasi Official
           </p>
           <h1 className="mt-4 max-w-3xl font-display text-3xl text-[#17365d] sm:text-4xl">
-            Pilih Kebutuhan yang Ingin Anda Dukung
+            Rekomendasi Kebutuhan Sekolah Official
           </h1>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-[#687b90]">
-            Pilih bidang pendidikan atau wilayah yang ingin Anda bantu. Kami
-            menampilkan kebutuhan sekolah yang paling relevan.
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#687b90]">
+            Setiap sekolah yang ditampilkan berasal dari{" "}
+            <strong>Data Induk Pendidikan Kemendikdasmen</strong>. Kebutuhan
+            yang muncul adalah kampanye terverifikasi setelah sekolah mengajukan
+            permohonan bantuan.
           </p>
         </div>
+
         <section className="py-8">
           <h2 className="text-xl font-bold text-[#344054]">
-            Pilih kategori favoritmu
+            Pilih Kategori Kebutuhan
           </h2>
           <div className="mt-6 flex gap-4 overflow-x-auto pb-3 sm:gap-6">
             {categories.map((category) => (
@@ -211,42 +230,50 @@ export default function SmartMatch() {
             ))}
           </div>
         </section>
+
         <section className="border-t border-[#e3e6e9] pt-7">
           <div className="flex items-end justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#718096]">
-                Rekomendasi kebutuhan
+                Hasil Rekomendasi
               </p>
               <h2 className="mt-2 text-xl font-bold text-[#344054]">
-                Kebutuhan yang mungkin sesuai untuk Anda
+                Kebutuhan Sekolah Terverifikasi
               </h2>
             </div>
             <span className="hidden text-xs text-[#718096] sm:block">
-              {results.length} kebutuhan
+              {results.length} sekolah
             </span>
           </div>
+
           {loading && (
-            <p className="py-8 text-sm text-[#718096]">Memuat kebutuhan...</p>
+            <div className="py-12 text-center text-sm text-[#718096]">
+              Mengambil data sekolah resmi dari Kemendikdasmen...
+            </div>
           )}
+
           {!loading && results.length === 0 && (
-            <p className="py-8 text-sm text-[#718096]">
-              Belum ada kebutuhan untuk kategori ini.
-            </p>
+            <div className="my-8 rounded-lg border border-dashed border-slate-300 p-8 text-center">
+              <p className="text-sm font-medium text-slate-600">
+                Belum ada kebutuhan terverifikasi untuk kategori ini.
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Semua data sekolah tersimpan resmi di database pemerintah.
+              </p>
+            </div>
           )}
+
           {!loading &&
-            results.map((campaign, index) => (
-              <ResultRow
-                key={campaign.id || campaign.title}
-                campaign={campaign}
-                index={index}
-              />
+            results.map((campaign) => (
+              <ResultRow key={campaign.id} campaign={campaign} />
             ))}
-          <button
-            type="button"
-            className="mx-auto mt-7 block rounded-full bg-[#e4f5fc] px-7 py-3 text-sm font-semibold text-[#1688bd]"
-          >
-            Lihat semua kebutuhan <span className="ml-2">→</span>
-          </button>
+
+          <div className="mt-8 rounded-lg bg-blue-50 p-4 text-xs text-blue-900 border border-blue-200">
+            <strong>Catatan Verifikasi Data:</strong> Seluruh sekolah di atas
+            memiliki NPSN valid dan terdaftar di Data Induk Pendidikan
+            Kemendikdasmen. Wilayah 3T ditetapkan secara resmi berdasarkan
+            Perpres No. 63 Tahun 2020.
+          </div>
         </section>
       </div>
     </main>

@@ -25,10 +25,12 @@ const heroMetrics = [
 
 const sampleCampaigns = [
   {
+    id: 1,
     title: "Perbaikan Atap dan Lantai Kelas yang Bocor",
-    school: "SDN 03 Wamena Tengah",
+    school: "SD NEGERI 1 WAMENA",
+    npsn: "60301416",
     location: "Wamena, Papua Pegunungan",
-    students: 320,
+    students: 342,
     category: "Infrastruktur",
     priorityScore: 87,
     priority: "Sangat Prioritas",
@@ -37,13 +39,15 @@ const sampleCampaigns = [
       "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=80",
   },
   {
-    title: "Penyediaan Perpustakaan dan Buku Bacaan",
-    school: "SMPN 1 Lumbis",
-    location: "Nunukan, Kalimantan Utara",
-    students: 210,
-    category: "Buku & Literasi",
-    priorityScore: 76,
-    priority: "Prioritas",
+    id: 2,
+    title: "Pengadaan Laptop dan Akses Internet (ANBK)",
+    school: "SMP NEGERI 1 KEPULAUAN SULA",
+    npsn: "60200843",
+    location: "Sanana, Maluku Utara",
+    students: 285,
+    category: "Teknologi",
+    priorityScore: 82,
+    priority: "Sangat Prioritas",
     accent: "#f59e0b",
     image:
       "https://images.unsplash.com/photo-1513258496099-48168024aec0?auto=format&fit=crop&w=900&q=80",
@@ -98,10 +102,14 @@ export default function Home() {
           setFeatured(
             rows.slice(0, 4).map((item, idx) => ({
               ...sampleCampaigns[idx % sampleCampaigns.length],
+              id: item.id,
               title: item.title,
-              school: item.school_name,
-              location: item.location,
-              students: item.students ?? 120,
+              school: item.school?.name || item.school_name,
+              npsn: item.school?.npsn || null,
+              location: item.school
+                ? `${item.school.kecamatan}, ${item.school.kabupaten_kota}, ${item.school.provinsi}`
+                : item.location,
+              students: item.school?.jumlah_siswa || item.student_count || 120,
               category: item.category || "Infrastruktur",
               priorityScore: item.priority_score ?? 72,
               priority: item.priority_label || "Prioritas",
@@ -204,7 +212,7 @@ export default function Home() {
                     Perbaikan Atap dan Lantai Kelas yang Bocor
                   </p>
                   <p className="mt-1 text-xs text-[#6b7d91]">
-                    SDN 03 Wamena Tengah
+                    SD NEGERI 1 WAMENA (NPSN: 60301416)
                     <br />
                     Wamena, Papua Pegunungan
                   </p>

@@ -5,6 +5,7 @@ use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\MatchController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\StatsController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,6 +14,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 // ---------- PUBLIC READS ----------
+Route::get('/schools', [SchoolController::class, 'index']);
+Route::get('/schools/{npsn}', [SchoolController::class, 'show']);
 Route::get('/campaigns', [CampaignController::class, 'index']);
 Route::get('/campaigns/{campaign}', [CampaignController::class, 'show']);
 Route::get('/campaigns/{campaign}/donations', [DonationController::class, 'index']);

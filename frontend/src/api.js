@@ -37,6 +37,11 @@ export const authApi = {
 };
 
 export const api = {
+  listSchools: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/schools${qs ? `?${qs}` : ""}`);
+  },
+  getSchool: (npsn) => request(`/schools/${npsn}`),
   listCampaigns: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
     return request(`/campaigns${qs ? `?${qs}` : ""}`);

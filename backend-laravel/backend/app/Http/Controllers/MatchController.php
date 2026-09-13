@@ -16,7 +16,7 @@ class MatchController extends Controller
             ->filter()
             ->values();
 
-        $campaigns = Campaign::where('status', 'verified')->get();
+        $campaigns = Campaign::with(['school', 'user:id,name,organization_name'])->where('status', 'verified')->get();
 
         $scored = $campaigns->map(function (Campaign $c) use ($focus) {
             $tags = collect($c->tags ?? [])->map(fn ($t) => strtolower($t));

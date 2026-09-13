@@ -17,6 +17,8 @@ class User extends Authenticatable
         'password',
         'role',              // admin | sekolah | individu | perusahaan | pemerintah
         'organization_name', // nama sekolah / perusahaan / instansi (opsional)
+        'school_id',
+        'npsn',
         'phone',
     ];
 
@@ -31,6 +33,11 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function school()
+    {
+        return $this->belongsTo(School::class, 'school_id');
     }
 
     public function campaigns()

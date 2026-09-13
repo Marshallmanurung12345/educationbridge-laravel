@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Campaign;
+use App\Models\School;
 use Illuminate\Http\Request;
 
 class CampaignController extends Controller
@@ -10,7 +11,7 @@ class CampaignController extends Controller
     // Publik: siapa saja bisa melihat daftar campaign (filter status/category, sort)
     public function index(Request $request)
     {
-        $query = Campaign::query()->with('school:id,name,organization_name');
+        $query = Campaign::query()->with(['school', 'user:id,name,organization_name']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->query('status'));
@@ -31,9 +32,13 @@ class CampaignController extends Controller
     // Hanya role "sekolah" (dibatasi lewat middleware role:sekolah di routes/api.php)
     public function store(Request $request)
     {
+        $user = $request->user();
+
         $data = $request->validate([
-            'school_name' => 'required|string|max:255',
-            'location' => 'required|string|max:255',
+            'school_id' => 'nullable|exists:schools,id',
+            'npsn' => 'nullable|string|exists:schools,npsn',
+            'school_name' => 'nullable|string|max:255',
+            'location' => 'nullable|string|max:255',
             'category' => 'required|string|max:100',
             'tags' => 'nullable|array',
             'title' => 'required|string|max:255',
@@ -41,22 +46,42 @@ class CampaignController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'target_amount' => 'required|integer|min:1',
-            'student_count' => 'required|integer|min:0',
+            'student_count' => 'nullable|integer|min:0',
             'urgency' => 'required|integer|min:1|max:5',
             'facility_condition' => 'required|integer|min:1|max:5',
-            'remoteness' => 'required|integer|min:1|max:5',
+            'remoteness' => 'nullable|integer|min:1|max:5',
             'access_score' => 'required|integer|min:1|max:5',
             'image_url' => 'nullable|string',
         ]);
 
-        $campaign = $request->user()->campaigns()->create($data);
+        $officialSchool = null;
+        if (!empty($data['school_id'])) {
+            $officialSchool = School::find($data['school_id']);
+        } elseif (!empty($data['npsn'])) {
+            $officialSchool = School::where('npsn', $data['npsn'])->first();
+        } elseif ($user->school_id) {
+            $officialSchool = $user->school;
+        }
 
-        return response()->json($campaign, 201);
+        if ($officialSchool) {
+            $data['school_id'] = $officialSchool->id;
+            $data['school_name'] = $officialSchool->name;
+            $data['location'] = "{$officialSchool->kecamatan}, {$officialSchool->kabupaten_kota}, {$officialSchool->provinsi}";
+            $data['student_count'] = $officialSchool->jumlah_siswa ?? ($data['student_count'] ?? 0);
+            $data['remoteness'] = $officialSchool->is_3t ? 5 : ($data['remoteness'] ?? 3);
+        } else {
+            $data['school_name'] = $data['school_name'] ?? 'Sekolah';
+            $data['location'] = $data['location'] ?? 'Indonesia';
+        }
+
+        $campaign = $user->campaigns()->create($data);
+
+        return response()->json($campaign->load(['school', 'user:id,name,organization_name']), 201);
     }
 
     public function show(Campaign $campaign)
     {
-        return response()->json($campaign->load('school:id,name,organization_name'));
+        return response()->json($campaign->load(['school', 'user:id,name,organization_name']));
     }
 
     // Pemilik (sekolah) boleh edit data campaign miliknya; admin boleh ubah status verifikasi.
@@ -100,7 +125,7 @@ class CampaignController extends Controller
 
         $campaign->update($data);
 
-        return response()->json($campaign->fresh());
+        return response()->json($campaign->fresh()->load(['school', 'user:id,name,organization_name']));
     }
 
     // Hanya admin (dibatasi lewat middleware role:admin di routes/api.php)
