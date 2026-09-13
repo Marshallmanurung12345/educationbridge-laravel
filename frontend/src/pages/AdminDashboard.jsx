@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { api, formatRupiah } from "../api";
-import WelcomeOverlay from "../components/WelcomeOverlay";
 
 const statusConfig = {
   pending: {
@@ -83,19 +82,6 @@ export default function AdminDashboard() {
 
   return (
     <main className="min-h-screen bg-[#f8fafc] text-[#1e293b] pb-16">
-      {" "}
-      <WelcomeOverlay
-        roleKey="admin"
-        roleBadge="⚡ Panel Admin & Verifikator"
-        title="Selamat Datang di Panel Verifikasi EducationBridge"
-        subtitle="Pusat Pemeriksaan Legalitas Pengajuan Sekolah, Pengesahan RAB, dan Validasi NPSN Kemendikdasmen"
-        features={[
-          "Verifikasi Kesesuaian NPSN Sekolah dengan Data Induk Kemendikdasmen",
-          "Pemeriksaan Rencana Anggaran Biaya (RAB) & Dokumen Surat Kepsek",
-          "Pengubahan Status Workflow (Pending → Perlu Perbaikan → Verified / Rejected)",
-          "Penetapan Priority Score Otomatis & Publikasi ke Rekomendasi",
-        ]}
-      />
       {/* HEADER PANEL VERIFIKASI ADMIN */}
       <div className="bg-[#0f172a] text-white border-b border-slate-800">
         <div className="mx-auto max-w-[1280px] px-5 py-8 sm:px-8">

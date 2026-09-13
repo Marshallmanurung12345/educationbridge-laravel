@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
 import { useAuth } from "../context/AuthContext";
-import WelcomeOverlay from "../components/WelcomeOverlay";
 
 const fallbackCampaigns = [
   {
@@ -90,19 +89,6 @@ export default function PerusahaanDashboard() {
 
   return (
     <main className="min-h-screen bg-[#f8fafc] text-[#1e293b] pb-16">
-      <WelcomeOverlay
-        roleKey="perusahaan"
-        roleBadge="🏢 Portal CSR Perusahaan"
-        title={`Selamat Datang, ${user?.organization_name || user?.name || "Mitra CSR"}`}
-        subtitle="Platform Penyaluran Tanggung Jawab Sosial & Keberlanjutan Lingkungan (ESG) Terukur"
-        features={[
-          "Penyaluran CSR Tepat Sasaran ke Sekolah Terverifikasi Kemendikdasmen",
-          "Program Adopsi Fasilitas Sekolah Berbasis Wilayah 3T",
-          "Penerbitan Sertifikat Kemitraan & Ringkasan Laporan Dampak ESG",
-          "Klaim Fasilitas Tax Deductible (Potongan Pajak Kemitraan Sosial)",
-        ]}
-      />
-
       {/* HEADER DASHBOARD CSR PERUSAHAAN */}
       <div className="bg-[#0f172a] text-white border-b border-slate-800">
         <div className="mx-auto max-w-[1280px] px-5 py-8 sm:px-8">

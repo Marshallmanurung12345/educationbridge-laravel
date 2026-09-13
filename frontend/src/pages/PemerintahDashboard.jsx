@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
-import WelcomeOverlay from "../components/WelcomeOverlay";
 
 const fallbackSchools = [
   {
@@ -193,19 +192,6 @@ export default function PemerintahDashboard() {
 
   return (
     <main className="min-h-screen bg-[#f8fafc] text-[#1e293b] pb-16">
-      <WelcomeOverlay
-        roleKey="pemerintah"
-        roleBadge="🏛️ Portal Pemerintah & Monev"
-        title="Selamat Datang di Portal Monitoring Daerah"
-        subtitle="Sistem Pengawasan Alokasi Bantuan Sekolah Terintegrasi Data Induk Kemendikdasmen"
-        features={[
-          "Pengawasan Peta Distribusi Sarana Prasarana Sekolah Daerah 3T",
-          "Komitmen Alokasi Dana Pendampingan APBD (Matching Grant 50%)",
-          "Pengesahan & Verifikasi Lapangan Sarpras Dinas Pendidikan",
-          "Export Laporan Monitoring & Evaluasi (Monev) Akuntabel",
-        ]}
-      />
-
       {/* HEADER DASHBOARD PEMERINTAH */}
       <div className="bg-[#0f172a] text-white border-b border-slate-800">
         <div className="mx-auto max-w-[1280px] px-5 py-8 sm:px-8">
