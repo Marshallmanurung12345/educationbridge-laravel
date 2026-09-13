@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import logo from "../assets/logo.png";
 
 export default function Login() {
   const { login } = useAuth();
@@ -36,8 +37,16 @@ export default function Login() {
         />
         <div className="absolute inset-0 bg-[#132641]/65" />
         <div className="relative flex h-full flex-col justify-between p-10 text-white">
-          <Link to="/" className="font-display text-2xl">
-            EducationBridge
+          <Link
+            to="/"
+            className="flex items-center gap-3 font-display text-2xl"
+          >
+            <img
+              src={logo}
+              alt="EducationBridge Logo"
+              className="h-8 w-auto max-h-8 object-contain"
+            />
+            <span>EducationBridge</span>
           </Link>
           <div>
             <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#f3c36b]">

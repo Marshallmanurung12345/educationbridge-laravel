@@ -19,6 +19,8 @@ const initialForm = {
   category: "Fasilitas",
   title: "",
   description: "",
+  rab_description: "",
+  supporting_document: "",
   start_date: "",
   end_date: "",
   target_amount: "",
@@ -107,19 +109,101 @@ export default function CreateCampaign() {
 
   if (submitted) {
     return (
-      <div className="max-w-xl mx-auto px-5 py-20 text-center">
-        <h1 className="font-display text-3xl">Pengajuan terkirim</h1>
-        <p className="text-ink-light mt-3">
-          Terima kasih. Campaign <strong>{submitted.title}</strong> akan
-          ditinjau tim EducationBridge sebelum ditayangkan ke publik. Skor
-          prioritas sementara: <strong>{submitted.priority_score}/100</strong>.
+      <div className="max-w-2xl mx-auto px-5 py-16 text-center">
+        <div className="inline-block rounded-full bg-amber-100 p-4 text-amber-800 text-3xl mb-4">
+          ⏳
+        </div>
+        <h1 className="font-display text-3xl font-bold text-[#17365d]">
+          Pengajuan Bantuan Terkirim!
+        </h1>
+        <p className="text-slate-600 mt-3 text-sm leading-relaxed max-w-lg mx-auto">
+          Terima kasih. Permohonan bantuan untuk{" "}
+          <strong>{submitted.title}</strong> di{" "}
+          <strong>{submitted.school_name}</strong> saat ini berada pada tahap{" "}
+          <strong>1. Menunggu Verifikasi (Pending)</strong>.
         </p>
-        <button
-          onClick={() => navigate("/admin")}
-          className="mt-6 bg-navy text-paper px-5 py-2.5"
-        >
-          Lihat status di Panel Admin
-        </button>
+
+        {/* STEP WORKFLOW PROGRESS CARD */}
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6 text-left shadow-sm">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
+            Alur Tahapan Verifikasi EducationBridge:
+          </h3>
+          <div className="space-y-4 text-xs">
+            <div className="flex items-start gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white font-bold text-[11px]">
+                1
+              </span>
+              <div>
+                <strong className="block text-slate-900">
+                  1. Pengajuan Sekolah & RAB (Selesai)
+                </strong>
+                <span className="text-slate-500">
+                  Data permohonan, RAB, dan dokumen pendukung telah diterima
+                  sistem.
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white font-bold text-[11px]">
+                2
+              </span>
+              <div>
+                <strong className="block text-amber-800">
+                  2. Pemeriksaan Awal Admin (Proses)
+                </strong>
+                <span className="text-slate-500">
+                  Admin mengecek kesesuaian NPSN dan data induk Kemendikdasmen.
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-600 font-bold text-[11px]">
+                3
+              </span>
+              <div>
+                <strong className="block text-slate-700">
+                  3. Verifikasi Lapangan & Dokumen
+                </strong>
+                <span className="text-slate-500">
+                  Verifikator menelaah foto kondisi terbaru, RAB, dan surat
+                  pengajuan Kepsek.
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-600 font-bold text-[11px]">
+                4
+              </span>
+              <div>
+                <strong className="block text-slate-700">
+                  4. Hitung Priority Score & Publikasi Rekomendasi
+                </strong>
+                <span className="text-slate-500">
+                  Setelah terverifikasi, Priority Score dihitung otomatis &
+                  kampanye tayang di Rekomendasi.
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 flex justify-center gap-3">
+          <button
+            onClick={() => navigate("/admin")}
+            className="rounded-lg bg-[#1a2d4d] px-5 py-2.5 text-xs font-bold text-white shadow hover:bg-slate-800"
+          >
+            Buka Panel Verifikasi Admin
+          </button>
+          <button
+            onClick={() => setSubmitted(null)}
+            className="rounded-lg border border-slate-300 px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+          >
+            Ajukan Kebutuhan Lain
+          </button>
+        </div>
       </div>
     );
   }
@@ -207,6 +291,26 @@ export default function CreateCampaign() {
             value={form.description}
             onChange={(e) => update("description", e.target.value)}
             className="input"
+            placeholder="Jelaskan secara rinci latar belakang dan dampak kebutuhan sarana prasarana sekolah..."
+          />
+        </Field>
+
+        <Field label="Rencana Anggaran Biaya (RAB) / Perkiraan Rincian">
+          <textarea
+            rows={3}
+            value={form.rab_description}
+            onChange={(e) => update("rab_description", e.target.value)}
+            className="input"
+            placeholder="Contoh: Pembelian 50 lembar atap seng (Rp 15 Juta), Semen 100 sak (Rp 7 Juta), Upah tukang (Rp 10 Juta)..."
+          />
+        </Field>
+
+        <Field label="Dokumen Pendukung / Surat Pengajuan Kepsek & Link Foto">
+          <input
+            value={form.supporting_document}
+            onChange={(e) => update("supporting_document", e.target.value)}
+            className="input"
+            placeholder="Contoh: Nomor Surat: 045/SDN1-WM/2026 atau Link Drive Dokumen Pendukung & Foto Kondisi"
           />
         </Field>
 

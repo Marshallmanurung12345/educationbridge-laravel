@@ -1,3 +1,5 @@
+import logo from "../assets/logo.png";
+
 export default function Footer() {
   return (
     <footer
@@ -6,9 +8,16 @@ export default function Footer() {
     >
       <div className="grid w-full gap-10 px-5 py-12 sm:px-8 lg:grid-cols-[1.5fr_0.8fr_0.8fr_1.2fr] lg:px-12 xl:px-16">
         <div>
-          <span className="font-display text-2xl text-[#17365d]">
-            EducationBridge
-          </span>
+          <div className="flex items-center gap-3">
+            <img
+              src={logo}
+              alt="EducationBridge Logo"
+              className="h-8 w-auto max-h-8 object-contain"
+            />
+            <span className="font-display text-2xl text-[#17365d]">
+              EducationBridge
+            </span>
+          </div>
           <p className="mt-4 max-w-xs text-sm leading-6">
             Menjembatani kebutuhan pendidikan dengan dukungan yang tepat
             sasaran, transparan, dan berdampak.

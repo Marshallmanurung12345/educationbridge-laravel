@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import logo from "../assets/logo.png";
 
 const linkClass = ({ isActive }) =>
   `px-3 py-2 text-sm font-medium transition-colors ${
@@ -42,9 +43,11 @@ export default function Nav() {
     <header className="sticky top-0 z-30 border-b border-[#e4e7eb] bg-[#ffffff]">
       <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between gap-4 px-4 py-4 sm:px-8 lg:px-10">
         <NavLink to="/" className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#1a2d4d] text-xs font-bold tracking-tight text-white">
-            EB
-          </div>
+          <img
+            src={logo}
+            alt="EducationBridge Logo"
+            className="h-9 w-auto max-h-9 object-contain"
+          />
           <span className="font-display text-[1.55rem] leading-none text-[#1d273a]">
             EducationBridge
           </span>

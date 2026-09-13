@@ -43,6 +43,8 @@ class CampaignController extends Controller
             'tags' => 'nullable|array',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
+            'rab_description' => 'nullable|string',
+            'supporting_document' => 'nullable|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'target_amount' => 'required|integer|min:1',
@@ -102,6 +104,8 @@ class CampaignController extends Controller
             'tags' => 'sometimes|array',
             'title' => 'sometimes|string|max:255',
             'description' => 'sometimes|string',
+            'rab_description' => 'sometimes|nullable|string',
+            'supporting_document' => 'sometimes|nullable|string',
             'start_date' => 'sometimes|date',
             'end_date' => 'sometimes|date|after_or_equal:start_date',
             'target_amount' => 'sometimes|integer|min:1',
@@ -114,7 +118,8 @@ class CampaignController extends Controller
         ];
 
         if ($isAdmin) {
-            $rules['status'] = 'sometimes|in:pending,verified,rejected';
+            $rules['status'] = 'sometimes|in:pending,needs_revision,verified,rejected';
+            $rules['verification_note'] = 'sometimes|nullable|string';
         }
 
         $data = $request->validate($rules);

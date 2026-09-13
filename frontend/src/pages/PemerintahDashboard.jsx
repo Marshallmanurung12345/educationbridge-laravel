@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
+import WelcomeOverlay from "../components/WelcomeOverlay";
 
 const fallbackSchools = [
   {
@@ -192,6 +193,19 @@ export default function PemerintahDashboard() {
 
   return (
     <main className="min-h-screen bg-[#f8fafc] text-[#1e293b] pb-16">
+      <WelcomeOverlay
+        roleKey="pemerintah"
+        roleBadge="🏛️ Portal Pemerintah & Monev"
+        title="Selamat Datang di Portal Monitoring Daerah"
+        subtitle="Sistem Pengawasan Alokasi Bantuan Sekolah Terintegrasi Data Induk Kemendikdasmen"
+        features={[
+          "Pengawasan Peta Distribusi Sarana Prasarana Sekolah Daerah 3T",
+          "Komitmen Alokasi Dana Pendampingan APBD (Matching Grant 50%)",
+          "Pengesahan & Verifikasi Lapangan Sarpras Dinas Pendidikan",
+          "Export Laporan Monitoring & Evaluasi (Monev) Akuntabel",
+        ]}
+      />
+
       {/* HEADER DASHBOARD PEMERINTAH */}
       <div className="bg-[#0f172a] text-white border-b border-slate-800">
         <div className="mx-auto max-w-[1280px] px-5 py-8 sm:px-8">
@@ -315,23 +329,47 @@ export default function PemerintahDashboard() {
           </div>
         </div>
 
-        {/* INTEGRATION NOTICE */}
+        {/* INTEGRATION NOTICE WITH ACTION BUTTONS */}
         <div className="mt-8 rounded-xl border border-blue-200 bg-blue-50/70 p-5">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white font-bold">
-              🏛️
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-start gap-4 max-w-3xl">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white font-bold">
+                🏛️
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-blue-950">
+                  Wewenang & Aksi Pemerintah / Dinas Pendidikan Daerah
+                </h3>
+                <p className="mt-1 text-xs leading-relaxed text-blue-900">
+                  Pemerintah tidak hanya memantau, namun berperan aktif
+                  mengalokasikan{" "}
+                  <strong>Dana Pendampingan APBD (Matching Grant)</strong>,
+                  melakukan <strong>Verifikasi Validitas Sarpras 3T</strong>,
+                  serta mengesahkan rekomendasi perbaikan fasilitas sekolah.
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-bold text-blue-950">
-                Fitur Khusus Peran Pemerintah / Mitra Dinas Pendidikan
-              </h3>
-              <p className="mt-1 text-xs leading-relaxed text-blue-900">
-                Sebagai instansi Pemerintah / Mitra, Anda memiliki kewenangan
-                memantau distribusi sarana prasarana sekolah, mengidentifikasi
-                daerah krisis pendidikan (Priority Score tinggi), serta
-                menyelaraskan dana hibah APBD/APBN dengan kebutuhan riil di
-                lapangan.
-              </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() =>
+                  alert(
+                    "Komitmen Alokasi Dana Pendampingan APBD (Matching Grant 50%) berhasil dicatat!",
+                  )
+                }
+                className="rounded-lg bg-amber-600 px-3.5 py-2 text-xs font-bold text-white shadow hover:bg-amber-500 transition"
+              >
+                💰 Alokasikan Matching Grant APBD
+              </button>
+              <button
+                onClick={() =>
+                  alert(
+                    "Status Verifikasi Lapangan Sarpras Dinas Pendidikan disahkan!",
+                  )
+                }
+                className="rounded-lg bg-blue-700 px-3.5 py-2 text-xs font-bold text-white shadow hover:bg-blue-600 transition"
+              >
+                ✅ Pengesahan Sarpras Dinas
+              </button>
             </div>
           </div>
         </div>
