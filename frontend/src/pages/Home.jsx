@@ -1,3 +1,4 @@
+import { ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import { Link } from "react-router-dom";
@@ -118,99 +119,97 @@ export default function Home() {
 
   return (
     <div className="bg-[#f7f9fc] text-[#172b4d]">
-      <section className="relative overflow-hidden bg-[#edf6ff] px-4 sm:px-8 lg:px-12 xl:px-16">
-        <div className="mx-auto grid min-h-[610px] max-w-[1560px] items-center gap-10 py-12 lg:grid-cols-[0.9fr_1.1fr] lg:py-16">
+            <section className="relative overflow-hidden bg-[#edf6ff] px-4 sm:px-8 lg:px-12 xl:px-16">
+        <div className="mx-auto grid min-h-[calc(100vh-80px)] max-w-[1560px] items-center gap-10 py-8 lg:grid-cols-[11fr_9fr] lg:py-10">
+          {/* LEFT COLUMN */}
           <div className="relative z-10">
-            <p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-[#55718f]">
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#55718f]">
               Bersama untuk pendidikan yang lebih merata
             </p>
-            <h1 className="max-w-[620px] font-display text-[3.25rem] leading-[0.98] text-[#17365d] sm:text-[4.5rem]">
-              Memahami Kebutuhan.
-              <br />
-              <span className="text-[#1d62b5]">Menghubungkan Dukungan.</span>
-              <br />
-              Membangun Pendidikan.
+            <h1 className="max-w-[560px] font-display text-4xl leading-tight text-[#17365d] lg:text-5xl">
+              Menghubungkan Dukungan.{" "}
+              <span className="text-[#1d62b5]">Membangun Pendidikan.</span>
             </h1>
-            <p className="mt-6 max-w-[590px] text-base leading-7 text-[#506985]">
+            <p className="mt-4 line-clamp-2 max-w-[520px] text-sm leading-6 text-[#506985] sm:text-base">
               EducationBridge menjembatani sekolah yang membutuhkan dengan
-              individu, perusahaan, dan mitra untuk menciptakan kesempatan
-              pendidikan yang lebih merata di seluruh Indonesia.
+              individu, perusahaan, dan mitra untuk pendidikan yang lebih
+              merata di seluruh Indonesia.
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 to="/kampanye"
-                className="bg-[#17365d] px-5 py-3 text-sm font-semibold text-white hover:bg-[#1d4d83]"
+                className="group flex items-center gap-2 bg-[#17365d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1d4d83] hover:shadow-lg hover:shadow-[#17365d]/20"
               >
-                Jelajahi Kebutuhan <span className="ml-2">→</span>
+                Jelajahi Kebutuhan
+                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
               </Link>
               <Link
                 to="/ajukan"
-                className="border border-[#718aa8] bg-white/70 px-5 py-3 text-sm font-semibold text-[#17365d] hover:bg-white"
+                className="border border-[#718aa8] bg-white/70 px-5 py-3 text-sm font-semibold text-[#17365d] transition hover:bg-white"
               >
                 Ajukan Kebutuhan Sekolah
               </Link>
             </div>
-            <div className="mt-12 grid max-w-[600px] gap-5 sm:grid-cols-3">
+            <div className="mt-8 grid grid-cols-3 gap-4 border-t border-[#17365d]/10 pt-4">
               {[
-                {
-                  title: "Tepat Sasaran",
-                  text: "Berbasis data & priority score",
-                },
-                {
-                  title: "Transparan",
-                  text: "Dapat dipantau oleh semua pihak",
-                },
-                {
-                  title: "Berdampak Nyata",
-                  text: "Untuk pendidikan yang lebih merata",
-                },
+                { title: "Tepat Sasaran", text: "Berbasis data & priority score" },
+                { title: "Transparan", text: "Dipantau semua pihak" },
+                { title: "Berdampak Nyata", text: "Pendidikan lebih merata" },
               ].map((item) => (
-                <div
-                  key={item.title}
-                  className="border-l-2 border-[#d6a331] pl-3"
-                >
-                  <p className="text-sm font-bold text-[#17365d]">
+                <div key={item.title} className="border-l-2 border-[#d6a331] pl-3">
+                  <p className="text-xs font-bold text-[#17365d] sm:text-sm">
                     {item.title}
                   </p>
-                  <p className="mt-1 text-xs leading-5 text-[#60758d]">
+                  <p className="mt-1 text-[11px] leading-4 text-[#60758d] sm:text-xs sm:leading-5">
                     {item.text}
                   </p>
                 </div>
               ))}
             </div>
           </div>
-          <div className="relative min-h-[500px] overflow-hidden rounded-[16px] bg-[#d7e8f8]">
-            <img
-              src={childrenImage}
-              alt="Siswa Indonesia di lingkungan sekolah"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#edf6ff]/75 via-transparent to-[#17365d]/10" />
-            <div className="absolute right-5 top-5 max-w-[240px] bg-white/90 p-4 text-right shadow-lg">
-              <p className="font-display text-2xl leading-tight text-[#17365d]">
-                Pendidikan yang lebih merata membuka lebih banyak kemungkinan.
-              </p>
+
+          {/* RIGHT COLUMN */}
+          <div className="relative pb-8 lg:pb-10">
+            <div className="relative h-[360px] w-full overflow-hidden rounded-3xl shadow-xl sm:h-[400px] lg:h-[420px]">
+              <img
+                src={childrenImage}
+                alt="Siswa Indonesia di lingkungan sekolah"
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#17365d]/40 via-transparent to-transparent" />
             </div>
-            <div className="absolute bottom-5 left-5 max-w-[350px] bg-white p-4 shadow-lg">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7a8798]">
-                Kebutuhan paling mendesak saat ini
+
+            <div className="absolute -bottom-2 left-1/2 w-[92%] -translate-x-1/2 cursor-pointer rounded-2xl bg-white p-4 shadow-xl transition duration-300 hover:-translate-y-1 sm:w-[85%]">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-bold text-red-600">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  Priority Score: 87/100
+                </span>
+                <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Terverifikasi 3T
+                </span>
+              </div>
+
+              <p className="mt-3 text-sm font-bold leading-5 text-[#17365d]">
+                Perbaikan Atap dan Lantai Kelas yang Bocor
               </p>
-              <div className="mt-3 flex gap-3">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-[#df3f3f] text-xl font-bold text-[#df3f3f]">
-                  87
+              <p className="mt-1 text-xs text-[#6b7d91]">
+                SDN 03 Wamena Tengah · Wamena, Papua Pegunungan
+              </p>
+
+              <div className="mt-3">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-[#edf0f4]">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-[#f59e0b] to-[#df3f3f]"
+                    style={{ width: "85%" }}
+                  />
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-[#17365d]">
-                    Perbaikan Atap dan Lantai Kelas yang Bocor
-                  </p>
-                  <p className="mt-1 text-xs text-[#6b7d91]">
-                    SDN 03 Wamena Tengah
-                    <br />
-                    Wamena, Papua Pegunungan
-                  </p>
-                  <span className="mt-2 inline-block text-[10px] font-bold text-[#df3f3f]">
-                    Sangat Prioritas
+                <div className="mt-1.5 flex items-center justify-between text-[11px] text-[#60758d]">
+                  <span className="font-semibold text-[#17365d]">
+                    Rp 38.500.000
                   </span>
+                  <span>dari Rp 45.000.000</span>
                 </div>
               </div>
             </div>
