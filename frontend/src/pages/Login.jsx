@@ -125,5 +125,7 @@ export default function Login() {
 export function defaultRouteForRole(role) {
   if (role === "admin") return "/admin";
   if (role === "sekolah") return "/ajukan";
-  return "/kampanye";
+  if (role === "pemerintah") return "/dashboard-pemerintah";
+  if (role === "perusahaan") return "/dashboard-perusahaan";
+  return "/cocok";
 }

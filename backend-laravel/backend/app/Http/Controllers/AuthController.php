@@ -28,7 +28,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('educationbridge')->plainTextToken;
 
-        return response()->json(['user' => $user, 'token' => $token], 201);
+        return response()->json(['user' => $user->load('school'), 'token' => $token], 201);
     }
 
     public function login(Request $request)
@@ -48,7 +48,7 @@ class AuthController extends Controller
 
         $token = $user->createToken('educationbridge')->plainTextToken;
 
-        return response()->json(['user' => $user, 'token' => $token]);
+        return response()->json(['user' => $user->load('school'), 'token' => $token]);
     }
 
     public function logout(Request $request)
@@ -60,6 +60,6 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        return response()->json($request->user());
+        return response()->json($request->user()->load('school'));
     }
 }

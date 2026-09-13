@@ -6,12 +6,27 @@ const linkClass = ({ isActive }) =>
     isActive ? "text-[#1a2d4d]" : "text-[#4c5a73] hover:text-[#1a2d4d]"
   }`;
 
-const roleLabel = {
-  admin: "Admin",
-  sekolah: "Sekolah",
-  individu: "Individu",
-  perusahaan: "Perusahaan",
-  pemerintah: "Pemerintah",
+const roleConfig = {
+  admin: {
+    label: "Admin System",
+    badgeBg: "bg-purple-100 text-purple-800 border-purple-200",
+  },
+  sekolah: {
+    label: "Sekolah (Pengaju)",
+    badgeBg: "bg-blue-100 text-blue-800 border-blue-200",
+  },
+  individu: {
+    label: "Donatur Individu",
+    badgeBg: "bg-slate-100 text-slate-800 border-slate-200",
+  },
+  perusahaan: {
+    label: "Mitra CSR Perusahaan",
+    badgeBg: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  },
+  pemerintah: {
+    label: "Pemerintah / Monev",
+    badgeBg: "bg-amber-100 text-amber-900 border-amber-300",
+  },
 };
 
 export default function Nav() {
@@ -39,20 +54,78 @@ export default function Nav() {
           <NavLink to="/" className={linkClass}>
             Beranda
           </NavLink>
-          <NavLink to="/kampanye" className={linkClass}>
-            Jelajahi Kebutuhan
-          </NavLink>
-          {(!user || user.role === "sekolah") && (
-            <NavLink to="/ajukan" className={linkClass}>
-              Ajukan Kebutuhan
-            </NavLink>
+
+          {/* NAV LINKS KHUSUS SETIAP ROLE */}
+          {user?.role === "pemerintah" && (
+            <>
+              <NavLink
+                to="/dashboard-pemerintah"
+                className="px-3.5 py-1.5 text-xs font-bold text-amber-950 bg-amber-100/80 hover:bg-amber-200/80 rounded-lg border border-amber-300 shadow-sm transition"
+              >
+                🏛️ Dashboard Monev
+              </NavLink>
+              <NavLink to="/kampanye" className={linkClass}>
+                Peta Kebutuhan Daerah
+              </NavLink>
+            </>
           )}
-          {(!user ||
-            ["individu", "perusahaan", "pemerintah"].includes(user.role)) && (
-            <NavLink to="/cocok" className={linkClass}>
-              Rekomendasi
-            </NavLink>
+
+          {user?.role === "perusahaan" && (
+            <>
+              <NavLink
+                to="/dashboard-perusahaan"
+                className="px-3.5 py-1.5 text-xs font-bold text-emerald-950 bg-emerald-100/80 hover:bg-emerald-200/80 rounded-lg border border-emerald-300 shadow-sm transition"
+              >
+                🏢 Portal CSR
+              </NavLink>
+              <NavLink to="/cocok" className={linkClass}>
+                Program Adopsi
+              </NavLink>
+              <NavLink to="/kampanye" className={linkClass}>
+                Jelajahi Kebutuhan
+              </NavLink>
+            </>
           )}
+
+          {user?.role === "sekolah" && (
+            <>
+              <NavLink
+                to="/ajukan"
+                className="px-3.5 py-1.5 text-xs font-bold text-blue-950 bg-blue-100/80 hover:bg-blue-200/80 rounded-lg border border-blue-300 shadow-sm transition"
+              >
+                🏫 Dashboard Sekolah
+              </NavLink>
+              <NavLink to="/kampanye" className={linkClass}>
+                Jelajahi Kebutuhan
+              </NavLink>
+            </>
+          )}
+
+          {user?.role === "admin" && (
+            <>
+              <NavLink
+                to="/admin"
+                className="px-3.5 py-1.5 text-xs font-bold text-purple-950 bg-purple-100/80 hover:bg-purple-200/80 rounded-lg border border-purple-300 shadow-sm transition"
+              >
+                ⚡ Panel Admin
+              </NavLink>
+              <NavLink to="/kampanye" className={linkClass}>
+                Semua Kebutuhan
+              </NavLink>
+            </>
+          )}
+
+          {(!user || user?.role === "individu") && (
+            <>
+              <NavLink to="/kampanye" className={linkClass}>
+                Jelajahi Kebutuhan
+              </NavLink>
+              <NavLink to="/cocok" className={linkClass}>
+                Rekomendasi Pintar
+              </NavLink>
+            </>
+          )}
+
           <a href="#footer" className={linkClass}>
             Tentang Kami
           </a>
@@ -79,13 +152,15 @@ export default function Nav() {
                 <div className="text-sm font-semibold text-[#1d273a]">
                   {user.name}
                 </div>
-                <div className="text-[11px] text-[#5c6b82]">
-                  {roleLabel[user.role] || "Donatur"}
-                </div>
+                <span
+                  className={`inline-block text-[10px] font-bold border rounded px-1.5 py-0.2 ${roleConfig[user.role]?.badgeBg || "bg-slate-100"}`}
+                >
+                  {roleConfig[user.role]?.label || "Donatur"}
+                </span>
               </div>
               <button
                 onClick={onLogout}
-                className="ml-1 text-sm text-[#1a2d4d] hover:text-[#32518f]"
+                className="ml-1 text-xs font-semibold text-red-600 hover:text-red-800"
               >
                 Keluar
               </button>

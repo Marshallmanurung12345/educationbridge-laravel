@@ -8,6 +8,8 @@ import Campaigns from "./pages/Campaigns";
 import CampaignDetail from "./pages/CampaignDetail";
 import CreateCampaign from "./pages/CreateCampaign";
 import AdminDashboard from "./pages/AdminDashboard";
+import PemerintahDashboard from "./pages/PemerintahDashboard";
+import PerusahaanDashboard from "./pages/PerusahaanDashboard";
 import SmartMatch from "./pages/SmartMatch";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -51,6 +53,22 @@ export default function App() {
               element={
                 <ProtectedRoute roles={["admin"]}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard-pemerintah"
+              element={
+                <ProtectedRoute roles={["pemerintah"]}>
+                  <PemerintahDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard-perusahaan"
+              element={
+                <ProtectedRoute roles={["perusahaan"]}>
+                  <PerusahaanDashboard />
                 </ProtectedRoute>
               }
             />

@@ -3,30 +3,43 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { defaultRouteForRole } from "./Login";
 
-const roles = [
-  { value: "sekolah", label: "Sekolah", hint: "Mengajukan kebutuhan bantuan" },
-  { value: "individu", label: "Individu", hint: "Memberikan donasi" },
-  { value: "perusahaan", label: "Perusahaan", hint: "Menyalurkan CSR" },
+const donorSubRoles = [
+  { value: "individu", label: "Individu", hint: "Donatur Perseorangan" },
+  {
+    value: "perusahaan",
+    label: "Perusahaan",
+    hint: "Penyalur CSR / Instansi Swasta",
+  },
   {
     value: "pemerintah",
     label: "Pemerintah / Mitra",
-    hint: "Mendukung & memantau",
+    hint: "Dinas Pendidikan / Instansi Pemerintah",
   },
 ];
 
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [mainCategory, setMainCategory] = useState("donatur"); // 'sekolah' | 'donatur'
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
-    role: "individu",
+    role: "individu", // default donor type
     organization_name: "",
     phone: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function handleMainCategoryChange(cat) {
+    setMainCategory(cat);
+    if (cat === "sekolah") {
+      setForm((f) => ({ ...f, role: "sekolah" }));
+    } else {
+      setForm((f) => ({ ...f, role: "individu" }));
+    }
+  }
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -63,22 +76,51 @@ export default function Register() {
         </p>
 
         <div className="mt-7 grid grid-cols-2 gap-3">
-          {roles.map((r) => (
-            <button
-              type="button"
-              key={r.value}
-              onClick={() => update("role", r.value)}
-              className={`rounded-xl border p-3 text-left transition ${form.role === r.value ? "border-[#1a2d4d] bg-[#eef3fb]" : "border-[#e0e3e8] bg-[#fafbfc] hover:border-[#9aa7ba]"}`}
-            >
-              <span className="block text-sm font-semibold text-[#1d273a]">
-                {r.label}
-              </span>
-              <span className="mt-1 block text-xs leading-5 text-[#667085]">
-                {r.hint}
-              </span>
-            </button>
-          ))}
+          <button
+            type="button"
+            onClick={() => handleMainCategoryChange("sekolah")}
+            className={`rounded-xl border p-4 text-left transition ${mainCategory === "sekolah" ? "border-[#1a2d4d] bg-[#eef3fb] ring-2 ring-[#1a2d4d]" : "border-[#e0e3e8] bg-[#fafbfc] hover:border-[#9aa7ba]"}`}
+          >
+            <span className="block text-sm font-bold text-[#1d273a]">
+              Sekolah
+            </span>
+            <span className="mt-1 block text-xs leading-5 text-[#667085]">
+              Mengajukan kebutuhan bantuan
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleMainCategoryChange("donatur")}
+            className={`rounded-xl border p-4 text-left transition ${mainCategory === "donatur" ? "border-[#1a2d4d] bg-[#eef3fb] ring-2 ring-[#1a2d4d]" : "border-[#e0e3e8] bg-[#fafbfc] hover:border-[#9aa7ba]"}`}
+          >
+            <span className="block text-sm font-bold text-[#1d273a]">
+              Donatur / Mitra
+            </span>
+            <span className="mt-1 block text-xs leading-5 text-[#667085]">
+              Ingin membantu / menyalurkan bantuan
+            </span>
+          </button>
         </div>
+
+        {mainCategory === "donatur" && (
+          <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/60 p-3.5">
+            <label className="block text-xs font-bold text-[#1a2d4d] uppercase tracking-wider">
+              Pilih Tipe Donatur / Mitra:
+            </label>
+            <select
+              value={form.role}
+              onChange={(e) => update("role", e.target.value)}
+              className="mt-2 w-full rounded-lg border border-[#c3d1e6] bg-white px-3 py-2 text-sm font-semibold text-[#1d273a] focus:outline-none focus:ring-2 focus:ring-[#1a2d4d]"
+            >
+              {donorSubRoles.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label} — {r.hint}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <form onSubmit={onSubmit} className="mt-7 space-y-5">
           <div>
