@@ -3,6 +3,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Nav from "./components/Nav";
 import Footer from "./components/Footer";
+import WelcomeOverlay from "./components/WelcomeOverlay";
 import Home from "./pages/PublicHome";
 import Campaigns from "./pages/Campaigns";
 import CampaignDetail from "./pages/CampaignDetail";
@@ -20,6 +21,7 @@ export default function App() {
 
   return (
     <AuthProvider>
+      <WelcomeOverlay />
       <div className="min-h-screen flex flex-col">
         <Nav />
         <main className="flex-1">
