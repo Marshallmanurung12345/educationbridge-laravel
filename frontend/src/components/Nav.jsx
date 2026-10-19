@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.png";
@@ -6,6 +7,11 @@ import NotificationMenu from "./NotificationMenu";
 const linkClass = ({ isActive }) =>
   `px-2.5 py-2 text-[13px] font-medium transition-colors ${
     isActive ? "text-[#1a2d4d]" : "text-[#4c5a73] hover:text-[#1a2d4d]"
+  }`;
+
+const mobileLinkClass = ({ isActive }) =>
+  `block border-b border-[#edf0f4] py-3 text-sm font-medium ${
+    isActive ? "text-[#1a2d4d]" : "text-[#4c5a73]"
   }`;
 
 const roleConfig = {
@@ -34,6 +40,7 @@ const roleConfig = {
 export default function Nav() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   async function onLogout() {
     await logout();
@@ -123,7 +130,7 @@ export default function Nav() {
           </a>
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           <div className="flex items-center gap-2 border-b border-[#cfd5dd] px-1 py-2">
             <span aria-hidden="true" className="text-sm text-[#667085]">
               ⌕
@@ -176,7 +183,179 @@ export default function Nav() {
             </div>
           )}
         </div>
+
+        <button
+          type="button"
+          className="flex h-10 w-10 items-center justify-center text-xl text-[#17365d] lg:hidden"
+          aria-label={mobileMenuOpen ? "Tutup menu" : "Buka menu"}
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-navigation"
+          onClick={() => setMobileMenuOpen((open) => !open)}
+        >
+          {mobileMenuOpen ? "×" : "☰"}
+        </button>
       </div>
+
+      {mobileMenuOpen && (
+        <div
+          id="mobile-navigation"
+          className="border-t border-[#e4e7eb] bg-white px-4 pb-4 lg:hidden"
+        >
+          <nav aria-label="Navigasi mobile" className="mx-auto max-w-[1280px]">
+            <NavLink
+              to="/"
+              className={mobileLinkClass}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Beranda
+            </NavLink>
+
+            {user?.role === "pemerintah" && (
+              <>
+                <NavLink
+                  to="/dashboard-pemerintah"
+                  className={mobileLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Dashboard Monev
+                </NavLink>
+                <NavLink
+                  to="/kampanye"
+                  className={mobileLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Peta Kebutuhan Daerah
+                </NavLink>
+              </>
+            )}
+
+            {user?.role === "perusahaan" && (
+              <>
+                <NavLink
+                  to="/dashboard-perusahaan"
+                  className={mobileLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Portal CSR
+                </NavLink>
+                <NavLink
+                  to="/cocok"
+                  className={mobileLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Program Adopsi
+                </NavLink>
+                <NavLink
+                  to="/kampanye"
+                  className={mobileLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Jelajahi Kebutuhan
+                </NavLink>
+              </>
+            )}
+
+            {user?.role === "sekolah" && (
+              <>
+                <NavLink
+                  to="/ajukan"
+                  className={mobileLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Dashboard Sekolah
+                </NavLink>
+                <NavLink
+                  to="/kampanye"
+                  className={mobileLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Jelajahi Kebutuhan
+                </NavLink>
+              </>
+            )}
+
+            {user?.role === "admin" && (
+              <>
+                <NavLink
+                  to="/admin"
+                  className={mobileLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Panel Admin
+                </NavLink>
+                <NavLink
+                  to="/kampanye"
+                  className={mobileLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Semua Kebutuhan
+                </NavLink>
+              </>
+            )}
+
+            {(!user || user?.role === "individu") && (
+              <>
+                <NavLink
+                  to="/kampanye"
+                  className={mobileLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Jelajahi Kebutuhan
+                </NavLink>
+                <NavLink
+                  to="/cocok"
+                  className={mobileLinkClass}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Rekomendasi Pintar
+                </NavLink>
+              </>
+            )}
+
+            <a
+              href="#footer"
+              className={mobileLinkClass({ isActive: false })}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Tentang Kami
+            </a>
+
+            {user ? (
+              <div className="flex items-center justify-between gap-3 pt-4">
+                <span className="min-w-0 truncate text-sm font-medium text-[#1d273a]">
+                  {user.name}
+                </span>
+                <div className="flex items-center gap-4">
+                  <NotificationMenu user={user} />
+                  <button
+                    onClick={onLogout}
+                    className="text-sm font-semibold text-[#a63c32]"
+                  >
+                    Keluar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-3 pt-4">
+                <NavLink
+                  to="/masuk"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="inline-flex min-h-10 flex-1 items-center justify-center border border-[#cbd3dc] px-4 text-sm font-medium text-[#17365d]"
+                >
+                  Masuk
+                </NavLink>
+                <NavLink
+                  to="/daftar"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="inline-flex min-h-10 flex-1 items-center justify-center bg-[#17365d] px-4 text-sm font-medium text-white"
+                >
+                  Daftar
+                </NavLink>
+              </div>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
