@@ -68,272 +68,173 @@ const fallbackCampaigns = [
 
 export default function PerusahaanDashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState(null);
   const [campaigns, setCampaigns] = useState(fallbackCampaigns);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      api.stats().catch(() => null),
-      api.listCampaigns({ sort: "priority" }).catch(() => []),
-    ]).then(([statsData, campaignsData]) => {
-      if (statsData) setStats(statsData);
-      if (Array.isArray(campaignsData) && campaignsData.length > 0)
-        setCampaigns(campaignsData);
-      setLoading(false);
-    });
+    api
+      .listCampaigns({ sort: "priority" })
+      .then((campaignsData) => {
+        if (Array.isArray(campaignsData) && campaignsData.length > 0) {
+          setCampaigns(campaignsData);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const verifiedCampaigns = campaigns.filter((c) => c.status === "verified");
+  const companyName =
+    user?.organization_name || user?.name || "Perusahaan Anda";
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] text-[#1e293b] pb-16">
-      {/* HEADER DASHBOARD CSR PERUSAHAAN */}
-      <div className="bg-[#0f172a] text-white border-b border-slate-800">
-        <div className="mx-auto max-w-[1280px] px-5 py-8 sm:px-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+    <main className="min-h-screen bg-[#f5f7fa] pb-16 text-[#1e293b]">
+      <div className="mx-auto max-w-[1120px] px-5 sm:px-8">
+        <header className="border-b border-[#e1e6ec] py-8 sm:py-10">
+          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="rounded bg-emerald-500/20 px-2.5 py-1 text-xs font-bold text-emerald-400 border border-emerald-500/30">
-                  🏢 PORTAL CSR & KEMITRAAN PERUSAHAAN
-                </span>
-                <span className="rounded bg-blue-500/20 px-2.5 py-1 text-xs font-semibold text-blue-300 border border-blue-500/30">
-                  Laporan Dampak ESG
-                </span>
-              </div>
-              <h1 className="mt-3 font-display text-3xl font-bold sm:text-4xl">
-                Dashboard Penyaluran CSR Perusahaan
-              </h1>
-              <p className="mt-2 text-sm text-slate-300 max-w-2xl leading-relaxed">
-                Kelola program Tanggung Jawab Sosial dan Lingkungan (TJSL/CSR)
-                perusahaan Anda. Salurkan dana CSR secara terukur ke sekolah
-                terdaftar resmi di wilayah 3T dan dapatkan laporan akuntabilitas
-                ESG.
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#9a6b1c]">
+                Dashboard Perusahaan
               </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() =>
-                  alert(
-                    "Sertifikat & Ringkasan Laporan Dampak CSR berhasil di-download!",
-                  )
-                }
-                className="rounded-lg bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white shadow hover:bg-emerald-500 transition"
-              >
-                📜 Unduh Sertifikat & Laporan ESG
-              </button>
-              <Link
-                to="/cocok"
-                className="rounded-lg bg-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-200 border border-slate-700 hover:bg-slate-700 transition"
-              >
-                🤝 Cari Program Adopsi Sekolah
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-[1280px] px-5 pt-8 sm:px-8">
-        {/* COMPANY PROFILE BADGE */}
-        <div className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-              Entitas Perusahaan Terdaftar
-            </span>
-            <h2 className="text-xl font-bold text-slate-900 mt-0.5">
-              {user?.organization_name ||
-                user?.name ||
-                "PT Teknologi Nusantara"}
-            </h2>
-            <p className="text-xs text-slate-500 mt-1">
-              Mitra CSR Resmi EducationBridge · ID Kemitraan: CSR-
-              {user?.id || 1029}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="rounded-full bg-emerald-100 text-emerald-800 px-3 py-1 text-xs font-bold">
-              ✓ Status Kemitraan Aktif
-            </span>
-            <span className="rounded-full bg-blue-100 text-blue-800 px-3 py-1 text-xs font-bold">
-              Status Tax Deductible Valid
-            </span>
-          </div>
-        </div>
-
-        {/* METRICS ROW */}
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Total Dana CSR Tersalurkan
-            </span>
-            <div className="mt-2 flex items-baseline justify-between">
-              <span className="text-2xl font-bold text-emerald-600">
-                {formatRupiah(stats?.totalRaised || 125000000)}
-              </span>
-              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                CSR Valid
-              </span>
-            </div>
-            <p className="mt-2 text-xs text-slate-500">
-              Tercatat dalam laporan keberlanjutan
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Sekolah Mitra Binaan
-            </span>
-            <div className="mt-2 flex items-baseline justify-between">
-              <span className="text-3xl font-bold text-slate-900">
-                {stats?.verifiedCampaigns || 6} Sekolah
-              </span>
-              <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                Adopsi
-              </span>
-            </div>
-            <p className="mt-2 text-xs text-slate-500">
-              Menerima alokasi dana CSR
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Siswa Penerima Bantuan
-            </span>
-            <div className="mt-2 flex items-baseline justify-between">
-              <span className="text-3xl font-bold text-slate-900">
-                {stats?.totalStudents || 1250}
-              </span>
-              <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-                Siswa
-              </span>
-            </div>
-            <p className="mt-2 text-xs text-slate-500">
-              Dukungan sarana & beasiswa
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Score Kontribusi ESG
-            </span>
-            <div className="mt-2 flex items-baseline justify-between">
-              <span className="text-3xl font-bold text-amber-600">
-                94 / 100
-              </span>
-              <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
-                Sangat Baik
-              </span>
-            </div>
-            <p className="mt-2 text-xs text-slate-500">
-              Indikator Social Impact
-            </p>
-          </div>
-        </div>
-
-        {/* CAMPAIGN SPONSORSHIP TABLE */}
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-6 py-4">
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">
-                Program Adopsi & Penyaluran CSR Sekolah
-              </h2>
-              <p className="text-xs text-slate-500">
-                Daftar kebutuhan sekolah terverifikasi resmi yang dapat didukung
-                penuh oleh perusahaan
+              <h1 className="mt-2 font-display text-3xl font-semibold text-[#17365d] sm:text-4xl">
+                Program CSR
+              </h1>
+              <p className="mt-2 text-sm text-[#64748b]">
+                {companyName} <span aria-hidden="true">·</span> Pilih kebutuhan
+                sekolah yang ingin Anda dukung.
               </p>
             </div>
             <Link
               to="/cocok"
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-500 transition"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#17365d] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#214675]"
             >
-              + Salurkan Dana CSR Baru
+              Cari program <span aria-hidden="true">→</span>
             </Link>
+          </div>
+        </header>
+
+        <section aria-labelledby="needs-heading" className="pt-8">
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[#dfe5eb] pb-4">
+            <div>
+              <h2
+                id="needs-heading"
+                className="text-lg font-semibold text-[#17365d]"
+              >
+                Kebutuhan sekolah
+              </h2>
+              <p className="mt-1 text-sm text-[#64748b]">
+                Program yang dapat ditinjau untuk dukungan CSR.
+              </p>
+            </div>
+            {!loading && (
+              <span className="text-sm text-[#64748b]">
+                {verifiedCampaigns.length} kebutuhan tersedia
+              </span>
+            )}
           </div>
 
           {loading ? (
-            <div className="p-8 text-center text-sm text-slate-500">
-              Memuat program CSR perusahaan...
+            <p className="py-10 text-sm text-[#64748b]" role="status">
+              Memuat kebutuhan sekolah...
+            </p>
+          ) : verifiedCampaigns.length === 0 ? (
+            <div className="py-10">
+              <p className="font-semibold text-[#17365d]">
+                Belum ada kebutuhan yang tersedia.
+              </p>
+              <p className="mt-1 text-sm text-[#64748b]">
+                Silakan periksa kembali nanti.
+              </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-600">
-                <thead className="bg-slate-50 text-[11px] uppercase font-bold text-slate-500 border-b border-slate-200">
-                  <tr>
-                    <th className="px-6 py-3.5">Sekolah & NPSN</th>
-                    <th className="px-6 py-3.5">Lokasi & Status 3T</th>
-                    <th className="px-6 py-3.5">Kategori CSR</th>
-                    <th className="px-6 py-3.5">Judul Program</th>
-                    <th className="px-6 py-3.5 text-right">
-                      Target & Terkumpul
-                    </th>
-                    <th className="px-6 py-3.5 text-center">
-                      Aksi Penyaluran CSR
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 font-medium">
-                  {verifiedCampaigns.map((c) => {
-                    const school = c.school;
-                    const progress =
-                      c.progress_percent ||
-                      Math.round((c.raised_amount / c.target_amount) * 100);
+            <ul className="divide-y divide-[#e1e6ec]">
+              {verifiedCampaigns.map((campaign) => {
+                const school = campaign.school;
+                const target = Number(campaign.target_amount) || 0;
+                const raised = Number(campaign.raised_amount) || 0;
+                const progress = Math.min(
+                  100,
+                  Math.max(
+                    0,
+                    Number(
+                      campaign.progress_percent ??
+                        (target > 0 ? Math.round((raised / target) * 100) : 0),
+                    ),
+                  ),
+                );
 
-                    return (
-                      <tr key={c.id} className="hover:bg-slate-50 transition">
-                        <td className="px-6 py-4">
-                          <span className="font-bold text-slate-900 block text-sm">
-                            {school?.name || c.school_name}
+                return (
+                  <li key={campaign.id}>
+                    <div className="grid gap-4 py-5 sm:grid-cols-[minmax(0,1fr)_190px_auto] sm:items-center sm:gap-6">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[11px] font-semibold uppercase tracking-wide text-[#9a6b1c]">
+                            {campaign.category}
                           </span>
-                          <span className="font-mono text-slate-500 text-[11px] block mt-0.5">
-                            NPSN: {school?.npsn || "Official"}
+                          {school?.is_3t && (
+                            <span className="border-l border-[#d7dde5] pl-2 text-[11px] text-[#64748b]">
+                              Wilayah 3T
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="mt-1 font-semibold leading-6 text-[#17365d]">
+                          {campaign.title}
+                        </h3>
+                        <p className="mt-1 text-sm text-[#64748b]">
+                          {school?.name || campaign.school_name}
+                          {(school?.kecamatan || school?.kabupaten_kota) && (
+                            <span>
+                              {" "}
+                              ·{" "}
+                              {[school.kecamatan, school.kabupaten_kota]
+                                .filter(Boolean)
+                                .join(", ")}
+                            </span>
+                          )}
+                          {!school && campaign.location && (
+                            <span> · {campaign.location}</span>
+                          )}
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <span className="text-[#64748b]">Terkumpul</span>
+                          <span className="font-semibold text-[#17365d]">
+                            {progress}%
                           </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="block text-slate-700">
-                            {school
-                              ? `${school.kecamatan}, ${school.kabupaten_kota}`
-                              : c.location}
-                          </span>
-                          <span
-                            className={`inline-block mt-1 text-[10px] font-bold rounded px-2 py-0.5 ${school?.is_3t ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-600"}`}
-                          >
-                            {school?.is_3t ? "Wilayah 3T Official" : "Reguler"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="rounded bg-emerald-100 text-emerald-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-                            {c.category}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 max-w-xs font-semibold text-slate-900">
-                          {c.title}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <span className="font-bold text-emerald-700 block">
-                            {formatRupiah(c.raised_amount)}
-                          </span>
-                          <span className="text-[10px] text-slate-500">
-                            {progress}% dari {formatRupiah(c.target_amount)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <Link
-                            to={`/kampanye/${c.id}`}
-                            className="inline-block rounded bg-emerald-600 px-3.5 py-1.5 font-bold text-white shadow hover:bg-emerald-500 transition"
-                          >
-                            Salurkan CSR →
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                        </div>
+                        <div
+                          className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#e4e9ef]"
+                          role="progressbar"
+                          aria-label={`Dana terkumpul untuk ${campaign.title}`}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={progress}
+                        >
+                          <div
+                            className="h-full rounded-full bg-[#d99a2b]"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                        <p className="mt-1.5 text-xs text-[#64748b]">
+                          {formatRupiah(raised)} dari {formatRupiah(target)}
+                        </p>
+                      </div>
+
+                      <Link
+                        to={`/kampanye/${campaign.id}`}
+                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-[#cdd6e0] px-3.5 py-2 text-sm font-semibold text-[#17365d] transition hover:border-[#17365d] hover:bg-white"
+                      >
+                        Lihat kebutuhan <span aria-hidden="true">→</span>
+                      </Link>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
           )}
-        </div>
+        </section>
       </div>
     </main>
   );

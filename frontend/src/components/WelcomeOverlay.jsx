@@ -3,17 +3,25 @@ import logo from "../assets/logo.png";
 import anaksd from "../assets/anaksd.png";
 
 export default function WelcomeOverlay() {
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(
+    () => sessionStorage.getItem("eb_global_welcome_seen") !== "true",
+  );
 
   useEffect(() => {
-    // Tampilkan overlay jika belum pernah dibuka dalam sesi ini
-    const seen = sessionStorage.getItem("eb_global_welcome_seen");
-    if (!seen) {
-      setShow(true);
-    }
-  }, []);
+    if (!show) return;
 
-  function handleContinue() {
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        sessionStorage.setItem("eb_global_welcome_seen", "true");
+        setShow(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [show]);
+
+  function handleClose() {
     sessionStorage.setItem("eb_global_welcome_seen", "true");
     setShow(false);
   }
@@ -21,10 +29,25 @@ export default function WelcomeOverlay() {
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm transition-all">
-      <div className="relative grid w-full max-w-[920px] overflow-hidden rounded-[28px] bg-white shadow-2xl border border-slate-100 md:grid-cols-2 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-3 backdrop-blur-sm transition-all sm:p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="welcome-title"
+        className="relative grid max-h-[calc(100dvh-1.5rem)] w-full max-w-[960px] grid-cols-1 overflow-y-auto rounded-[28px] border border-slate-100 bg-white shadow-2xl animate-fade-in md:max-h-[min(720px,calc(100dvh-3rem))] md:grid-cols-[1.08fr_0.92fr] md:overflow-hidden"
+      >
+        <button
+          type="button"
+          onClick={handleClose}
+          className="absolute right-4 top-16 z-30 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-md backdrop-blur-sm transition hover:bg-white hover:text-slate-900 md:top-4"
+          aria-label="Tutup"
+          title="Tutup"
+        >
+          ✕
+        </button>
+
         {/* LEFT COLUMN: FORM & INFO */}
-        <div className="flex flex-col justify-between p-6 sm:p-8">
+        <div className="flex flex-col justify-between p-5 sm:p-8 md:p-9">
           <div>
             {/* BRAND LOGO */}
             <div className="flex items-center gap-3">
@@ -47,7 +70,10 @@ export default function WelcomeOverlay() {
             <div className="my-5 h-1 w-10 rounded-full bg-[#e3a22f]" />
 
             {/* TITLE */}
-            <h2 className="font-display text-2xl font-bold text-slate-900 sm:text-3xl leading-snug">
+            <h2
+              id="welcome-title"
+              className="font-display text-2xl font-bold text-slate-900 sm:text-3xl leading-snug"
+            >
               Selamat Datang di{" "}
               <span className="text-[#17365d]">Education</span>
               <span className="text-[#e3a22f]">Bridge</span>
@@ -60,16 +86,16 @@ export default function WelcomeOverlay() {
             </p>
 
             {/* 4 FEATURE ICONS */}
-            <div className="my-6 grid grid-cols-4 gap-2">
+            <div className="my-6 grid grid-cols-2 gap-x-4 gap-y-4 sm:gap-x-5">
               <div className="flex flex-col items-center text-center">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 text-blue-600 text-lg">
                   📖
                 </div>
-                <strong className="mt-2 text-[11px] font-bold text-slate-900 block">
-                  Data Resmi
+                <strong className="mt-2 block text-xs font-bold text-slate-900">
+                  Data Pendidikan
                 </strong>
-                <span className="text-[9px] text-slate-500 leading-tight block mt-0.5">
-                  Berbasis Data Induk Pendidikan
+                <span className="mt-0.5 block text-[11px] leading-snug text-slate-600">
+                  Data pendidikan dari sumber resmi yang tersedia.
                 </span>
               </div>
 
@@ -77,11 +103,11 @@ export default function WelcomeOverlay() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 text-lg">
                   ✓
                 </div>
-                <strong className="mt-2 text-[11px] font-bold text-slate-900 block">
-                  Tepat Sasaran
+                <strong className="mt-2 block text-xs font-bold text-slate-900">
+                  Proses Verifikasi
                 </strong>
-                <span className="text-[9px] text-slate-500 leading-tight block mt-0.5">
-                  Terverifikasi dan akuntabel
+                <span className="mt-0.5 block text-[11px] leading-snug text-slate-600">
+                  Kebutuhan ditinjau melalui proses verifikasi EducationBridge.
                 </span>
               </div>
 
@@ -89,11 +115,11 @@ export default function WelcomeOverlay() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 text-amber-600 text-lg">
                   👥
                 </div>
-                <strong className="mt-2 text-[11px] font-bold text-slate-900 block">
+                <strong className="mt-2 block text-xs font-bold text-slate-900">
                   Kolaborasi
                 </strong>
-                <span className="text-[9px] text-slate-500 leading-tight block mt-0.5">
-                  Sekolah, Donatur, CSR, & Pemerintah
+                <span className="mt-0.5 block text-[11px] leading-snug text-slate-600">
+                  Sekolah, donatur, dan CSR.
                 </span>
               </div>
 
@@ -101,11 +127,11 @@ export default function WelcomeOverlay() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-rose-100 text-rose-600 text-lg">
                   ❤️
                 </div>
-                <strong className="mt-2 text-[11px] font-bold text-slate-900 block">
-                  Dampak Nyata
+                <strong className="mt-2 block text-xs font-bold text-slate-900">
+                  Laporan Bantuan
                 </strong>
-                <span className="text-[9px] text-slate-500 leading-tight block mt-0.5">
-                  Untuk pendidikan lebih merata
+                <span className="mt-0.5 block text-[11px] leading-snug text-slate-600">
+                  Transparansi laporan bantuan.
                 </span>
               </div>
             </div>
@@ -114,7 +140,8 @@ export default function WelcomeOverlay() {
           <div>
             {/* MAIN BUTTON */}
             <button
-              onClick={handleContinue}
+              type="button"
+              onClick={handleClose}
               className="w-full rounded-xl bg-[#17365d] py-3.5 text-sm font-bold text-white shadow-lg transition hover:bg-[#1d4778] hover:shadow-xl"
             >
               Mulai Jelajahi <span className="ml-1">→</span>
@@ -129,41 +156,20 @@ export default function WelcomeOverlay() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: IMAGE & OVERLAY QUOTE */}
-        <div className="relative min-h-[300px] md:min-h-[440px] overflow-hidden bg-slate-100">
+        {/* RIGHT COLUMN: IMAGE & OVERLAY SLOGAN */}
+        <div className="relative min-h-[300px] overflow-hidden bg-slate-100 sm:min-h-[320px] md:min-h-[440px]">
           <img
             src={anaksd}
             alt="Siswa Sekolah Dasar Indonesia"
             className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-slate-950/20" />
-
-          {/* CLOSE BUTTON */}
-          <button
-            onClick={handleContinue}
-            className="absolute top-4 right-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-slate-700 shadow-md backdrop-blur-sm transition hover:bg-white hover:text-slate-900"
-            aria-label="Tutup"
-          >
-            ✕
-          </button>
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/10 to-slate-950/40" />
 
           {/* SCRIPT TEXT TOP RIGHT */}
-          <div className="absolute top-8 right-6 text-right max-w-[220px] drop-shadow-md">
-            <p className="font-serif italic text-white text-xl sm:text-2xl leading-tight">
+          <div className="absolute right-6 top-8 max-w-[220px] rounded-xl bg-slate-950/25 px-3 py-2 text-right shadow-lg backdrop-blur-[2px]">
+            <p className="font-serif text-xl italic leading-tight text-white sm:text-2xl">
               Pendidikan Menghubungkan Lebih Banyak Harapan
             </p>
-          </div>
-
-          {/* QUOTE OVERLAY BOX */}
-          <div className="absolute bottom-6 left-6 right-6 max-w-[280px] rounded-2xl bg-white/90 p-4 shadow-xl backdrop-blur-md border border-white/50">
-            <span className="font-serif text-2xl font-bold text-[#17365d] leading-none block mb-1">
-              “
-            </span>
-            <p className="text-xs font-semibold text-slate-800 leading-relaxed">
-              Setiap anak berhak mendapat pendidikan yang layak, di mana pun
-              mereka berada.
-            </p>
-            <div className="mt-2 h-1 w-6 rounded-full bg-[#e3a22f]" />
           </div>
         </div>
       </div>

@@ -28,65 +28,79 @@ class DatabaseSeeder extends Seeder
         $nias = School::where('npsn', '10208123')->first();
 
         // ---------- USERS (Role Accounts linked to Official Schools) ----------
-        $admin = User::create([
-            'name' => 'Admin EducationBridge',
-            'email' => 'admin@educationbridge.id',
-            'password' => Hash::make('password'),
-            'role' => 'admin',
-        ]);
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@educationbridge.id'],
+            [
+                'name' => 'Admin EducationBridge',
+                'password' => Hash::make('password'),
+                'role' => 'admin',
+            ]
+        );
 
-        $sekolah1 = User::create([
-            'name' => 'Kepala Sekolah SD NEGERI 1 WAMENA',
-            'email' => 'sekolah1@educationbridge.id',
-            'password' => Hash::make('password'),
-            'role' => 'sekolah',
-            'organization_name' => 'SD NEGERI 1 WAMENA',
-            'school_id' => $wamena?->id,
-            'npsn' => $wamena?->npsn,
-        ]);
+        $sekolah1 = User::firstOrCreate(
+            ['email' => 'sekolah1@educationbridge.id'],
+            [
+                'name' => 'Kepala Sekolah SD NEGERI 1 WAMENA',
+                'password' => Hash::make('password'),
+                'role' => 'sekolah',
+                'organization_name' => 'SD NEGERI 1 WAMENA',
+                'school_id' => $wamena?->id,
+                'npsn' => $wamena?->npsn,
+            ]
+        );
 
-        $sekolah2 = User::create([
-            'name' => 'Kepala Sekolah SMP NEGERI 1 KEPULAUAN SULA',
-            'email' => 'sekolah2@educationbridge.id',
-            'password' => Hash::make('password'),
-            'role' => 'sekolah',
-            'organization_name' => 'SMP NEGERI 1 KEPULAUAN SULA',
-            'school_id' => $sula?->id,
-            'npsn' => $sula?->npsn,
-        ]);
+        $sekolah2 = User::firstOrCreate(
+            ['email' => 'sekolah2@educationbridge.id'],
+            [
+                'name' => 'Kepala Sekolah SMP NEGERI 1 KEPULAUAN SULA',
+                'password' => Hash::make('password'),
+                'role' => 'sekolah',
+                'organization_name' => 'SMP NEGERI 1 KEPULAUAN SULA',
+                'school_id' => $sula?->id,
+                'npsn' => $sula?->npsn,
+            ]
+        );
 
-        $sekolah3 = User::create([
-            'name' => 'Kepala Sekolah SD NEGERI CIKONENG 2',
-            'email' => 'sekolah3@educationbridge.id',
-            'password' => Hash::make('password'),
-            'role' => 'sekolah',
-            'organization_name' => 'SD NEGERI CIKONENG 2',
-            'school_id' => $cikoneng?->id,
-            'npsn' => $cikoneng?->npsn,
-        ]);
+        $sekolah3 = User::firstOrCreate(
+            ['email' => 'sekolah3@educationbridge.id'],
+            [
+                'name' => 'Kepala Sekolah SD NEGERI CIKONENG 2',
+                'password' => Hash::make('password'),
+                'role' => 'sekolah',
+                'organization_name' => 'SD NEGERI CIKONENG 2',
+                'school_id' => $cikoneng?->id,
+                'npsn' => $cikoneng?->npsn,
+            ]
+        );
 
-        $individu = User::create([
-            'name' => 'Budi Santoso',
-            'email' => 'individu@educationbridge.id',
-            'password' => Hash::make('password'),
-            'role' => 'individu',
-        ]);
+        $individu = User::firstOrCreate(
+            ['email' => 'individu@educationbridge.id'],
+            [
+                'name' => 'Budi Santoso',
+                'password' => Hash::make('password'),
+                'role' => 'individu',
+            ]
+        );
 
-        $perusahaan = User::create([
-            'name' => 'CSR PT Teknologi Nusantara',
-            'email' => 'perusahaan@educationbridge.id',
-            'password' => Hash::make('password'),
-            'role' => 'perusahaan',
-            'organization_name' => 'PT Teknologi Nusantara',
-        ]);
+        $perusahaan = User::firstOrCreate(
+            ['email' => 'perusahaan@educationbridge.id'],
+            [
+                'name' => 'CSR PT Teknologi Nusantara',
+                'password' => Hash::make('password'),
+                'role' => 'perusahaan',
+                'organization_name' => 'PT Teknologi Nusantara',
+            ]
+        );
 
-        $pemerintah = User::create([
-            'name' => 'Dinas Pendidikan Provinsi',
-            'email' => 'pemerintah@educationbridge.id',
-            'password' => Hash::make('password'),
-            'role' => 'pemerintah',
-            'organization_name' => 'Dinas Pendidikan Provinsi',
-        ]);
+        $pemerintah = User::firstOrCreate(
+            ['email' => 'pemerintah@educationbridge.id'],
+            [
+                'name' => 'Dinas Pendidikan Provinsi',
+                'password' => Hash::make('password'),
+                'role' => 'pemerintah',
+                'organization_name' => 'Dinas Pendidikan Provinsi',
+            ]
+        );
 
         // ---------- CAMPAIGNS (EducationBridge Needs Submitted by Verified Real Schools) ----------
         $samples = [
@@ -214,54 +228,54 @@ class DatabaseSeeder extends Seeder
 
         foreach ($samples as $s) {
             $schoolObj = $s['school'];
-            $campaign = Campaign::create([
-                'user_id' => $s['owner']->id,
-                'school_id' => $schoolObj?->id,
-                'school_name' => $schoolObj?->name ?? 'Sekolah Resmi',
-                'location' => $schoolObj ? "{$schoolObj->kecamatan}, {$schoolObj->kabupaten_kota}, {$schoolObj->provinsi}" : 'Indonesia',
-                'category' => $s['category'],
-                'tags' => $s['tags'],
-                'title' => $s['title'],
-                'description' => $s['description'],
-                'target_amount' => $s['target_amount'],
-                'raised_amount' => $s['raised_amount'],
-                'student_count' => $schoolObj?->jumlah_siswa ?? 0,
-                'urgency' => $s['urgency'],
-                'facility_condition' => $s['facility_condition'],
-                'remoteness' => $schoolObj?->is_3t ? 5 : $s['remoteness'],
-                'access_score' => $s['access_score'],
-                'status' => $s['status'],
-                'start_date' => now()->toDateString(),
-                'end_date' => now()->addDays(60)->toDateString(),
-            ]);
+            $campaign = Campaign::firstOrCreate(
+                ['user_id' => $s['owner']->id, 'title' => $s['title']],
+                [
+                    'school_id' => $schoolObj?->id,
+                    'school_name' => $schoolObj?->name ?? 'Sekolah Resmi',
+                    'location' => $schoolObj ? "{$schoolObj->kecamatan}, {$schoolObj->kabupaten_kota}, {$schoolObj->provinsi}" : 'Indonesia',
+                    'category' => $s['category'],
+                    'tags' => $s['tags'],
+                    'description' => $s['description'],
+                    'target_amount' => $s['target_amount'],
+                    'raised_amount' => $s['raised_amount'],
+                    'student_count' => $schoolObj?->jumlah_siswa ?? 0,
+                    'urgency' => $s['urgency'],
+                    'facility_condition' => $s['facility_condition'],
+                    'remoteness' => $schoolObj?->is_3t ? 5 : $s['remoteness'],
+                    'access_score' => $s['access_score'],
+                    'status' => $s['status'],
+                    'start_date' => now()->toDateString(),
+                    'end_date' => now()->addDays(60)->toDateString(),
+                ]
+            );
 
             if ($s['title'] === 'Pengadaan Buku Bacaan Perpustakaan Anak') {
-                Report::create([
-                    'campaign_id' => $campaign->id,
-                    'title' => 'Buku Telah Diterima dan Digunakan',
-                    'narrative' => 'Buku bacaan telah diterima SD NEGERI CIKONENG 2 dan disusun di perpustakaan sekolah. Antusiasme membaca siswa meningkat.',
-                ]);
+                Report::firstOrCreate(
+                    ['campaign_id' => $campaign->id, 'title' => 'Buku Telah Diterima dan Digunakan'],
+                    ['narrative' => 'Buku bacaan telah diterima SD NEGERI CIKONENG 2 dan disusun di perpustakaan sekolah. Antusiasme membaca siswa meningkat.']
+                );
             }
 
             // Sample Notification for pending/verified campaigns
             if ($campaign->status === 'pending') {
-                Notification::create([
-                    'target_role' => 'admin',
-                    'type' => 'campaign_submitted',
-                    'title' => '📥 Pengajuan Bantuan Baru',
-                    'message' => "Sekolah {$campaign->school_name} mengajukan permohonan bantuan '{$campaign->title}'. Perlu pemeriksaan verifikator.",
-                    'campaign_id' => $campaign->id,
-                    'is_read' => false,
-                ]);
+                Notification::firstOrCreate(
+                    ['target_role' => 'admin', 'type' => 'campaign_submitted', 'campaign_id' => $campaign->id],
+                    [
+                        'title' => '📥 Pengajuan Bantuan Baru',
+                        'message' => "Sekolah {$campaign->school_name} mengajukan permohonan bantuan '{$campaign->title}'. Perlu pemeriksaan verifikator.",
+                        'is_read' => false,
+                    ]
+                );
             } else {
-                Notification::create([
-                    'user_id' => $campaign->user_id,
-                    'type' => 'campaign_verified',
-                    'title' => '✅ Campaign Terverifikasi & Tayang!',
-                    'message' => "Permohonan bantuan '{$campaign->title}' di {$campaign->school_name} telah disetujui Admin dan dipublikasikan.",
-                    'campaign_id' => $campaign->id,
-                    'is_read' => false,
-                ]);
+                Notification::firstOrCreate(
+                    ['user_id' => $campaign->user_id, 'type' => 'campaign_verified', 'campaign_id' => $campaign->id],
+                    [
+                        'title' => '✅ Campaign Terverifikasi & Tayang!',
+                        'message' => "Permohonan bantuan '{$campaign->title}' di {$campaign->school_name} telah disetujui Admin dan dipublikasikan.",
+                        'is_read' => false,
+                    ]
+                );
             }
         }
 

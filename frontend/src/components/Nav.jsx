@@ -4,7 +4,7 @@ import logo from "../assets/logo.png";
 import NotificationMenu from "./NotificationMenu";
 
 const linkClass = ({ isActive }) =>
-  `px-3 py-2 text-sm font-medium transition-colors ${
+  `px-2.5 py-2 text-[13px] font-medium transition-colors ${
     isActive ? "text-[#1a2d4d]" : "text-[#4c5a73] hover:text-[#1a2d4d]"
   }`;
 
@@ -42,19 +42,19 @@ export default function Nav() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-[#e4e7eb] bg-[#ffffff]">
-      <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between gap-4 px-4 py-4 sm:px-8 lg:px-10">
-        <NavLink to="/" className="flex items-center gap-3">
+      <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between gap-4 px-4 py-3 sm:px-8 lg:px-10">
+        <NavLink to="/" className="flex items-center gap-2.5">
           <img
             src={logo}
             alt="EducationBridge Logo"
-            className="h-9 w-auto max-h-9 object-contain"
+            className="h-8 w-auto max-h-8 object-contain"
           />
-          <span className="font-display text-[1.55rem] leading-none text-[#1d273a]">
+          <span className="font-display text-[1.45rem] leading-none text-[#1d273a]">
             EducationBridge
           </span>
         </NavLink>
 
-        <nav className="hidden items-center gap-1 lg:flex">
+        <nav className="hidden items-center gap-0 lg:flex">
           <NavLink to="/" className={linkClass}>
             Beranda
           </NavLink>
@@ -62,11 +62,8 @@ export default function Nav() {
           {/* NAV LINKS KHUSUS SETIAP ROLE */}
           {user?.role === "pemerintah" && (
             <>
-              <NavLink
-                to="/dashboard-pemerintah"
-                className="px-3.5 py-1.5 text-xs font-bold text-amber-950 bg-amber-100/80 hover:bg-amber-200/80 rounded-lg border border-amber-300 shadow-sm transition"
-              >
-                🏛️ Dashboard Monev
+              <NavLink to="/dashboard-pemerintah" className={linkClass}>
+                Dashboard Monev
               </NavLink>
               <NavLink to="/kampanye" className={linkClass}>
                 Peta Kebutuhan Daerah
@@ -76,11 +73,8 @@ export default function Nav() {
 
           {user?.role === "perusahaan" && (
             <>
-              <NavLink
-                to="/dashboard-perusahaan"
-                className="px-3.5 py-1.5 text-xs font-bold text-emerald-950 bg-emerald-100/80 hover:bg-emerald-200/80 rounded-lg border border-emerald-300 shadow-sm transition"
-              >
-                🏢 Portal CSR
+              <NavLink to="/dashboard-perusahaan" className={linkClass}>
+                Portal CSR
               </NavLink>
               <NavLink to="/cocok" className={linkClass}>
                 Program Adopsi
@@ -93,11 +87,8 @@ export default function Nav() {
 
           {user?.role === "sekolah" && (
             <>
-              <NavLink
-                to="/ajukan"
-                className="px-3.5 py-1.5 text-xs font-bold text-blue-950 bg-blue-100/80 hover:bg-blue-200/80 rounded-lg border border-blue-300 shadow-sm transition"
-              >
-                🏫 Dashboard Sekolah
+              <NavLink to="/ajukan" className={linkClass}>
+                Dashboard Sekolah
               </NavLink>
               <NavLink to="/kampanye" className={linkClass}>
                 Jelajahi Kebutuhan
@@ -107,11 +98,8 @@ export default function Nav() {
 
           {user?.role === "admin" && (
             <>
-              <NavLink
-                to="/admin"
-                className="px-3.5 py-1.5 text-xs font-bold text-purple-950 bg-purple-100/80 hover:bg-purple-200/80 rounded-lg border border-purple-300 shadow-sm transition"
-              >
-                ⚡ Panel Admin
+              <NavLink to="/admin" className={linkClass}>
+                Panel Admin
               </NavLink>
               <NavLink to="/kampanye" className={linkClass}>
                 Semua Kebutuhan

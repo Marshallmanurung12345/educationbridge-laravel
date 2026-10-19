@@ -117,20 +117,20 @@ function NeedCard({ need }) {
   return (
     <Link
       to={`/kampanye/${need.id}`}
-      className="group overflow-hidden rounded-[14px] border border-[#e2e8ef] bg-white transition hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(23,54,93,0.1)]"
+      className="group min-w-0 overflow-hidden border-b border-[#e2e8ef] bg-white"
     >
       <img
         src={need.image}
         alt={need.title}
-        className="h-48 w-full object-cover transition group-hover:scale-[1.02]"
+        className="aspect-[4/3] w-full object-cover"
       />
-      <div className="p-5">
+      <div className="py-4">
         <span
-          className={`text-[10px] font-bold uppercase tracking-[0.1em] ${need.score >= 80 ? "text-[#cf4141]" : "text-[#b57817]"}`}
+          className={`text-[10px] font-semibold uppercase tracking-[0.08em] ${need.score >= 80 ? "text-[#cf4141]" : "text-[#b57817]"}`}
         >
           {need.status}
         </span>
-        <h3 className="mt-2 min-h-[48px] text-base font-bold leading-6 text-[#17365d]">
+        <h3 className="mt-2 min-h-[48px] text-base font-semibold leading-6 text-[#17365d]">
           {need.title}
         </h3>
         <p className="mt-2 text-sm font-semibold text-[#526a83]">
@@ -146,9 +146,8 @@ function NeedCard({ need }) {
         <div className="mt-4">
           <Score value={need.score} />
         </div>
-        <p className="mt-4 text-sm font-bold text-[#2767b1]">
-          Kenali kebutuhannya{" "}
-          <span className="transition group-hover:ml-1">→</span>
+        <p className="mt-4 text-sm font-semibold text-[#2767b1]">
+          Kenali kebutuhannya <span aria-hidden="true">→</span>
         </p>
       </div>
     </Link>
@@ -169,7 +168,7 @@ export default function PublicHome() {
             title: item.title,
             school: item.school_name || fallbackNeeds[index].school,
             location: item.location || fallbackNeeds[index].location,
-            score: item.priority_score || fallbackNeeds[index].score,
+            score: item.priority_score ?? fallbackNeeds[index].score,
             start_date: item.start_date || fallbackNeeds[index].start_date,
             end_date: item.end_date || fallbackNeeds[index].end_date,
             needed: item.target_amount || fallbackNeeds[index].needed,
@@ -181,60 +180,60 @@ export default function PublicHome() {
       .catch(() => {});
   }, []);
 
+  const priorityNeed = needs[0];
+
   return (
     <div className="bg-[#faf9f6] text-[#23364f]">
-      <section className="px-5 py-10 sm:px-8 lg:px-12 lg:py-16">
-        <div className="mx-auto grid max-w-[1280px] items-center gap-10 lg:grid-cols-[0.82fr_1.18fr]">
+      <section className="px-5 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
+        <div className="mx-auto grid max-w-[1200px] items-center gap-8 lg:grid-cols-2 lg:gap-12">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#718096]">
               EducationBridge · Simulasi Demo
             </p>
-            <h1 className="mt-5 max-w-[560px] font-display text-[3rem] leading-[1.04] text-[#17365d] sm:text-[4.15rem]">
-              Setiap Sekolah Punya Kebutuhan.
-              <br />
-              <span className="text-[#2767b1]">Mari Kita Bantu Bersama.</span>
+            <h1 className="mt-4 max-w-[520px] font-display text-[2.55rem] leading-[1.08] text-[#17365d] sm:text-[3.55rem]">
+              Setiap Sekolah Punya Kebutuhan.{" "}
+              <span className="text-[#b27a1d]">Mari Kita Bantu Bersama.</span>
             </h1>
-            <p className="mt-6 max-w-[540px] text-base leading-7 text-[#5d7087]">
+            <p className="mt-5 max-w-[500px] text-[15px] leading-7 text-[#5d7087]">
               EducationBridge menghubungkan sekolah yang membutuhkan dukungan
               dengan individu, perusahaan, dan mitra untuk menciptakan
               kesempatan pendidikan yang lebih merata.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 to="/kampanye"
-                className="rounded-[10px] bg-[#17365d] px-5 py-3 text-sm font-semibold text-white hover:bg-[#245083]"
+                className="inline-flex min-h-11 items-center rounded-lg bg-[#17365d] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#245083]"
               >
                 Jelajahi Kebutuhan
               </Link>
               <Link
                 to="/ajukan"
-                className="rounded-[10px] border border-[#afbdcc] bg-white px-5 py-3 text-sm font-semibold text-[#17365d] hover:bg-[#f2f6fa]"
+                className="inline-flex min-h-11 items-center rounded-lg border border-[#cbd3dc] px-4 py-2.5 text-sm font-semibold text-[#17365d] transition-colors hover:bg-white"
               >
                 Ajukan Kebutuhan
               </Link>
             </div>
           </div>
-          <div className="relative">
+          <div className="relative min-w-0 lg:pl-2">
             <img
               src={schoolImage}
               alt="Kegiatan belajar di sekolah wilayah 3T"
-              className="aspect-[4/3] w-full rounded-[16px] object-cover"
+              className="aspect-[4/3] w-full rounded-lg object-cover"
             />
-            <div className="absolute -bottom-5 left-5 max-w-[280px] rounded-[12px] bg-white p-4 shadow-[0_10px_25px_rgba(23,54,93,0.14)] sm:left-8">
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#77879a]">
+            <div className="absolute bottom-3 left-3 max-w-[260px] border-l-[3px] border-[#e3a22f] bg-white/95 px-3 py-2.5 sm:bottom-4 sm:left-4 sm:px-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#77879a]">
                 Kebutuhan Prioritas
               </p>
-              <div className="mt-2 flex items-center gap-3">
-                <span className="text-3xl font-bold text-[#d84747]">87</span>
+              <div className="mt-1.5 flex items-center gap-3">
+                <span className="font-display text-2xl text-[#17365d]">
+                  {priorityNeed.score}
+                </span>
                 <div>
-                  <p className="text-xs font-bold text-[#17365d]">
-                    Priority Score
+                  <p className="text-xs font-semibold text-[#17365d]">
+                    Priority Score / 100
                   </p>
-                  <p className="mt-1 text-xs text-[#647990]">
-                    Perbaikan Atap Kelas
-                  </p>
-                  <p className="text-[10px] text-[#8290a0]">
-                    SD NEGERI 1 WAMENA (NPSN: 60301416)
+                  <p className="mt-0.5 max-w-[190px] text-xs leading-4 text-[#647990]">
+                    {priorityNeed.title} · {priorityNeed.school}
                   </p>
                 </div>
               </div>
@@ -243,30 +242,40 @@ export default function PublicHome() {
         </div>
       </section>
 
-      <section className="border-y border-[#e5e9ee] bg-white px-5 py-7 sm:px-8 lg:px-12">
-        <div className="mx-auto grid max-w-[1280px] gap-6 sm:grid-cols-3">
-          <div className="flex gap-3">
-            <span className="text-lg text-[#e3a22f]">✓</span>
+      <section className="border-y border-[#e5e9ee] bg-[#faf9f6] px-5 py-5 sm:px-8 lg:px-12">
+        <div className="mx-auto grid max-w-[1200px] gap-5 sm:grid-cols-3 sm:divide-x sm:divide-[#e5e9ee]">
+          <div className="flex gap-3 sm:pr-5">
+            <span aria-hidden="true" className="text-base text-[#b27a1d]">
+              ✓
+            </span>
             <div>
-              <p className="text-sm font-bold text-[#17365d]">Terverifikasi</p>
+              <p className="text-sm font-semibold text-[#17365d]">
+                Terverifikasi
+              </p>
               <p className="mt-1 text-xs leading-5 text-[#718096]">
                 Setiap kebutuhan melalui proses verifikasi.
               </p>
             </div>
           </div>
-          <div className="flex gap-3">
-            <span className="text-lg text-[#e3a22f]">✓</span>
+          <div className="flex gap-3 sm:px-5">
+            <span aria-hidden="true" className="text-base text-[#b27a1d]">
+              ✓
+            </span>
             <div>
-              <p className="text-sm font-bold text-[#17365d]">Tepat Sasaran</p>
+              <p className="text-sm font-semibold text-[#17365d]">
+                Tepat Sasaran
+              </p>
               <p className="mt-1 text-xs leading-5 text-[#718096]">
                 Prioritas ditentukan berdasarkan tingkat kebutuhan.
               </p>
             </div>
           </div>
-          <div className="flex gap-3">
-            <span className="text-lg text-[#e3a22f]">✓</span>
+          <div className="flex gap-3 sm:pl-5">
+            <span aria-hidden="true" className="text-base text-[#b27a1d]">
+              ✓
+            </span>
             <div>
-              <p className="text-sm font-bold text-[#17365d]">Transparan</p>
+              <p className="text-sm font-semibold text-[#17365d]">Transparan</p>
               <p className="mt-1 text-xs leading-5 text-[#718096]">
                 Perkembangan bantuan dapat dipantau.
               </p>
@@ -531,71 +540,6 @@ export default function PublicHome() {
             >
               Temukan Kebutuhan
             </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-y border-[#e5e9ee] bg-white px-5 py-14 sm:px-8 lg:px-12">
-        <div className="mx-auto grid max-w-[1100px] items-center gap-8 md:grid-cols-2">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#b27a1d]">
-              Untuk perusahaan
-            </p>
-            <h2 className="mt-3 font-display text-3xl text-[#17365d]">
-              Program CSR yang Menjangkau Lebih Jauh
-            </h2>
-            <p className="mt-4 max-w-md text-sm leading-7 text-[#687b90]">
-              Temukan kebutuhan sekolah yang sesuai dengan fokus program CSR
-              perusahaan Anda.
-            </p>
-            <a
-              href="#footer"
-              className="mt-6 inline-block text-sm font-bold text-[#2767b1]"
-            >
-              Pelajari Program CSR →
-            </a>
-          </div>
-          <img
-            src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=900&q=80"
-            alt="Ruang kerja tim yang mendukung program pendidikan"
-            className="h-56 w-full rounded-[14px] object-cover"
-          />
-        </div>
-      </section>
-
-      <section className="px-5 py-16 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1100px]">
-          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#718096]">
-            Transparansi
-          </p>
-          <h2 className="mt-3 font-display text-3xl text-[#17365d]">
-            Setiap Dukungan Punya Jejak.
-          </h2>
-          <div className="mt-10 grid gap-6 sm:grid-cols-5">
-            {[
-              "Sekolah Mengajukan",
-              "EducationBridge Memverifikasi",
-              "Dukungan Disalurkan",
-              "Sekolah Melaporkan",
-              "Dampak Terlihat",
-            ].map((step, index) => (
-              <div
-                key={step}
-                className="relative border-t-2 border-[#d6a331] pt-4"
-              >
-                <span className="text-xs font-bold text-[#d6a331]">
-                  0{index + 1}
-                </span>
-                <p className="mt-2 text-sm font-bold leading-5 text-[#17365d]">
-                  {step}
-                </p>
-                {index < 4 && (
-                  <span className="absolute right-0 top-[-10px] hidden text-xl text-[#afbdcc] sm:block">
-                    →
-                  </span>
-                )}
-              </div>
-            ))}
           </div>
         </div>
       </section>

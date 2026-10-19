@@ -60,18 +60,21 @@ class Campaign extends Model
 
     /**
      * Priority Score (0-100):
-     *  35% urgensi, 25% kondisi fasilitas (makin buruk makin tinggi skor),
-     *  25% keterpencilan lokasi (3T), 15% jumlah siswa terdampak (dinormalisasi, cap 1000).
+     *  25% keterpencilan wilayah (3T), 25% kondisi fasilitas (makin buruk makin tinggi),
+     *  20% jumlah siswa terdampak (dinormalisasi, cap 1000),
+     *  15% akses pendidikan (makin rendah akses makin tinggi), 15% urgensi.
      */
     public static function computePriorityScore(int $urgency, int $facilityCondition, int $remoteness, int $studentCount, int $accessScore = 3): int
     {
         $regionScore = ($remoteness / 5) * 25;
         $facilityScore = ((6 - $facilityCondition) / 5) * 25;
         $studentScore = (min($studentCount, 1000) / 1000) * 20;
-        $accessScore = (((6 - $accessScore) / 5) * 15);
+        // NB: jangan pakai nama variabel $accessScore lagi di sini, kalau tidak
+        // parameter input akan tertimpa dan nilai asli dari user diabaikan.
+        $accessPoint = ((6 - $accessScore) / 5) * 15;
         $urgencyScore = ($urgency / 5) * 15;
 
-        return (int) round($regionScore + $facilityScore + $studentScore + $accessScore + $urgencyScore);
+        return (int) round($regionScore + $facilityScore + $studentScore + $accessPoint + $urgencyScore);
     }
 
     public function getPriorityBreakdownAttribute(): array

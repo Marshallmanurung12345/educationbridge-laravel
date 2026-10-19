@@ -11,8 +11,9 @@ use App\Http\Controllers\StatsController;
 use Illuminate\Support\Facades\Route;
 
 // ---------- AUTH ----------
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+// throttle:auth -> maksimal 5 percobaan / menit (lihat AppServiceProvider).
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:auth');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth');
 
 // ---------- PUBLIC READS ----------
 Route::get('/schools', [SchoolController::class, 'index']);
@@ -32,6 +33,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Hanya role "sekolah" boleh mengajukan campaign
     Route::post('/campaigns', [CampaignController::class, 'store'])->middleware('role:sekolah');
 
+    // Daftar campaign milik sekolah yang sedang login (Dashboard Sekolah)
+    Route::get('/my-campaigns', [CampaignController::class, 'mine'])->middleware('role:sekolah');
+
     // Pemilik campaign ATAU admin (logika detail ada di controller)
     Route::put('/campaigns/{campaign}', [CampaignController::class, 'update']);
 
@@ -40,6 +44,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Hanya individu / perusahaan (CSR) / pemerintah boleh berdonasi
     Route::post('/campaigns/{campaign}/donations', [DonationController::class, 'store'])
+        ->middleware('role:individu,perusahaan,pemerintah');
+
+    // Riwayat donasi milik sendiri (semua role donatur)
+    Route::get('/my-donations', [DonationController::class, 'mine'])
         ->middleware('role:individu,perusahaan,pemerintah');
 
     // Laporan dampak hanya bisa dibuat oleh sekolah pemilik campaign (dicek di controller)

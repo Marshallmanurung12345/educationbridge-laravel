@@ -20,6 +20,14 @@ class CampaignController extends Controller
         if ($request->filled('category')) {
             $query->where('category', $request->query('category'));
         }
+        if ($request->filled('q')) {
+            $q = $request->query('q');
+            $query->where(function ($sub) use ($q) {
+                $sub->where('title', 'LIKE', "%{$q}%")
+                    ->orWhere('school_name', 'LIKE', "%{$q}%")
+                    ->orWhere('location', 'LIKE', "%{$q}%");
+            });
+        }
 
         match ($request->query('sort')) {
             'newest' => $query->orderByDesc('created_at'),
@@ -98,6 +106,34 @@ class CampaignController extends Controller
         ]);
 
         return response()->json($campaign->load(['school', 'user:id,name,organization_name']), 201);
+    }
+
+    // Daftar campaign milik sekolah yang sedang login (Dashboard Sekolah).
+    public function mine(Request $request)
+    {
+        $user = $request->user();
+
+        $campaigns = $user->campaigns()
+            ->with('school')
+            ->withCount(['donations', 'reports'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        $totalRaised = (int) $campaigns->sum('raised_amount');
+        $totalTarget = (int) $campaigns->sum('target_amount');
+
+        return response()->json([
+            'campaigns' => $campaigns,
+            'summary' => [
+                'total_campaigns' => $campaigns->count(),
+                'verified_campaigns' => $campaigns->where('status', 'verified')->count(),
+                'pending_campaigns' => $campaigns->whereIn('status', ['pending', 'needs_revision'])->count(),
+                'total_raised' => $totalRaised,
+                'total_target' => $totalTarget,
+                'total_donations' => (int) $campaigns->sum('donations_count'),
+                'total_reports' => (int) $campaigns->sum('reports_count'),
+            ],
+        ]);
     }
 
     public function show(Campaign $campaign)
