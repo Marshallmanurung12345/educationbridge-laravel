@@ -19,8 +19,8 @@ export default function Login() {
     try {
       const user = await login(email, password);
       const redirectTo =
-        user.role === "sekolah" && user.account_status !== "verified"
-          ? "/status-verifikasi"
+        user.role === "sekolah" || user.role === "admin" || user.role === "individu"
+          ? defaultRouteForRole(user.role, user.account_status)
           : location.state?.from || defaultRouteForRole(user.role);
       navigate(redirectTo, { replace: true });
     } catch (err) {
@@ -106,10 +106,9 @@ export default function Login() {
 
 export function defaultRouteForRole(role, accountStatus = "verified") {
   if (role === "admin") return "/admin";
-  if (role === "sekolah") {
-    return accountStatus === "verified" ? "/ajukan" : "/status-verifikasi";
-  }
+  if (role === "sekolah") return "/dashboard-sekolah";
+  if (role === "individu") return "/kampanye";
   if (role === "pemerintah") return "/dashboard-pemerintah";
   if (role === "perusahaan") return "/dashboard-perusahaan";
-  return "/cocok";
+  return accountStatus === "verified" ? "/kampanye" : "/status-verifikasi";
 }

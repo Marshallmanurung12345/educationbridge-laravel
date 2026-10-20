@@ -28,7 +28,7 @@ export default function WelcomeOverlay() {
     setShow(false);
   }
 
-  if (!ready || user?.role === "admin" || !show) return null;
+  if (!ready || user?.role === "admin" || user?.role === "sekolah" || !show) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-3 backdrop-blur-sm transition-all sm:p-4">

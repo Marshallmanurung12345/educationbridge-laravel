@@ -14,9 +14,9 @@ export default function ProtectedRoute({ roles, children }) {
   if (
     user.role === "sekolah" &&
     user.account_status !== "verified" &&
-    location.pathname !== "/status-verifikasi"
+    location.pathname === "/ajukan"
   ) {
-    return <Navigate to="/status-verifikasi" replace />;
+    return <Navigate to="/dashboard-sekolah" replace />;
   }
 
   if (
@@ -24,7 +24,7 @@ export default function ProtectedRoute({ roles, children }) {
     user.account_status === "verified" &&
     location.pathname === "/status-verifikasi"
   ) {
-    return <Navigate to="/ajukan" replace />;
+    return <Navigate to="/sekolah/profil" replace />;
   }
 
   if (roles && !roles.includes(user.role)) {

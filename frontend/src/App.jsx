@@ -3,6 +3,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/AdminLayout";
+import SchoolLayout from "./components/SchoolLayout";
 import Nav from "./components/Nav";
 import Footer from "./components/Footer";
 import WelcomeOverlay from "./components/WelcomeOverlay";
@@ -20,6 +21,7 @@ import SchoolAccountStatus from "./pages/SchoolAccountStatus";
 import SchoolAccountReview from "./pages/SchoolAccountReview";
 import AuditLogPage from "./pages/AuditLogPage";
 import AdminSchools from "./pages/AdminSchools";
+import SchoolDashboard from "./pages/SchoolDashboard";
 
 export default function App() {
   return (
@@ -33,6 +35,7 @@ function AppContent() {
   const location = useLocation();
   const { user, ready } = useAuth();
   const isAdmin = user?.role === "admin";
+  const isSchool = user?.role === "sekolah";
   const isAuthPage = ["/masuk", "/daftar", "/status-verifikasi"].includes(location.pathname);
   const publicPage = (page) => {
     if (!ready) return null;
@@ -46,6 +49,10 @@ function AppContent() {
         <AdminLayout>
           <AppRoutes publicPage={publicPage} />
         </AdminLayout>
+      ) : isSchool ? (
+        <SchoolLayout>
+          <AppRoutes publicPage={publicPage} />
+        </SchoolLayout>
       ) : (
         <div className="flex min-h-screen flex-col">
           <Nav />
@@ -70,6 +77,22 @@ function AppRoutes({ publicPage = (page) => page }) {
       />
       <Route path="/masuk" element={<Login />} />
       <Route path="/daftar" element={<Register />} />
+      <Route
+        path="/dashboard-sekolah"
+        element={
+          <ProtectedRoute roles={["sekolah"]}>
+            <SchoolDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/sekolah/profil"
+        element={
+          <ProtectedRoute roles={["sekolah"]}>
+            <SchoolAccountStatus />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/status-verifikasi"
         element={
