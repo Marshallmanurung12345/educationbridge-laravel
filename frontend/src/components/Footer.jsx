@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer
       id="footer"
-      className="border-t border-[#dfe6ef] bg-white text-sm text-[#60748d]"
+      className="border-t border-[#29496f] bg-[#17345b] text-sm text-[#d5dfeb]"
     >
       <div className="grid w-full gap-10 px-5 py-12 sm:px-8 lg:grid-cols-[1.5fr_0.8fr_0.8fr_1.2fr] lg:px-12 xl:px-16">
         <div>
@@ -14,7 +14,7 @@ export default function Footer() {
               alt="EducationBridge Logo"
               className="h-8 w-auto max-h-8 object-contain"
             />
-            <span className="font-display text-2xl text-[#17365d]">
+            <span className="font-display text-2xl text-white">
               EducationBridge
             </span>
           </div>
@@ -22,7 +22,7 @@ export default function Footer() {
             Menjembatani kebutuhan pendidikan dengan dukungan yang tepat
             sasaran, transparan, dan berdampak.
           </p>
-          <div className="mt-5 flex gap-3 text-xs font-bold text-[#17365d]">
+          <div className="mt-5 flex gap-3 text-xs font-bold text-[#ffad55]">
             <span>◎</span>
             <span>in</span>
             <span>▶</span>
@@ -30,62 +30,62 @@ export default function Footer() {
           </div>
         </div>
         <div>
-          <p className="font-bold text-[#17365d]">Jelajahi</p>
+          <p className="font-bold text-white">Jelajahi</p>
           <div className="mt-4 space-y-3 text-xs">
-            <a className="block hover:text-[#1d62b5]" href="/">
+            <a className="block hover:text-[#ffad55]" href="/">
               Beranda
             </a>
-            <a className="block hover:text-[#1d62b5]" href="/kampanye">
+            <a className="block hover:text-[#ffad55]" href="/kampanye">
               Jelajahi Kebutuhan
             </a>
-            <a className="block hover:text-[#1d62b5]" href="/ajukan">
+            <a className="block hover:text-[#ffad55]" href="/ajukan">
               Ajukan Kebutuhan
             </a>
-            <a className="block hover:text-[#1d62b5]" href="/cocok">
+            <a className="block hover:text-[#ffad55]" href="/cocok">
               Rekomendasi
             </a>
           </div>
         </div>
         <div>
-          <p className="font-bold text-[#17365d]">Bantuan</p>
+          <p className="font-bold text-white">Bantuan</p>
           <div className="mt-4 space-y-3 text-xs">
-            <a className="block hover:text-[#1d62b5]" href="#footer">
+            <a className="block hover:text-[#ffad55]" href="#footer">
               FAQ
             </a>
-            <a className="block hover:text-[#1d62b5]" href="#footer">
+            <a className="block hover:text-[#ffad55]" href="#footer">
               Panduan Pengguna
             </a>
-            <a className="block hover:text-[#1d62b5]" href="#footer">
+            <a className="block hover:text-[#ffad55]" href="#footer">
               Kebijakan Privasi
             </a>
-            <a className="block hover:text-[#1d62b5]" href="#footer">
+            <a className="block hover:text-[#ffad55]" href="#footer">
               Kontak
             </a>
           </div>
         </div>
         <div>
-          <p className="font-bold text-[#17365d]">Tetap Terhubung</p>
+          <p className="font-bold text-white">Tetap Terhubung</p>
           <p className="mt-4 text-xs leading-5">
             Dapatkan informasi terbaru seputar pendidikan dan program
             EducationBridge.
           </p>
-          <div className="mt-4 flex border border-[#d8e1eb] bg-[#fbfcfe] p-1">
+          <div className="mt-4 flex border border-white/25 bg-white/10 p-1">
             <input
               aria-label="Alamat email"
               type="email"
               placeholder="Masukkan email Anda"
-              className="min-w-0 flex-1 border-0 bg-transparent px-2 text-xs outline-none"
+              className="min-w-0 flex-1 border-0 bg-transparent px-2 text-xs text-white outline-none placeholder:text-[#b8c7d8]"
             />
             <button
               aria-label="Berlangganan newsletter"
-              className="bg-[#17365d] px-3 py-2 text-xs text-white"
+              className="bg-[#f28c28] px-3 py-2 text-xs text-white transition-colors hover:bg-[#dc7616]"
             >
               →
             </button>
           </div>
         </div>
       </div>
-      <div className="border-t border-[#edf0f4] px-5 py-4 text-center text-xs sm:px-8 lg:px-12 xl:px-16 lg:text-left">
+      <div className="border-t border-white/15 px-5 py-4 text-center text-xs text-[#b8c7d8] sm:px-8 lg:px-12 xl:px-16 lg:text-left">
         © 2026 EducationBridge. All rights reserved.
       </div>
     </footer>
