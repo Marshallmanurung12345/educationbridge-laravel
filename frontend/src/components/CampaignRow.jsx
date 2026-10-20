@@ -49,7 +49,7 @@ export default function CampaignRow({ campaign }) {
         {imageUrl ? (
           <img
             src={imageUrl}
-            alt={`Dokumentasi campaign: ${campaign.title}`}
+            alt={`Dokumentasi kebutuhan: ${campaign.title}`}
             className="h-full w-full object-cover"
             onError={(event) => {
               event.currentTarget.hidden = true;
@@ -70,15 +70,17 @@ export default function CampaignRow({ campaign }) {
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] leading-4 text-[#64748b]">
           <span className="font-semibold uppercase tracking-wide text-[#9a6b1c]">
-          {campaign.category || "Data belum tersedia"}
+            {campaign.category || "Data belum tersedia"}
           </span>
           <span aria-hidden="true">·</span>
           <span className="min-w-0">{location}</span>
-          {school && (
-            <span className="border-l border-[#cbd3dc] pl-2 font-medium text-[#a63c32]">
-              {school.is_3t === true ? "Wilayah 3T terverifikasi" : "Bukan wilayah 3T"}
-            </span>
-          )}
+          <span className="border-l border-[#cbd3dc] pl-2 font-medium text-[#a63c32]">
+            {!school || school.is_3t === null || school.is_3t === undefined
+              ? "Status 3T: Data belum tersedia"
+              : school.is_3t
+                ? "Wilayah 3T terverifikasi"
+                : "Bukan wilayah 3T"}
+          </span>
         </div>
         <h3 className="mt-1 font-display text-base leading-5 text-[#17365d] group-hover:underline decoration-marigold decoration-2 underline-offset-4 sm:text-lg sm:leading-6">
           {campaign.title}

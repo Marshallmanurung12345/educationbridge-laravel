@@ -302,6 +302,46 @@ class AuthWorkflowTest extends TestCase
             ->assertJsonMissing(['title' => 'Pengajuan donatur lain']);
     }
 
+    public function test_donor_dashboard_summarizes_only_the_authenticated_users_donations(): void
+    {
+        $school = $this->createSchool();
+        $donor = $this->createUser('individu', 'donor@example.test');
+        $otherDonor = $this->createUser('individu', 'other-donor@example.test');
+        $campaign = Campaign::create([
+            'user_id' => $this->createUser('sekolah', 'school-owner@example.test')->id,
+            'school_id' => $school->id,
+            'school_name' => $school->name,
+            'location' => 'Papua',
+            'category' => 'Fasilitas',
+            'title' => 'Kebutuhan disetujui',
+            'description' => 'Kebutuhan yang telah disetujui admin.',
+            'target_amount' => 1000000,
+            'status' => 'verified',
+        ]);
+        Donation::create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $donor->id,
+            'donor_name' => $donor->name,
+            'donor_type' => 'individu',
+            'amount' => 25000,
+        ]);
+        Donation::create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $otherDonor->id,
+            'donor_name' => $otherDonor->name,
+            'donor_type' => 'individu',
+            'amount' => 50000,
+        ]);
+
+        $this->actingAs($donor, 'sanctum')
+            ->getJson('/api/my-donations')
+            ->assertOk()
+            ->assertJsonPath('total_donated', 25000)
+            ->assertJsonPath('total_donation_count', 1)
+            ->assertJsonPath('campaigns_supported', 1)
+            ->assertJsonCount(1, 'donations');
+    }
+
     public function test_non_donor_cannot_access_donor_submission_api(): void
     {
         $schoolAccount = $this->createSchoolAccount('99999999');
@@ -342,6 +382,21 @@ class AuthWorkflowTest extends TestCase
             'status' => 'needs_revision',
             'priority_score' => $priorityScore,
         ]);
+
+        $this->actingAs($donor, 'sanctum')
+            ->putJson("/api/campaigns/{$campaign->id}", [
+                'title' => 'Pengajuan yang sudah diperbaiki',
+            ])
+            ->assertOk()
+            ->assertJsonPath('title', 'Pengajuan yang sudah diperbaiki')
+            ->assertJsonPath('status', 'needs_revision');
+
+        $otherDonor = $this->createUser('individu', 'other-donor@example.test');
+        $this->actingAs($otherDonor, 'sanctum')
+            ->putJson("/api/campaigns/{$campaign->id}", [
+                'title' => 'Perubahan tanpa izin',
+            ])
+            ->assertForbidden();
     }
 
     public function test_donor_can_submit_a_school_campaign_for_admin_review(): void

@@ -23,6 +23,16 @@ function formatDate(value) {
     : "—";
 }
 
+function externalHttpUrl(value) {
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
 function Status({ value }) {
   const label = statusLabels[value] || value || "—";
   const style =
@@ -381,7 +391,7 @@ export default function AdminDashboard({ campaignQueue = false }) {
           <section role="dialog" aria-modal="true" aria-labelledby="campaign-review-title" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-5 shadow-2xl sm:p-6">
             <div className="flex items-start justify-between gap-4 border-b border-[#EEF0F3] pb-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-[#8893A3]">Detail pengajuan kampanye</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[#8893A3]">Detail kebutuhan sekolah</p>
                 <h2 id="campaign-review-title" className="mt-1 text-xl font-semibold text-[#17345B]">{selectedCampaign.title}</h2>
                 <p className="mt-1 text-sm text-[#667085]">{selectedCampaign.school?.name || selectedCampaign.school_name} · {selectedCampaign.location}</p>
               </div>
@@ -398,7 +408,18 @@ export default function AdminDashboard({ campaignQueue = false }) {
                   <h3 className="font-semibold text-[#17345B]">Rencana anggaran</h3>
                   <p className="mt-1 whitespace-pre-wrap text-[#475467]">{selectedCampaign.rab_description || "Belum tersedia."}</p>
                   <p className="mt-1 font-medium text-[#17345B]">Target: {formatRupiah(selectedCampaign.target_amount)}</p>
+                  <p className="mt-1 text-[#667085]">Hubungan dengan sekolah: {selectedCampaign.applicant_relationship || "Belum tersedia."}</p>
                   <p className="mt-1 text-[#667085]">Bukti/izin: {selectedCampaign.supporting_document || "Belum tersedia."}</p>
+                  {externalHttpUrl(selectedCampaign.supporting_document) && (
+                    <a
+                      href={externalHttpUrl(selectedCampaign.supporting_document)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1 inline-block font-medium text-[#1D62B5] underline"
+                    >
+                      Buka bukti pendukung
+                    </a>
+                  )}
                 </div>
                 <div>
                   <h3 className="font-semibold text-[#17345B]">Pengaju</h3>
@@ -425,6 +446,8 @@ export default function AdminDashboard({ campaignQueue = false }) {
                   <div className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-[#D9E0E8] bg-[#F8F9FB] text-center text-xs text-[#8893A3]">Belum ada foto kebutuhan</div>
                 )}
                 <p className="mt-2 text-xs text-[#667085]">NPSN: {selectedCampaign.school?.npsn || "—"}</p>
+                <p className="mt-1 text-xs text-[#667085]">Wilayah: {[selectedCampaign.school?.kecamatan, selectedCampaign.school?.kabupaten_kota, selectedCampaign.school?.provinsi].filter(Boolean).join(", ") || selectedCampaign.location || "Data belum tersedia"}</p>
+                <p className="mt-1 text-xs text-[#667085]">Status 3T: {selectedCampaign.school?.is_3t === true ? "Terverifikasi 3T" : selectedCampaign.school?.is_3t === false ? "Bukan wilayah 3T" : "Data belum tersedia"}</p>
                 <p className="mt-1 text-xs text-[#667085]">Status: <Status value={selectedCampaign.status} /></p>
               </div>
             </div>

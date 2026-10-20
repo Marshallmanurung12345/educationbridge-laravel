@@ -345,18 +345,18 @@ export default function CampaignDetail() {
             </div>
             <div className="text-right text-xs text-blue-900">
               <span className="block font-semibold">Sumber Data Sekolah:</span>
-              <a
-                href={
-                  campaign.school?.source_url ||
-                  "https://data.kemendikdasmen.go.id/data-induk"
-                }
-                target="_blank"
-                rel="noreferrer"
-                className="font-bold text-blue-700 underline"
-              >
-                {campaign.school?.data_source ||
-                  "Data Induk Pendidikan Kemendikdasmen"}
-              </a>
+              {campaign.school?.data_source && campaign.school?.source_url ? (
+                <a
+                  href={campaign.school.source_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-bold text-blue-700 underline"
+                >
+                  {campaign.school.data_source}
+                </a>
+              ) : (
+                <span>Data belum tersedia</span>
+              )}
             </div>
           </div>
 

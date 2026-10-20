@@ -46,6 +46,14 @@ export default function CreateCampaign() {
   const editId = searchParams.get("edit");
   const isEditing = Boolean(editId);
   const isSchoolAccount = user?.role === "sekolah";
+  const submissionsPath =
+    user?.role === "sekolah"
+      ? "/dashboard-sekolah#pengajuan-saya"
+      : user?.role === "individu"
+        ? "/dashboard-donatur#pengajuan-saya"
+        : user?.role === "perusahaan"
+          ? "/dashboard-perusahaan"
+          : "/dashboard-pemerintah";
   const [form, setForm] = useState(initialForm);
   const [schoolSearch, setSchoolSearch] = useState("");
   const [schoolLevel, setSchoolLevel] = useState("");
@@ -254,10 +262,10 @@ export default function CreateCampaign() {
           </p>
           <button
             type="button"
-            onClick={() => navigate(isSchoolAccount ? "/dashboard-sekolah#pengajuan-saya" : "/dashboard-donatur#pengajuan-saya")}
+            onClick={() => navigate(submissionsPath)}
             className="mt-6 min-h-11 rounded-lg bg-[#17345B] px-5 text-sm font-semibold text-white hover:bg-[#244a79]"
           >
-            {isSchoolAccount ? "Lihat Pengajuan Saya" : "Kembali ke Dashboard Donatur"}
+            {isSchoolAccount ? "Lihat Pengajuan Saya" : "Kembali ke Dashboard"}
           </button>
         </section>
       </main>

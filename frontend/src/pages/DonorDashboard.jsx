@@ -45,12 +45,12 @@ export default function DonorDashboard() {
   const [submissionData, setSubmissionData] = useState(null);
   const [donationError, setDonationError] = useState("");
   const [submissionError, setSubmissionError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loadedPage, setLoadedPage] = useState(0);
   const [page, setPage] = useState(1);
+  const loading = loadedPage !== page;
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
 
     Promise.allSettled([api.myDonations(), api.mySubmissions(page)]).then(
       ([donationResult, submissionResult]) => {
@@ -67,7 +67,7 @@ export default function DonorDashboard() {
         } else {
           setSubmissionError(submissionResult.reason.message);
         }
-        setLoading(false);
+        setLoadedPage(page);
       },
     );
 
@@ -139,7 +139,7 @@ export default function DonorDashboard() {
           ))}
         </section>
 
-        <section className="mt-8 rounded-xl border border-[#E3E8EF] bg-white">
+        <section id="pengajuan-saya" className="mt-8 rounded-xl border border-[#E3E8EF] bg-white">
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[#E9EDF2] px-4 py-4 sm:px-5">
             <div>
               <h2 className="text-lg font-semibold">Pengajuan Saya</h2>

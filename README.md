@@ -34,8 +34,9 @@ Frontend berjalan di `http://localhost:5173`.
 ## Registrasi dan Hak Akses
 
 - Pendaftaran publik hanya menyediakan **Sekolah / Perwakilan** dan **Donatur**. Role internal donatur yang digunakan backend adalah `individu`; pendaftar perusahaan/CSR juga memilih Donatur dan tidak memperoleh role atau hak akses terpisah.
-- Akun sekolah baru dapat login setelah registrasi, tetapi berstatus **Menunggu Verifikasi**. Admin harus mencocokkan nama sekolah dan NPSN dengan data sekolah resmi sebelum akun dapat mengajukan campaign. Jika diminta perbaikan, sekolah dapat memperbarui datanya di halaman status verifikasi.
-- Donatur dapat melihat dan mendukung kebutuhan sekolah. Pengajuan campaign oleh donatur memerlukan sekolah tujuan, hubungan dengan sekolah, RAB, dan bukti izin/kewenangan; campaign baru tampil setelah disetujui admin.
+- Akun sekolah baru dapat login setelah registrasi, tetapi berstatus **Menunggu Verifikasi**. Admin harus mencocokkan nama sekolah dan NPSN dengan data sekolah resmi sebelum akun dapat mengajukan kebutuhan. Jika diminta perbaikan, sekolah dapat memperbarui datanya di halaman status verifikasi.
+- Setelah login, Donatur diarahkan ke `/dashboard-donatur` untuk melihat catatan donasi, laporan yang tersedia, dan status pengajuan miliknya. Donatur juga dapat menjelajahi kebutuhan sekolah serta mengajukan kebutuhan dengan sekolah tujuan, hubungan dengan sekolah, RAB, dan bukti izin/kewenangan. Kebutuhan baru tampil ke publik setelah disetujui admin.
+- Daftar sekolah pada aplikasi berasal dari dataset lokal yang tersedia, bukan sinkronisasi API real-time. Periksa kelengkapan dataset sebelum menganggap pencarian mencakup seluruh sekolah.
 - Admin tidak dapat mendaftar melalui form publik. Akun admin lokal disediakan oleh seeder. Untuk produksi, buat akun admin melalui provisioning yang aman dan jangan gunakan kredensial demo.
 - Role `perusahaan` dan `pemerintah` pada akun lama tetap didukung untuk kompatibilitas; keduanya tidak tersedia pada pendaftaran publik.
 
@@ -52,7 +53,7 @@ Jalankan `php artisan migrate --seed` di backend untuk membuat data demo lokal. 
 | `perusahaan@educationbridge.id` | Donatur lama (kompatibilitas) |
 | `pemerintah@educationbridge.id` | Pemerintah lama (kompatibilitas) |
 
-Admin mengelola pengajuan campaign di `/admin`, verifikasi akun sekolah di `/admin/akun-sekolah`, dan catatan tindakan di `/admin/audit-log`. Keputusan status akun dan campaign dicatat di audit log.
+Sekolah membuka dashboard di `/dashboard-sekolah`; Donatur membuka dashboard di `/dashboard-donatur`. Admin mengelola kebutuhan yang perlu ditinjau di `/admin`, verifikasi akun sekolah di `/admin/akun-sekolah`, dan catatan tindakan di `/admin/audit-log`. Keputusan status akun dan kebutuhan dicatat di audit log.
 
 ## API Utama
 
@@ -63,6 +64,8 @@ POST /api/logout
 GET  /api/me
 GET  /api/campaigns
 POST /api/campaigns
+GET  /api/my-submissions
+GET  /api/my-donations
 POST /api/campaigns/{id}/donations
 GET  /api/stats
 ```
