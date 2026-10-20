@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
 import { useLanguage } from "../context/useLanguage";
-import heroImage from "../assets/sekolah1.jpeg";
+import heroImage from "../assets/image.png";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -72,12 +72,12 @@ function CampaignPhoto({ imageUrl, title, translations }) {
       <div
         role="img"
         aria-label={`${translations.photoAlt} ${title}`}
-        className="flex aspect-[16/9] w-full items-center justify-center bg-[#edf1f4] px-4 text-center"
+        className="flex aspect-[2/1] w-full items-center justify-center bg-gradient-to-br from-[#eef3f7] to-[#e5ebf1] px-4 text-center"
       >
-        <div>
+        <div className="flex flex-col items-center">
           <span
             aria-hidden="true"
-            className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white text-xl text-[#526a83]"
+            className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white text-xl text-[#526a83] shadow-sm"
           >
             ▧
           </span>
@@ -93,7 +93,7 @@ function CampaignPhoto({ imageUrl, title, translations }) {
     <img
       src={source}
       alt={`Dokumentasi kebutuhan: ${title}`}
-      className="aspect-[16/9] w-full object-cover"
+      className="aspect-[2/1] w-full object-cover"
       onError={() => setFailed(true)}
     />
   );
@@ -121,6 +121,7 @@ function NeedCard({ campaign }) {
         className="relative block overflow-hidden focus-visible:outline-offset-[-3px]"
       >
         <CampaignPhoto
+          key={`${campaign.id}-${campaign.image_url || ""}`}
           imageUrl={campaign.image_url}
           title={campaign.title}
           translations={home}
@@ -136,13 +137,13 @@ function NeedCard({ campaign }) {
         <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#a96517]">
           {campaign.category || "Kategori belum tersedia"}
         </p>
-        <h3 className="mt-2 line-clamp-2 min-h-12 text-base font-semibold leading-6 text-[#17345b] sm:text-[17px]">
+        <h3 className="mt-2 line-clamp-2 min-h-11 text-[15px] font-semibold leading-[1.4] text-[#17345b] sm:text-base">
           {campaign.title}
         </h3>
         <p className="mt-2 truncate text-sm font-medium text-[#34465d]">
           {schoolName}
         </p>
-        <p className="mt-1 flex min-h-9 items-start gap-1.5 text-xs leading-5 text-[#718096]">
+        <p className="mt-1 flex min-h-8 items-start gap-1.5 text-xs leading-[1.4] text-[#718096]">
           <svg
             aria-hidden="true"
             viewBox="0 0 20 20"
@@ -235,16 +236,16 @@ export default function PublicHome() {
       <main>
         <section
           aria-labelledby="hero-title"
-          className="relative flex min-h-[450px] items-center justify-center bg-cover bg-center px-5 py-14 text-center sm:min-h-[430px] sm:px-8 sm:py-16"
+          className="relative flex min-h-[430px] items-center justify-center bg-cover bg-center px-5 py-12 text-center sm:min-h-[420px] sm:px-8 sm:py-14"
           style={{
-            backgroundImage: `linear-gradient(rgba(10, 24, 42, 0.62), rgba(10, 24, 42, 0.68)), url("${heroImage}")`,
-            backgroundPosition: "center 52%",
+            backgroundImage: `linear-gradient(180deg, rgba(10, 24, 42, 0.34), rgba(10, 24, 42, 0.48)), url("${heroImage}")`,
+            backgroundPosition: "center 76%",
           }}
         >
-          <div className="mx-auto w-full max-w-[900px] text-white">
+          <div className="mx-auto w-full max-w-[900px] text-white drop-shadow-[0_2px_12px_rgba(10,24,42,0.28)]">
             <h1
               id="hero-title"
-              className="mx-auto max-w-[800px] text-3xl font-semibold leading-tight tracking-[-0.025em] sm:text-4xl lg:text-[3.25rem]"
+              className="mx-auto max-w-[800px] text-[1.8rem] font-semibold leading-[1.12] tracking-[-0.025em] sm:text-[2.5rem] lg:text-5xl"
             >
               {home.heroLead}{" "}
               <span className="text-[#ffad55]">
@@ -252,10 +253,10 @@ export default function PublicHome() {
               </span>{" "}
               {home.heroTail}
             </h1>
-            <p className="mx-auto mt-5 max-w-[690px] text-sm leading-6 text-white/90 sm:text-base sm:leading-7">
+            <p className="mx-auto mt-4 max-w-[690px] text-sm leading-6 text-white sm:mt-5 sm:text-base sm:leading-7">
               {home.heroDescription}
             </p>
-            <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col justify-center gap-3 sm:mt-7 sm:flex-row">
               <Link
                 to="/ajukan"
                 className="inline-flex min-h-12 items-center justify-center rounded-lg bg-[#f28c28] px-8 text-sm font-semibold text-white transition-colors hover:bg-[#dc7616] focus-visible:outline-white"
@@ -275,14 +276,14 @@ export default function PublicHome() {
         <section
           id="kebutuhan"
           aria-labelledby="needs-title"
-          className="scroll-mt-20 bg-[#f8fafc] px-5 py-9 sm:px-8 sm:py-11 lg:px-12"
+          className="scroll-mt-20 bg-[#f8fafc] px-5 py-8 sm:px-8 sm:py-10 lg:px-12"
         >
           <div className="mx-auto max-w-[1200px]">
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
               <div>
                 <h2
                   id="needs-title"
-                  className="text-2xl font-semibold leading-tight text-[#17345b] sm:text-[28px]"
+                  className="text-[1.4rem] font-semibold leading-tight text-[#17345b] sm:text-2xl"
                 >
                   {home.needsTitle}
                 </h2>
@@ -322,7 +323,7 @@ export default function PublicHome() {
                 {home.empty}
               </p>
             ) : (
-              <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="mt-5 grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-5">
                 {needs.map((campaign) => (
                   <NeedCard key={campaign.id} campaign={campaign} />
                 ))}
