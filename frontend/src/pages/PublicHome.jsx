@@ -133,7 +133,7 @@ function NeedCard({ campaign }) {
         )}
       </Link>
 
-      <div className="p-4 sm:p-5">
+      <div className="p-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#a96517]">
           {campaign.category || "Kategori belum tersedia"}
         </p>
@@ -155,9 +155,9 @@ function NeedCard({ campaign }) {
         </p>
 
         {progress !== null ? (
-          <div className="mt-3">
+          <div className="mt-2.5">
             <div
-              className="h-2 overflow-hidden rounded-full bg-[#edf0f4]"
+              className="h-1.5 overflow-hidden rounded-full bg-[#edf0f4]"
               role="progressbar"
               aria-label={`${home.progress} ${campaign.title}`}
               aria-valuemin={0}
@@ -169,22 +169,18 @@ function NeedCard({ campaign }) {
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-[#718096]">
-              <span>{hasAmounts ? `${progress}% ${home.raised}` : `${progress}%`}</span>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] leading-4">
+              <span className="font-semibold text-[#17345b]">
+                {hasAmounts
+                  ? `${formatRupiah(campaign.raised_amount)} ${home.raised}`
+                  : `${progress}%`}
+              </span>
               {hasAmounts && (
-                <span className="font-medium text-[#17345b]">
+                <span className="text-[#718096]">
                   {home.target} {formatRupiah(campaign.target_amount)}
                 </span>
               )}
             </div>
-            {hasAmounts && (
-              <p className="mt-1 text-xs text-[#64748b]">
-                <strong className="font-semibold text-[#17345b]">
-                  {formatRupiah(campaign.raised_amount)}
-                </strong>{" "}
-                {home.raised}
-              </p>
-            )}
           </div>
         ) : (
           <p className="mt-3 text-xs text-[#718096]">
@@ -334,7 +330,7 @@ export default function PublicHome() {
 
         <section
           id="dampak"
-          className="scroll-mt-20 bg-white px-5 py-8 sm:px-8 lg:px-12"
+          className="scroll-mt-20 bg-white px-5 py-7 sm:px-8 lg:px-12"
         >
           <div className="mx-auto flex max-w-[1200px] flex-col items-start justify-between gap-4 border-t border-[#e5eaf0] pt-7 sm:flex-row sm:items-center">
             <h2 className="max-w-xl text-xl font-semibold leading-snug text-[#17345b] sm:text-2xl">

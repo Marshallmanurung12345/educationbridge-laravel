@@ -8,7 +8,6 @@ import NotificationMenu from "./NotificationMenu";
 const publicLinks = [
   ["home", "/"],
   ["needs", "/kampanye"],
-  ["about", "/#footer"],
   ["impact", "/#dampak"],
 ];
 
@@ -52,13 +51,13 @@ function LanguageSwitcher({ language, setLanguage, label }) {
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((isOpen) => !isOpen)}
-        className="flex min-h-10 items-center gap-1.5 rounded-lg border border-[#d5dde6] bg-white px-2.5 text-base transition-colors hover:bg-[#f8fafc]"
+        className="flex min-h-10 items-center gap-1.5 rounded-lg border border-white/25 bg-white/10 px-2.5 text-base transition-colors hover:bg-white/15"
       >
         <span aria-hidden="true">{selected.flag}</span>
         <svg
           aria-hidden="true"
           viewBox="0 0 12 12"
-          className={`h-3 w-3 fill-current text-[#17345b] transition-transform ${open ? "rotate-180" : ""}`}
+          className={`h-3 w-3 fill-current text-white transition-transform ${open ? "rotate-180" : ""}`}
         >
           <path d="m2 4 4 4 4-4z" />
         </svg>
@@ -125,7 +124,7 @@ export default function Nav() {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-[#e5eaf0] bg-white">
+    <header className="sticky top-0 z-30 border-b border-[#29496f] bg-[#17345b]">
       <div className="mx-auto flex min-h-[68px] w-full max-w-[1280px] items-center justify-between gap-3 px-4 sm:gap-4 sm:px-8 lg:px-10">
         <Link
           to="/"
@@ -142,7 +141,7 @@ export default function Nav() {
               className="absolute -left-[14px] -top-[17px] h-[68px] w-[68px] max-w-none"
             />
           </span>
-          <span className="font-display text-lg leading-none text-[#17345b] sm:text-[1.4rem]">
+          <span className="font-display text-lg leading-none text-white sm:text-[1.4rem]">
             EducationBridge
           </span>
         </Link>
@@ -152,11 +151,11 @@ export default function Nav() {
           className="hidden items-center gap-1 lg:flex"
         >
           {publicLinks.map(([key, to]) =>
-            key === "about" || key === "impact" ? (
+            key === "impact" ? (
               <a
                 key={key}
                 href={to}
-                className="border-b-2 border-transparent px-2.5 py-2 text-[13px] font-medium text-[#42546b] transition-colors hover:border-[#f28c28] hover:text-[#17345b]"
+                className="border-b-2 border-transparent px-2.5 py-2 text-[13px] font-medium text-white/90 transition-colors hover:border-[#f28c28] hover:text-white"
               >
                 {nav[key]}
               </a>
@@ -168,8 +167,8 @@ export default function Nav() {
                 className={({ isActive }) =>
                   `border-b-2 px-2.5 py-2 text-[13px] font-medium transition-colors ${
                     isActive
-                      ? "border-[#f28c28] text-[#17345b]"
-                      : "border-transparent text-[#42546b] hover:text-[#17345b]"
+                      ? "border-[#f28c28] text-white"
+                      : "border-transparent text-white/90 hover:text-white"
                   }`
                 }
               >
@@ -189,19 +188,19 @@ export default function Nav() {
             <>
               <NotificationMenu user={user} />
               <details className="group relative">
-                <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-[#f5f7fa]">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#17345b] text-sm font-semibold text-white">
+                <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white/10">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-sm font-semibold text-white">
                     {user.name?.charAt(0)?.toUpperCase() || "U"}
                   </span>
                   <span className="max-w-32">
-                    <span className="block truncate text-sm font-semibold text-[#17345b]">
+                    <span className="block truncate text-sm font-semibold text-white">
                       {user.name}
                     </span>
-                    <span className="block text-[11px] text-[#718096]">
+                    <span className="block text-[11px] text-white/70">
                       {nav.roles[user.role] || nav.roles.user}
                     </span>
                   </span>
-                  <span aria-hidden="true" className="text-xs text-[#718096]">
+                  <span aria-hidden="true" className="text-xs text-white/70">
                     ▾
                   </span>
                 </summary>
@@ -229,7 +228,7 @@ export default function Nav() {
             <>
               <NavLink
                 to="/masuk"
-                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#d5dde6] px-4 text-sm font-medium text-[#17345b] transition-colors hover:bg-[#f8fafc]"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/45 px-4 text-sm font-medium text-white transition-colors hover:bg-white/10"
               >
                 {nav.login}
               </NavLink>
@@ -251,7 +250,7 @@ export default function Nav() {
           />
           <button
             type="button"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-2xl text-[#17345b] hover:bg-[#f5f7fa]"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-2xl text-white hover:bg-white/10"
             aria-label={mobileMenuOpen ? nav.closeMenu : nav.openMenu}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation"
@@ -265,18 +264,18 @@ export default function Nav() {
       {mobileMenuOpen && (
         <div
           id="mobile-navigation"
-          className="border-t border-[#e5eaf0] bg-white px-4 pb-4 lg:hidden"
+          className="border-t border-white/15 bg-[#17345b] px-4 pb-4 lg:hidden"
         >
           <nav
             aria-label={nav.mobileNavigation}
             className="mx-auto max-w-[1280px]"
           >
             {publicLinks.map(([key, to]) =>
-              key === "about" || key === "impact" ? (
+              key === "impact" ? (
                 <a
                   key={key}
                   href={to}
-                  className="block border-b border-[#edf0f4] py-3 text-sm font-medium text-[#42546b] hover:text-[#c56c13]"
+                  className="block border-b border-white/10 py-3 text-sm font-medium text-white/90 hover:text-[#ffad55]"
                   onClick={closeMobileMenu}
                 >
                   {nav[key]}
@@ -287,8 +286,8 @@ export default function Nav() {
                   to={to}
                   end={key === "home"}
                   className={({ isActive }) =>
-                    `block border-b border-[#edf0f4] py-3 text-sm font-medium ${
-                      isActive ? "text-[#17345b]" : "text-[#42546b]"
+                    `block border-b border-white/10 py-3 text-sm font-medium ${
+                      isActive ? "text-[#ffad55]" : "text-white/90"
                     }`
                   }
                   onClick={closeMobileMenu}
@@ -300,12 +299,12 @@ export default function Nav() {
 
             {user ? (
               <>
-                <div className="flex items-center justify-between gap-3 border-b border-[#edf0f4] py-3">
+                <div className="flex items-center justify-between gap-3 border-b border-white/10 py-3">
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-semibold text-[#17345b]">
+                    <span className="block truncate text-sm font-semibold text-white">
                       {user.name}
                     </span>
-                    <span className="text-xs text-[#718096]">
+                    <span className="text-xs text-white/70">
                       {nav.roles[user.role] || nav.roles.user}
                     </span>
                   </span>
@@ -315,7 +314,7 @@ export default function Nav() {
                   <NavLink
                     key={to}
                     to={to}
-                    className="block border-b border-[#edf0f4] py-3 text-sm font-medium text-[#42546b]"
+                    className="block border-b border-white/10 py-3 text-sm font-medium text-white/90"
                     onClick={closeMobileMenu}
                   >
                     {linkText(key)}
@@ -334,7 +333,7 @@ export default function Nav() {
                 <NavLink
                   to="/masuk"
                   onClick={closeMobileMenu}
-                  className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg border border-[#d5dde6] px-4 text-sm font-medium text-[#17345b]"
+                  className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg border border-white/45 px-4 text-sm font-medium text-white"
                 >
                   {nav.login}
                 </NavLink>
