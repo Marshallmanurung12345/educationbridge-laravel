@@ -2,77 +2,116 @@ import { Link } from "react-router-dom";
 import { formatRupiah } from "../api";
 import PriorityBadge from "./PriorityBadge";
 
-const accentByScore = (score) => {
-  if (score >= 80) return "bg-clay";
-  if (score >= 60) return "bg-marigold";
-  if (score >= 40) return "bg-navy-soft";
-  return "bg-ink-light/40";
-};
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+function resolveImageUrl(value) {
+  if (!value) return "";
+
+  try {
+    return new URL(value, API_BASE_URL).toString();
+  } catch {
+    return "";
+  }
+}
 
 export default function CampaignRow({ campaign }) {
   const school = campaign.school;
-  const npsn = school?.npsn
-    ? `NPSN: ${school.npsn}`
-    : "NPSN: Data belum tersedia";
-  const dataSource =
-    school?.data_source || "Data Induk Pendidikan Kemendikdasmen";
+  const score = Number(campaign.priority_score) || 0;
+  const target = Number(campaign.target_amount) || 0;
+  const raised = Number(campaign.raised_amount) || 0;
+  const progress = Math.min(
+    100,
+    Math.max(
+      0,
+      Number(
+        campaign.progress_percent ??
+          (target > 0 ? Math.round((raised / target) * 100) : 0),
+      ),
+    ),
+  );
+  const location = school
+    ? [school.kecamatan, school.kabupaten_kota, school.provinsi]
+        .filter(Boolean)
+        .join(", ") || "Lokasi belum tersedia"
+    : campaign.location || "Lokasi belum tersedia";
+  const dataSource = school?.data_source || "Sumber data belum tersedia";
+  const imageUrl = resolveImageUrl(campaign.image_url);
 
   return (
     <Link
       to={`/kampanye/${campaign.id}`}
-      className="group flex items-stretch gap-4 border-b border-ink/10 py-5 hover:bg-navy/5 transition-colors"
+      className="group grid grid-cols-[68px_minmax(0,1fr)_64px] items-center gap-3 border-b border-[#dfe5eb] py-4 hover:bg-[#f7f8fa] sm:grid-cols-[96px_minmax(0,1fr)_76px] sm:gap-5 sm:py-5"
     >
-      <span
-        className={`w-1.5 rounded-full ${accentByScore(campaign.priority_score)}`}
-      />
-      <div className="flex-1 min-w-0">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-ink-light">
-          <span className="font-mono font-bold bg-[#17365d] text-white px-2 py-0.5 rounded text-[11px]">
-            {npsn}
+      <div className="aspect-[4/3] w-full overflow-hidden bg-[#edf0f2]">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={`Dokumentasi campaign: ${campaign.title}`}
+            className="h-full w-full object-cover"
+            onError={(event) => {
+              event.currentTarget.hidden = true;
+              event.currentTarget.nextElementSibling.hidden = false;
+            }}
+          />
+        ) : null}
+        <div
+          hidden={Boolean(imageUrl)}
+          role="img"
+          aria-label={`Foto dokumentasi belum tersedia untuk ${campaign.title}`}
+          className="flex h-full w-full items-center justify-center px-1 text-center text-[10px] leading-4 text-[#64748b]"
+        >
+          Foto dokumentasi belum tersedia
+        </div>
+      </div>
+
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] leading-4 text-[#64748b]">
+          <span className="font-semibold uppercase tracking-wide text-[#9a6b1c]">
+            {campaign.category || "Kategori belum tersedia"}
           </span>
-          <span className="uppercase tracking-wide font-semibold text-[#087fae]">
-            {campaign.category}
-          </span>
-          <span>·</span>
-          <span>
-            {school
-              ? `${school.kecamatan}, ${school.kabupaten_kota}, ${school.provinsi}`
-              : campaign.location}
-          </span>
-          {school?.is_3t && (
-            <span className="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[10px]">
+          <span aria-hidden="true">·</span>
+          <span className="min-w-0">{location}</span>
+          {school?.is_3t === true && (
+            <span className="border-l border-[#cbd3dc] pl-2 font-medium text-[#a63c32]">
               Wilayah 3T
             </span>
           )}
         </div>
-        <h3 className="font-display text-xl mt-1 group-hover:underline decoration-marigold decoration-2 underline-offset-4">
+        <h3 className="mt-1 font-display text-base leading-5 text-[#17365d] group-hover:underline decoration-marigold decoration-2 underline-offset-4 sm:text-lg sm:leading-6">
           {campaign.title}
         </h3>
-        <p className="text-sm font-semibold text-ink mt-0.5">
-          {school?.name || campaign.school_name}
+        <p className="mt-1 text-xs font-medium text-[#34465d] sm:text-sm">
+          {school?.name ||
+            campaign.school_name ||
+            "Nama sekolah belum tersedia"}
         </p>
-        <p className="text-[11px] text-ink-light mt-0.5">
-          Sumber Data Sekolah:{" "}
-          <span className="text-[#087fae] font-medium">{dataSource}</span>
+        <p className="mt-1 flex flex-wrap gap-x-2 text-[10px] leading-4 text-[#718096] sm:text-[11px]">
+          <span>
+            {school?.npsn ? `NPSN: ${school.npsn}` : "NPSN belum tersedia"}
+          </span>
+          <span aria-hidden="true">·</span>
+          <span>Sumber: {dataSource}</span>
         </p>
 
-        <div className="mt-3 max-w-sm">
-          <div className="h-1.5 bg-ink/10 rounded-full overflow-hidden">
+        <div className="mt-2.5 max-w-[480px]">
+          <div className="h-1.5 overflow-hidden rounded-full bg-[#e6e9ed]">
             <div
-              className="h-full bg-sage"
-              style={{ width: `${campaign.progress_percent}%` }}
+              className="h-full rounded-full bg-[#17365d]"
+              style={{ width: `${progress}%` }}
             />
           </div>
-          <div className="flex justify-between text-xs mt-1 text-ink-light">
-            <span>{formatRupiah(campaign.raised_amount)} terkumpul</span>
-            <span>{campaign.progress_percent}%</span>
+          <div className="mt-1 flex flex-wrap items-center justify-between gap-x-2 text-[10px] leading-4 text-[#64748b] sm:text-[11px]">
+            <span>
+              <strong className="font-semibold text-[#34465d]">
+                {formatRupiah(raised)}
+              </strong>{" "}
+              terkumpul dari {formatRupiah(target)}
+            </span>
+            <span className="font-semibold text-[#34465d]">{progress}%</span>
           </div>
         </div>
       </div>
-      <PriorityBadge
-        score={campaign.priority_score}
-        label={campaign.priority_label}
-      />
+      <PriorityBadge score={score} label={campaign.priority_label} />
     </Link>
   );
 }
