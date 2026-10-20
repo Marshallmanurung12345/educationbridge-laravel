@@ -44,6 +44,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Daftar campaign milik sekolah yang sedang login (Dashboard Sekolah)
     Route::get('/my-campaigns', [CampaignController::class, 'mine'])->middleware('role:sekolah');
 
+    // Daftar pengajuan milik donatur yang sedang login.
+    Route::get('/my-submissions', [CampaignController::class, 'mySubmissions'])
+        ->middleware('role:individu,perusahaan,pemerintah');
+
     // Pemilik campaign ATAU admin (logika detail ada di controller)
     Route::put('/campaigns/{campaign}', [CampaignController::class, 'update']);
 

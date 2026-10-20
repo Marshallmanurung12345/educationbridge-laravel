@@ -22,6 +22,7 @@ import SchoolAccountReview from "./pages/SchoolAccountReview";
 import AuditLogPage from "./pages/AuditLogPage";
 import AdminSchools from "./pages/AdminSchools";
 import SchoolDashboard from "./pages/SchoolDashboard";
+import DonorDashboard from "./pages/DonorDashboard";
 
 export default function App() {
   return (
@@ -82,6 +83,14 @@ function AppRoutes({ publicPage = (page) => page }) {
         element={
           <ProtectedRoute roles={["sekolah"]}>
             <SchoolDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard-donatur"
+        element={
+          <ProtectedRoute roles={["individu"]}>
+            <DonorDashboard />
           </ProtectedRoute>
         }
       />

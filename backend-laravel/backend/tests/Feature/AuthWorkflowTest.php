@@ -268,6 +268,82 @@ class AuthWorkflowTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_donor_dashboard_returns_only_the_authenticated_users_submissions(): void
+    {
+        $school = $this->createSchool();
+        $donor = $this->createUser('individu', 'donor@example.test');
+        $otherDonor = $this->createUser('individu', 'other-donor@example.test');
+
+        foreach ([
+            [$donor, 'Pengajuan saya', 'needs_revision'],
+            [$otherDonor, 'Pengajuan donatur lain', 'pending'],
+        ] as [$owner, $title, $status]) {
+            Campaign::create([
+                'user_id' => $owner->id,
+                'school_id' => $school->id,
+                'school_name' => $school->name,
+                'location' => 'Papua',
+                'category' => 'Fasilitas',
+                'title' => $title,
+                'description' => 'Detail pengajuan kebutuhan.',
+                'verification_note' => $title === 'Pengajuan saya' ? 'Mohon lengkapi rincian.' : null,
+                'target_amount' => 1000000,
+                'status' => $status,
+            ]);
+        }
+
+        $this->actingAs($donor, 'sanctum')
+            ->getJson('/api/my-submissions')
+            ->assertOk()
+            ->assertJsonPath('summary.total_submissions', 1)
+            ->assertJsonPath('summary.needs_revision', 1)
+            ->assertJsonPath('campaigns.data.0.title', 'Pengajuan saya')
+            ->assertJsonPath('campaigns.data.0.verification_note', 'Mohon lengkapi rincian.')
+            ->assertJsonMissing(['title' => 'Pengajuan donatur lain']);
+    }
+
+    public function test_non_donor_cannot_access_donor_submission_api(): void
+    {
+        $schoolAccount = $this->createSchoolAccount('99999999');
+
+        $this->actingAs($schoolAccount, 'sanctum')
+            ->getJson('/api/my-submissions')
+            ->assertForbidden();
+    }
+
+    public function test_donor_cannot_change_admin_decisions_or_priority_score(): void
+    {
+        $school = $this->createSchool();
+        $donor = $this->createUser('individu', 'donor@example.test');
+        $campaign = Campaign::create([
+            'user_id' => $donor->id,
+            'school_id' => $school->id,
+            'school_name' => $school->name,
+            'location' => 'Papua',
+            'category' => 'Fasilitas',
+            'title' => 'Pengajuan yang perlu diperbaiki',
+            'description' => 'Deskripsi awal.',
+            'target_amount' => 1000000,
+            'status' => 'needs_revision',
+        ]);
+
+        $priorityScore = $campaign->priority_score;
+        $this->actingAs($donor, 'sanctum')
+            ->putJson("/api/campaigns/{$campaign->id}", [
+                'status' => 'verified',
+                'priority_score' => 100,
+            ])
+            ->assertOk()
+            ->assertJsonPath('status', 'needs_revision')
+            ->assertJsonPath('priority_score', $priorityScore);
+
+        $this->assertDatabaseHas('campaigns', [
+            'id' => $campaign->id,
+            'status' => 'needs_revision',
+            'priority_score' => $priorityScore,
+        ]);
+    }
+
     public function test_donor_can_submit_a_school_campaign_for_admin_review(): void
     {
         $school = $this->createSchool();

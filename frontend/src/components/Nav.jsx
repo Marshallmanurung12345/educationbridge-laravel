@@ -22,6 +22,7 @@ const roleLinks = {
     ["browse", "/kampanye"],
   ],
   individu: [
+    ["donorDashboard", "/dashboard-donatur"],
     ["browse", "/kampanye"],
     ["recommendations", "/cocok"],
     ["fundraise", "/ajukan"],

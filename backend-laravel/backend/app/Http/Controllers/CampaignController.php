@@ -157,6 +157,29 @@ class CampaignController extends Controller
         ]);
     }
 
+    // Donors can only see their own submissions; admin decisions remain server-controlled.
+    public function mySubmissions(Request $request)
+    {
+        $campaigns = $request->user()->campaigns()
+            ->with('school')
+            ->withCount(['donations', 'reports'])
+            ->orderByDesc('created_at')
+            ->paginate(10);
+
+        $ownedCampaigns = $request->user()->campaigns();
+
+        return response()->json([
+            'campaigns' => $campaigns,
+            'summary' => [
+                'total_submissions' => (clone $ownedCampaigns)->count(),
+                'pending' => (clone $ownedCampaigns)->where('status', 'pending')->count(),
+                'needs_revision' => (clone $ownedCampaigns)->where('status', 'needs_revision')->count(),
+                'approved' => (clone $ownedCampaigns)->where('status', 'verified')->count(),
+                'rejected' => (clone $ownedCampaigns)->where('status', 'rejected')->count(),
+            ],
+        ]);
+    }
+
     public function show(Request $request, Campaign $campaign)
     {
         $user = $request->user();

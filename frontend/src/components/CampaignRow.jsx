@@ -16,16 +16,19 @@ function resolveImageUrl(value) {
 
 export default function CampaignRow({ campaign }) {
   const school = campaign.school;
-  const score = Number(campaign.priority_score) || 0;
-  const target = Number(campaign.target_amount) || 0;
-  const raised = Number(campaign.raised_amount) || 0;
+  const hasScore = campaign.priority_score != null && Number.isFinite(Number(campaign.priority_score));
+  const score = hasScore ? Number(campaign.priority_score) : null;
+  const hasTarget = campaign.target_amount != null;
+  const hasRaised = campaign.raised_amount != null;
+  const target = Number(campaign.target_amount);
+  const raised = Number(campaign.raised_amount);
   const progress = Math.min(
     100,
     Math.max(
       0,
       Number(
         campaign.progress_percent ??
-          (target > 0 ? Math.round((raised / target) * 100) : 0),
+          (target > 0 && hasRaised ? Math.round((raised / target) * 100) : 0),
       ),
     ),
   );
@@ -34,7 +37,7 @@ export default function CampaignRow({ campaign }) {
         .filter(Boolean)
         .join(", ") || "Lokasi belum tersedia"
     : campaign.location || "Lokasi belum tersedia";
-  const dataSource = school?.data_source || "Sumber data belum tersedia";
+  const dataSource = school?.data_source || "Data belum tersedia";
   const imageUrl = resolveImageUrl(campaign.image_url);
 
   return (
@@ -67,13 +70,13 @@ export default function CampaignRow({ campaign }) {
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] leading-4 text-[#64748b]">
           <span className="font-semibold uppercase tracking-wide text-[#9a6b1c]">
-            {campaign.category || "Kategori belum tersedia"}
+          {campaign.category || "Data belum tersedia"}
           </span>
           <span aria-hidden="true">·</span>
           <span className="min-w-0">{location}</span>
-          {school?.is_3t === true && (
+          {school && (
             <span className="border-l border-[#cbd3dc] pl-2 font-medium text-[#a63c32]">
-              Wilayah 3T
+              {school.is_3t === true ? "Wilayah 3T terverifikasi" : "Bukan wilayah 3T"}
             </span>
           )}
         </div>
@@ -81,13 +84,11 @@ export default function CampaignRow({ campaign }) {
           {campaign.title}
         </h3>
         <p className="mt-1 text-xs font-medium text-[#34465d] sm:text-sm">
-          {school?.name ||
-            campaign.school_name ||
-            "Nama sekolah belum tersedia"}
+          {school?.name || campaign.school_name || "Data belum tersedia"}
         </p>
         <p className="mt-1 flex flex-wrap gap-x-2 text-[10px] leading-4 text-[#718096] sm:text-[11px]">
           <span>
-            {school?.npsn ? `NPSN: ${school.npsn}` : "NPSN belum tersedia"}
+            {school?.npsn ? `NPSN: ${school.npsn}` : "NPSN: Data belum tersedia"}
           </span>
           <span aria-hidden="true">·</span>
           <span>Sumber: {dataSource}</span>
@@ -103,15 +104,26 @@ export default function CampaignRow({ campaign }) {
           <div className="mt-1 flex flex-wrap items-center justify-between gap-x-2 text-[10px] leading-4 text-[#64748b] sm:text-[11px]">
             <span>
               <strong className="font-semibold text-[#34465d]">
-                {formatRupiah(raised)}
+                {hasRaised ? formatRupiah(raised) : "Data belum tersedia"}
               </strong>{" "}
-              terkumpul dari {formatRupiah(target)}
+              terkumpul dari {hasTarget ? formatRupiah(target) : "Data belum tersedia"}
             </span>
-            <span className="font-semibold text-[#34465d]">{progress}%</span>
+            <span className="font-semibold text-[#34465d]">
+              {hasTarget && hasRaised ? `${progress}%` : "Data belum tersedia"}
+            </span>
           </div>
         </div>
       </div>
-      <PriorityBadge score={score} label={campaign.priority_label} />
+      <div className="flex flex-col items-center gap-2">
+        {hasScore ? (
+          <PriorityBadge score={score} label={campaign.priority_label} />
+        ) : (
+          <span className="text-center text-xs text-[#64748b]">Skor belum tersedia</span>
+        )}
+        <span className="text-center text-[11px] font-semibold text-[#1D62B5]">
+          Lihat Detail
+        </span>
+      </div>
     </Link>
   );
 }

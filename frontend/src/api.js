@@ -56,6 +56,8 @@ export const api = {
   deleteCampaign: (id) => request(`/campaigns/${id}`, { method: "DELETE" }),
   listSchoolAccounts: () => request(`/admin/school-accounts`),
   myCampaigns: () => request(`/my-campaigns`),
+  mySubmissions: (page = 1) => request(`/my-submissions?page=${page}`),
+  myDonations: () => request(`/my-donations`),
   adminStats: () => request(`/admin/stats`),
   listAuditLogs: () => request(`/admin/audit-logs`),
   updateSchoolAccountStatus: (id, data) =>

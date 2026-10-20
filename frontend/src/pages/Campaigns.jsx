@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../api";
 import CampaignRow from "../components/CampaignRow";
 
@@ -16,33 +17,56 @@ export default function Campaigns() {
   const [category, setCategory] = useState("Semua");
   const [sort, setSort] = useState("priority");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    let active = true;
     setLoading(true);
+    setError("");
     const params = { status: "verified", sort };
     if (category !== "Semua") {
       params.category = category === "Buku" ? "Buku & Literasi" : category;
     }
     api
       .listCampaigns(params)
-      .then(setCampaigns)
-      .finally(() => setLoading(false));
-  }, [category, sort]);
+      .then((result) => {
+        if (active) setCampaigns(Array.isArray(result) ? result : []);
+      })
+      .catch((loadError) => {
+        if (active) setError(loadError.message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [category, sort, reloadKey]);
 
   return (
     <main className="min-h-screen bg-[#faf9f6] text-[#1e293b]">
       <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
-        <div className="border-b border-[#dfe5eb] pb-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9a6b1c]">
-            Pendidikan untuk semua
-          </p>
-          <h1 className="mt-2 font-display text-3xl leading-tight text-[#17365d] sm:text-4xl">
-            Jelajahi Kebutuhan Sekolah
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#64748b]">
-            Lihat kebutuhan sekolah yang telah diverifikasi dan urutkan
-            berdasarkan Priority Score untuk menemukan kebutuhan mendesak.
-          </p>
+        <div className="flex flex-col gap-4 border-b border-[#dfe5eb] pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#9a6b1c]">
+              Pendidikan untuk semua
+            </p>
+            <h1 className="mt-2 font-display text-3xl leading-tight text-[#17365d] sm:text-4xl">
+              Jelajahi Kebutuhan Sekolah
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#64748b]">
+              Lihat kebutuhan yang telah disetujui admin. Data dan Priority Score
+              ditampilkan sesuai informasi yang tersedia di sistem.
+            </p>
+          </div>
+          <Link
+            to="/ajukan"
+            className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg bg-[#F28C28] px-4 text-sm font-semibold text-white hover:bg-[#DB7415]"
+          >
+            Ajukan Kebutuhan Sekolah
+          </Link>
         </div>
 
         <div className="flex flex-col gap-4 border-b border-[#dfe5eb] py-4 lg:flex-row lg:items-center lg:justify-between">
@@ -85,15 +109,30 @@ export default function Campaigns() {
         <div className="mt-1">
           {loading && (
             <p className="py-8 text-sm text-[#64748b]" role="status">
-              Memuat campaign...
+              Memuat kebutuhan sekolah…
             </p>
           )}
-          {!loading && campaigns.length === 0 && (
+          {!loading && error && (
+            <div className="py-8" role="alert">
+              <p className="text-sm text-rose-700">
+                Kebutuhan sekolah tidak dapat dimuat: {error}
+              </p>
+              <button
+                type="button"
+                onClick={() => setReloadKey((key) => key + 1)}
+                className="mt-3 rounded-lg border border-[#cbd3dc] bg-white px-3 py-2 text-sm font-semibold text-[#17365d]"
+              >
+                Coba lagi
+              </button>
+            </div>
+          )}
+          {!loading && !error && campaigns.length === 0 && (
             <p className="py-8 text-sm text-[#64748b]" role="status">
-              Belum ada campaign untuk filter ini.
+              Data belum tersedia untuk filter ini.
             </p>
           )}
           {!loading &&
+            !error &&
             campaigns.map((campaign) => (
               <CampaignRow key={campaign.id} campaign={campaign} />
             ))}

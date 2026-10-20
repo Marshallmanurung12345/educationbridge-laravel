@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../context/AuthContext";
 
@@ -18,6 +18,7 @@ const initialForm = {
   title: "",
   description: "",
   rab_description: "",
+  image_url: "",
   supporting_document: "",
   applicant_relationship: "",
   start_date: "",
@@ -41,6 +42,9 @@ function schoolLocation(school) {
 export default function CreateCampaign() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("edit");
+  const isEditing = Boolean(editId);
   const isSchoolAccount = user?.role === "sekolah";
   const [form, setForm] = useState(initialForm);
   const [schoolSearch, setSchoolSearch] = useState("");
@@ -53,6 +57,51 @@ export default function CreateCampaign() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(null);
+  const [loadingEdit, setLoadingEdit] = useState(isEditing);
+
+  useEffect(() => {
+    if (!editId) return undefined;
+
+    let active = true;
+    api.getCampaign(editId)
+      .then((campaign) => {
+        if (!active) return;
+        const school = campaign.school || null;
+        setSelectedSchool(school);
+        setSchoolSearch(
+          school ? `${school.name} · ${school.npsn}` : campaign.school_name || "",
+        );
+        setForm((current) => ({
+          ...current,
+          school_id: campaign.school_id || "",
+          category: campaign.category || current.category,
+          title: campaign.title || "",
+          description: campaign.description || "",
+          rab_description: campaign.rab_description || "",
+          image_url: campaign.image_url || "",
+          supporting_document: campaign.supporting_document || "",
+          applicant_relationship: campaign.applicant_relationship || "",
+          start_date: campaign.start_date || "",
+          end_date: campaign.end_date || "",
+          target_amount: campaign.target_amount ?? "",
+          student_count: campaign.student_count ?? "",
+          urgency: campaign.urgency ?? current.urgency,
+          facility_condition: campaign.facility_condition ?? current.facility_condition,
+          remoteness: campaign.remoteness ?? current.remoteness,
+          access_score: campaign.access_score ?? current.access_score,
+        }));
+      })
+      .catch((loadError) => {
+        if (active) setError(loadError.message);
+      })
+      .finally(() => {
+        if (active) setLoadingEdit(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [editId]);
 
   useEffect(() => {
     if (!isSchoolAccount || !user?.school) return;
@@ -67,6 +116,7 @@ export default function CreateCampaign() {
   }, [isSchoolAccount, user?.school]);
 
   useEffect(() => {
+    if (isSchoolAccount && selectedSchool) return undefined;
     if (selectedSchool && schoolSearch === `${selectedSchool.name} · ${selectedSchool.npsn}`) {
       return undefined;
     }
@@ -165,7 +215,7 @@ export default function CreateCampaign() {
 
     setSubmitting(true);
     try {
-      const created = await api.createCampaign({
+      const payload = {
         ...form,
         school_id: selectedSchool.id,
         tags: [form.category.toLowerCase(), ...(categoryTags[form.category] || [])],
@@ -175,8 +225,11 @@ export default function CreateCampaign() {
         facility_condition: Number(form.facility_condition),
         remoteness: Number(form.remoteness),
         access_score: Number(form.access_score),
-      });
-      setSubmitted(created);
+      };
+      const result = isEditing
+        ? await api.updateCampaign(editId, payload)
+        : await api.createCampaign(payload);
+      setSubmitted(result);
     } catch (submitError) {
       setError(submitError.message);
     } finally {
@@ -189,16 +242,22 @@ export default function CreateCampaign() {
       <main className="min-h-[calc(100svh-68px)] bg-[#F7F8FA] px-4 py-12 sm:px-6">
         <section className="mx-auto max-w-xl rounded-xl border border-[#E6EAF0] bg-white p-6 text-center shadow-sm sm:p-8">
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-2xl text-emerald-700">✓</span>
-          <h1 className="mt-4 text-2xl font-semibold text-[#17345B]">Pengajuan berhasil dikirim</h1>
+          <h1 className="mt-4 text-2xl font-semibold text-[#17345B]">
+            {isEditing ? "Perubahan pengajuan tersimpan" : "Pengajuan berhasil dikirim"}
+          </h1>
           <p className="mt-2 text-sm leading-6 text-[#667085]">
-            Kebutuhan <strong className="text-[#17345B]">{submitted.title}</strong> untuk {submitted.school_name} akan diperiksa admin sebelum ditampilkan kepada publik.
+            {isEditing ? (
+              <>Perubahan untuk <strong className="text-[#17345B]">{submitted.title}</strong> sudah tersimpan. Pengajuan tetap akan diperiksa admin sebelum ditampilkan kepada publik.</>
+            ) : (
+              <>Kebutuhan <strong className="text-[#17345B]">{submitted.title}</strong> untuk {submitted.school_name} akan diperiksa admin sebelum ditampilkan kepada publik.</>
+            )}
           </p>
           <button
             type="button"
-            onClick={() => navigate(isSchoolAccount ? "/dashboard-sekolah#pengajuan-saya" : "/kampanye")}
+            onClick={() => navigate(isSchoolAccount ? "/dashboard-sekolah#pengajuan-saya" : "/dashboard-donatur#pengajuan-saya")}
             className="mt-6 min-h-11 rounded-lg bg-[#17345B] px-5 text-sm font-semibold text-white hover:bg-[#244a79]"
           >
-            {isSchoolAccount ? "Lihat Pengajuan Saya" : "Jelajahi Kebutuhan Sekolah"}
+            {isSchoolAccount ? "Lihat Pengajuan Saya" : "Kembali ke Dashboard Donatur"}
           </button>
         </section>
       </main>
@@ -218,7 +277,7 @@ export default function CreateCampaign() {
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-[#17345B] sm:text-[28px]">
-              {isSchoolAccount ? "Ajukan Kebutuhan Sekolah" : "Ajukan Kebutuhan untuk Sekolah"}
+              {isEditing ? "Perbarui Pengajuan Kebutuhan" : isSchoolAccount ? "Ajukan Kebutuhan Sekolah" : "Ajukan Kebutuhan untuk Sekolah"}
             </h1>
             <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[#667085]">
               Isi data sekolah dan kebutuhan secara jelas. Admin akan memeriksa pengajuan sebelum dipublikasikan.
@@ -229,11 +288,16 @@ export default function CreateCampaign() {
           </p>
         </div>
 
+        {loadingEdit ? (
+          <p role="status" className="rounded-xl border border-[#E6EAF0] bg-white p-6 text-sm text-[#667085]">
+            Memuat pengajuan…
+          </p>
+        ) : (
         <form onSubmit={onSubmit} className="space-y-4">
           <Section number="1" title="Informasi Sekolah" description="Pilih sekolah dari data resmi. NPSN dan lokasi akan terisi otomatis.">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Pilih Sekolah" className="sm:col-span-2">
-                {isSchoolAccount ? (
+                {isSchoolAccount || isEditing ? (
                   <input
                     value={selectedSchool ? `${selectedSchool.name} · ${selectedSchool.npsn}` : schoolSearch}
                     readOnly
@@ -249,9 +313,6 @@ export default function CreateCampaign() {
                         setSchoolSearch(event.target.value);
                         setSelectedSchool(null);
                         setForm((current) => ({ ...current, school_id: "" }));
-                      }}
-                      onFocus={(event) => {
-                        if (event.target.value) setSchoolResults((current) => current);
                       }}
                       autoComplete="off"
                       placeholder="Ketik nama sekolah atau NPSN (minimal 2 karakter)"
@@ -277,7 +338,7 @@ export default function CreateCampaign() {
                 )}
               </Field>
 
-              {!isSchoolAccount && (
+              {!isSchoolAccount && !isEditing && (
                 <>
                   <Field label="Filter jenjang">
                     <select value={schoolLevel} onChange={(event) => setSchoolLevel(event.target.value)} className="w-full rounded-lg border border-[#DCE2EA] bg-white px-3 py-2.5 text-sm text-[#17345B]">
@@ -342,11 +403,22 @@ export default function CreateCampaign() {
                 />
                 <span className="mt-1 block text-xs text-[#8893A3]">Masukkan tautan yang dapat diperiksa admin. Unggah berkas langsung belum tersedia.</span>
               </Field>
+              <Field label="Tautan foto kondisi atau kebutuhan (opsional)">
+                <input
+                  type="url"
+                  maxLength={2048}
+                  value={form.image_url}
+                  onChange={(event) => update("image_url", event.target.value)}
+                  className="form-control"
+                  placeholder="https://…"
+                />
+                <span className="mt-1 block text-xs text-[#8893A3]">Gunakan tautan foto dokumentasi yang dapat diakses admin. Unggah berkas langsung belum tersedia.</span>
+              </Field>
               <Field label="Tanggal mulai penggalangan">
-                <input required type="date" min={today} value={form.start_date} onChange={(event) => update("start_date", event.target.value)} className="form-control" />
+                <input required type="date" min={isEditing ? undefined : today} value={form.start_date} onChange={(event) => update("start_date", event.target.value)} className="form-control" />
               </Field>
               <Field label="Batas akhir penggalangan">
-                <input required type="date" min={form.start_date || today} value={form.end_date} onChange={(event) => update("end_date", event.target.value)} className="form-control" />
+                <input required type="date" min={form.start_date || (isEditing ? undefined : today)} value={form.end_date} onChange={(event) => update("end_date", event.target.value)} className="form-control" />
               </Field>
               <Field label="Target dana (Rp)">
                 <input required type="number" min="1" step="1000" value={form.target_amount} onChange={(event) => update("target_amount", event.target.value)} className="form-control" placeholder="Contoh: 50000000" />
@@ -366,7 +438,7 @@ export default function CreateCampaign() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <RangeField label="Urgensi kebutuhan" value={form.urgency} onChange={(value) => update("urgency", value)} low="Bisa ditunda" high="Sangat mendesak" />
               <RangeField label="Kondisi fasilitas" value={form.facility_condition} onChange={(value) => update("facility_condition", value)} low="Rusak berat" high="Kondisi baik" />
-              <RangeField label="Keterpencilan lokasi" value={form.remoteness} onChange={(value) => update("remoteness", value)} low="Sangat mudah dijangkau" high="Sangat terpencil" />
+              <RangeField label="Keterpencilan lokasi" value={form.remoteness} onChange={(value) => update("remoteness", value)} low="Sangat mudah dijangkau" high="Sangat terpencil" disabled={Boolean(selectedSchool?.is_3t)} />
               <RangeField label="Akses pendidikan" value={form.access_score} onChange={(value) => update("access_score", value)} low="Sangat terbatas" high="Mudah diakses" />
             </div>
             <p className="mt-4 rounded-lg bg-[#F8F9FB] px-3 py-2.5 text-xs leading-5 text-[#667085]">
@@ -378,10 +450,11 @@ export default function CreateCampaign() {
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E6EAF0] bg-white p-4">
             <p className="text-xs text-[#667085]">Pengajuan akan diperiksa admin sebelum ditampilkan kepada publik.</p>
             <button type="submit" disabled={submitting || (isSchoolAccount && user?.account_status !== "verified")} className="min-h-11 rounded-lg bg-[#F28C28] px-5 text-sm font-semibold text-white hover:bg-[#DC7616] disabled:cursor-not-allowed disabled:opacity-50">
-              {submitting ? "Mengirim pengajuan…" : "Ajukan untuk Verifikasi"}
+              {submitting ? "Menyimpan…" : isEditing ? "Simpan Perubahan" : "Ajukan untuk Verifikasi"}
             </button>
           </div>
         </form>
+        )}
       </div>
       <style>{`.form-control{width:100%;border:1px solid #DCE2EA;border-radius:.5rem;background:#fff;padding:.625rem .75rem;font-size:.875rem;color:#17345B;outline:none}.form-control:focus{border-color:#17345B;box-shadow:0 0 0 2px rgb(23 52 91 / .1)}.form-control::placeholder{color:#98A2B3}`}</style>
     </main>
@@ -412,13 +485,13 @@ function Field({ label, children, className = "" }) {
   );
 }
 
-function RangeField({ label, value, onChange, low, high }) {
+function RangeField({ label, value, onChange, low, high, disabled = false }) {
   return (
     <label className="rounded-lg border border-[#E6EAF0] bg-white p-3">
       <span className="flex items-center justify-between gap-2 text-xs font-medium text-[#344054]">
         {label}<strong className="text-[#17345B]">{value}/5</strong>
       </span>
-      <input type="range" min="1" max="5" value={value} onChange={(event) => onChange(Number(event.target.value))} className="mt-3 w-full accent-[#F28C28]" />
+      <input type="range" min="1" max="5" value={value} disabled={disabled} onChange={(event) => onChange(Number(event.target.value))} className="mt-3 w-full accent-[#F28C28] disabled:cursor-not-allowed disabled:opacity-60" />
       <span className="mt-1 flex justify-between gap-2 text-[10px] text-[#8893A3]"><span>{low}</span><span>{high}</span></span>
     </label>
   );

@@ -107,7 +107,7 @@ export default function Login() {
 export function defaultRouteForRole(role, accountStatus = "verified") {
   if (role === "admin") return "/admin";
   if (role === "sekolah") return "/dashboard-sekolah";
-  if (role === "individu") return "/kampanye";
+  if (role === "individu") return "/dashboard-donatur";
   if (role === "pemerintah") return "/dashboard-pemerintah";
   if (role === "perusahaan") return "/dashboard-perusahaan";
   return accountStatus === "verified" ? "/kampanye" : "/status-verifikasi";

@@ -2,11 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, formatRupiah } from "../api";
 import { useAuth } from "../context/AuthContext";
-import schoolImage from "../assets/sekolah1.jpeg";
 
 const donationPresets = [50000, 100000, 250000, 500000];
 const donorRoles = ["individu", "perusahaan", "pemerintah"];
-const fallbackImage = schoolImage;
 
 function dateLabel(value) {
   return value
@@ -25,6 +23,8 @@ export default function CampaignDetail() {
   const [donations, setDonations] = useState([]);
   const [reports, setReports] = useState([]);
   const [error, setError] = useState("");
+  const [donationLoadError, setDonationLoadError] = useState("");
+  const [reportLoadError, setReportLoadError] = useState("");
   const [status, setStatus] = useState("");
   const [amount, setAmount] = useState(100000);
   const [paymentMethod, setPaymentMethod] = useState("transfer_bank");
@@ -32,6 +32,7 @@ export default function CampaignDetail() {
   const [reportTitle, setReportTitle] = useState("");
   const [reportNarrative, setReportNarrative] = useState("");
   const [reportStatus, setReportStatus] = useState("");
+  const [imageFailed, setImageFailed] = useState(false);
 
   function load() {
     api
@@ -40,15 +41,24 @@ export default function CampaignDetail() {
       .catch((e) => setError(e.message));
     api
       .listDonations(id)
-      .then(setDonations)
-      .catch(() => {});
+      .then((result) => {
+        setDonations(result);
+        setDonationLoadError("");
+      })
+      .catch((loadError) => setDonationLoadError(loadError.message));
     api
       .listReports(id)
-      .then(setReports)
-      .catch(() => {});
+      .then((result) => {
+        setReports(result);
+        setReportLoadError("");
+      })
+      .catch((loadError) => setReportLoadError(loadError.message));
   }
 
-  useEffect(load, [id]);
+  useEffect(() => {
+    setImageFailed(false);
+    load();
+  }, [id]);
 
   async function submitDonation(event) {
     event.preventDefault();
@@ -97,7 +107,7 @@ export default function CampaignDetail() {
 
   const isOwnerSchool =
     user?.role === "sekolah" && user.id === campaign.user_id;
-  const image = campaign.image_url || fallbackImage;
+  const image = campaign.image_url;
   const tags = Array.isArray(campaign.tags) ? campaign.tags : [];
   const priorityBreakdown = campaign.priority_breakdown || {};
 
@@ -112,22 +122,32 @@ export default function CampaignDetail() {
         </Link>
 
         <section className="mt-6 grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
-          <div className="relative overflow-hidden rounded-[16px]">
-            <img
-              src={image}
-              alt={campaign.title}
-              className="aspect-[4/3] w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#102a4b]/75 via-transparent to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-5 text-white sm:p-6">
-              <p className="text-sm font-bold">{campaign.school_name}</p>
-              <p className="mt-1 text-xs text-white/80">
-                ● {campaign.location}
-              </p>
-            </div>
-            <span className="absolute right-4 top-4 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[#17365d]">
-              Lihat foto sekolah
-            </span>
+          <div className="relative overflow-hidden rounded-[16px] border border-[#e0e7ef] bg-[#edf0f2]">
+            {image && !imageFailed ? (
+              <>
+                <img
+                  src={image}
+                  alt={`Foto dokumentasi kebutuhan: ${campaign.title}`}
+                  onError={() => setImageFailed(true)}
+                  className="aspect-[4/3] w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#102a4b]/75 via-transparent to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-5 text-white sm:p-6">
+                  <p className="text-sm font-bold">{campaign.school_name}</p>
+                  <p className="mt-1 text-xs text-white/80">
+                    {campaign.location || "Lokasi belum tersedia"}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div
+                role="img"
+                aria-label="Foto dokumentasi belum tersedia"
+                className="flex aspect-[4/3] items-center justify-center px-6 text-center text-sm text-[#64748b]"
+              >
+                Foto dokumentasi belum tersedia
+              </div>
+            )}
           </div>
           <div className="rounded-[16px] border border-[#e0e7ef] bg-white p-6 shadow-[0_8px_24px_rgba(23,54,93,0.06)] sm:p-7">
             <div className="flex flex-wrap gap-2">
@@ -137,9 +157,11 @@ export default function CampaignDetail() {
               <span className="rounded-full bg-[#fce4e4] px-3 py-1 text-[11px] font-bold text-[#d84747]">
                 {campaign.priority_label || "Prioritas"}
               </span>
-              <span className="rounded-full bg-[#e0f2fe] px-3 py-1 text-[11px] font-semibold text-[#0369a1]">
-                ✓ Terverifikasi Official
-              </span>
+              {campaign.school?.data_source && (
+                <span className="rounded-full bg-[#e0f2fe] px-3 py-1 text-[11px] font-semibold text-[#0369a1]">
+                  Sumber sekolah tersedia
+                </span>
+              )}
             </div>
             <h1 className="mt-3 font-display text-3xl leading-tight text-[#17365d] sm:text-4xl">
               {campaign.title}
@@ -151,8 +173,17 @@ export default function CampaignDetail() {
               📍{" "}
               {campaign.school
                 ? `${campaign.school.kecamatan}, ${campaign.school.kabupaten_kota}, ${campaign.school.provinsi}`
-                : campaign.location}
+                : campaign.location || "Data belum tersedia"}
             </p>
+            {campaign.school && (
+              <p className="mt-2 text-xs text-[#64748b]">
+                Status wilayah: {campaign.school.is_3t === true
+                  ? campaign.school.status_3t_detail || "3T terverifikasi"
+                  : campaign.school.is_3t === false
+                    ? "Bukan wilayah 3T"
+                    : "Data belum tersedia"}
+              </p>
+            )}
             <div className="mt-6 h-2 overflow-hidden rounded-full bg-[#e9edf2]">
               <div
                 className="h-full bg-[#2d83c6]"
@@ -306,10 +337,10 @@ export default function CampaignDetail() {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-blue-200 pb-4">
             <div>
               <span className="inline-block rounded bg-blue-700 px-2.5 py-1 text-xs font-bold text-white uppercase tracking-wider">
-                Identitas Resmi Government
+                Identitas Sekolah
               </span>
               <h2 className="mt-2 text-2xl font-bold text-[#17365d]">
-                Data Induk Sekolah (Kemendikdasmen)
+                Data Sekolah
               </h2>
             </div>
             <div className="text-right text-xs text-blue-900">
@@ -520,7 +551,11 @@ export default function CampaignDetail() {
           <h2 className="font-display text-2xl text-[#17365d]">
             Donasi terbaru
           </h2>
-          {donations.length === 0 ? (
+          {donationLoadError ? (
+            <p role="alert" className="mt-3 text-sm text-rose-700">
+              Riwayat donasi tidak dapat dimuat: {donationLoadError}
+            </p>
+          ) : donations.length === 0 ? (
             <p className="mt-3 text-sm text-[#718096]">
               Belum ada donasi. Jadilah yang pertama membantu kebutuhan ini.
             </p>
@@ -573,10 +608,14 @@ export default function CampaignDetail() {
         )}
 
         <section className="mt-12 border-t border-[#e5e9ee] pt-8">
-          <h2 className="font-display text-2xl text-[#17365d]">
+          <h2 id="laporan-dampak" className="font-display text-2xl text-[#17365d]">
             Laporan dampak
           </h2>
-          {reports.length === 0 ? (
+          {reportLoadError ? (
+            <p role="alert" className="mt-3 text-sm text-rose-700">
+              Laporan penggunaan dana tidak dapat dimuat: {reportLoadError}
+            </p>
+          ) : reports.length === 0 ? (
             <p className="mt-3 text-sm text-[#718096]">
               Belum ada laporan dari sekolah untuk kebutuhan ini.
             </p>
