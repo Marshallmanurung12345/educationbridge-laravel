@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Campaign;
+use App\Models\Donation;
 use App\Models\School;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -185,6 +186,44 @@ class AuthWorkflowTest extends TestCase
             ->assertJsonCount(0);
         $this->getJson("/api/campaigns/{$campaign->id}")
             ->assertNotFound();
+    }
+
+    public function test_public_campaign_and_donation_responses_hide_user_identity(): void
+    {
+        $school = $this->createSchool();
+        $donor = $this->createUser('individu', 'donor@example.test');
+        $campaign = Campaign::create([
+            'user_id' => $donor->id,
+            'school_id' => $school->id,
+            'school_name' => $school->name,
+            'location' => 'Kabupaten Contoh',
+            'category' => 'Fasilitas',
+            'title' => 'Kebutuhan sekolah terverifikasi',
+            'description' => 'Campaign yang boleh dilihat publik.',
+            'target_amount' => 10000000,
+            'status' => 'verified',
+        ]);
+        Donation::create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $donor->id,
+            'donor_name' => 'Nama Donatur Rahasia',
+            'donor_type' => 'individu',
+            'amount' => 10000,
+            'message' => 'Pesan pribadi',
+        ]);
+
+        $this->getJson('/api/campaigns?status=verified')
+            ->assertOk()
+            ->assertJsonMissingPath('0.user');
+        $this->getJson("/api/campaigns/{$campaign->id}")
+            ->assertOk()
+            ->assertJsonMissingPath('user');
+        $this->getJson("/api/campaigns/{$campaign->id}/donations")
+            ->assertOk()
+            ->assertJsonPath('0.amount', 10000)
+            ->assertJsonMissingPath('0.user_id')
+            ->assertJsonMissingPath('0.donor_name')
+            ->assertJsonMissingPath('0.message');
     }
 
     private function createSchool(): School
