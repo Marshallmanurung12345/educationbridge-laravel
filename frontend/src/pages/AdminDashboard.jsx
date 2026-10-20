@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, formatRupiah } from "../api";
+import dashboardImage from "../assets/image.png";
 
 const statusConfig = {
   pending: {
@@ -83,7 +84,13 @@ export default function AdminDashboard() {
   return (
     <main className="min-h-screen bg-[#f8fafc] text-[#1e293b] pb-16">
       {/* HEADER PANEL VERIFIKASI ADMIN */}
-      <div className="bg-[#0f172a] text-white border-b border-slate-800">
+      <div
+        className="border-b border-slate-800 bg-[#0f172a] bg-cover bg-center text-white"
+        style={{
+          backgroundImage: `linear-gradient(90deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.72)), url("${dashboardImage}")`,
+          backgroundPosition: "center 55%",
+        }}
+      >
         <div className="mx-auto max-w-[1280px] px-5 py-8 sm:px-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>

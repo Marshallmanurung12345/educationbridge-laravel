@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
 import { useAuth } from "../context/AuthContext";
+import dashboardImage from "../assets/image.png";
 
 const fallbackCampaigns = [
   {
@@ -90,23 +91,29 @@ export default function PerusahaanDashboard() {
   return (
     <main className="min-h-screen bg-[#f5f7fa] pb-16 text-[#1e293b]">
       <div className="mx-auto max-w-[1120px] px-5 sm:px-8">
-        <header className="border-b border-[#e1e6ec] py-8 sm:py-10">
+        <header
+          className="border-b border-[#29496f] bg-[#17345b] bg-cover bg-center px-5 py-8 text-white sm:px-8 sm:py-10"
+          style={{
+            backgroundImage: `linear-gradient(90deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.72)), url("${dashboardImage}")`,
+            backgroundPosition: "center 55%",
+          }}
+        >
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#9a6b1c]">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#ffbd78]">
                 Dashboard Perusahaan
               </p>
-              <h1 className="mt-2 font-display text-3xl font-semibold text-[#17365d] sm:text-4xl">
+              <h1 className="mt-2 font-display text-3xl font-semibold text-white sm:text-4xl">
                 Program CSR
               </h1>
-              <p className="mt-2 text-sm text-[#64748b]">
+              <p className="mt-2 text-sm text-white/85">
                 {companyName} <span aria-hidden="true">·</span> Pilih kebutuhan
                 sekolah yang ingin Anda dukung.
               </p>
             </div>
             <Link
               to="/cocok"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#17365d] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#214675]"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#f28c28] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#dc7616]"
             >
               Cari program <span aria-hidden="true">→</span>
             </Link>
