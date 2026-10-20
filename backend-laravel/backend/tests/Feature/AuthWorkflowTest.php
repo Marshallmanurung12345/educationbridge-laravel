@@ -156,6 +156,51 @@ class AuthWorkflowTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_admin_dashboard_stats_are_real_and_admin_only(): void
+    {
+        $school = $this->createSchool();
+        $this->createSchoolAccount($school->npsn);
+        $verifiedAccount = $this->createSchoolAccount('87654321');
+        $verifiedAccount->account_status = 'verified';
+        $verifiedAccount->save();
+        $owner = $this->createUser('sekolah', 'campaign-owner@example.test');
+        Campaign::create([
+            'user_id' => $owner->id,
+            'school_name' => $school->name,
+            'location' => 'Papua',
+            'category' => 'Fasilitas',
+            'title' => 'Pengajuan menunggu',
+            'description' => 'Menunggu tinjauan admin.',
+            'target_amount' => 1000000,
+            'status' => 'pending',
+        ]);
+        Campaign::create([
+            'user_id' => $owner->id,
+            'school_name' => $school->name,
+            'location' => 'Papua',
+            'category' => 'Fasilitas',
+            'title' => 'Kampanye aktif',
+            'description' => 'Sudah disetujui.',
+            'target_amount' => 1000000,
+            'status' => 'verified',
+        ]);
+
+        $admin = $this->createUser('admin', 'admin@example.test');
+        $this->actingAs($admin, 'sanctum')
+            ->getJson('/api/admin/stats')
+            ->assertOk()
+            ->assertExactJson([
+                'pendingSchoolAccounts' => 1,
+                'pendingCampaigns' => 1,
+                'verifiedSchoolAccounts' => 2,
+                'activeCampaigns' => 1,
+            ]);
+
+        $this->actingAs($owner, 'sanctum')
+            ->getJson('/api/admin/stats')
+            ->assertForbidden();
+    }
+
     public function test_pending_school_cannot_submit_a_campaign(): void
     {
         $school = $this->createSchool();

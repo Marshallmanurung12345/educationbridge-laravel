@@ -168,7 +168,7 @@ export default function Nav() {
                 href={to}
                 className="border-b-2 border-transparent px-2.5 py-2 text-[13px] font-medium text-white/90 transition-colors hover:border-[#f28c28] hover:text-white"
               >
-                {nav[key]}
+                {isAdmin ? linkText(key) : nav[key]}
               </a>
             ) : (
               <NavLink
@@ -183,7 +183,7 @@ export default function Nav() {
                   }`
                 }
               >
-                {nav[key]}
+                {isAdmin ? linkText(key) : nav[key]}
               </NavLink>
             ),
           )}
