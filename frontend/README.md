@@ -1,16 +1,82 @@
-# React + Vite
+# EducationBridge
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+EducationBridge adalah aplikasi web untuk menghubungkan sekolah, donatur, perusahaan, dan pemerintah dalam mendukung kebutuhan pendidikan.
 
-Currently, two official plugins are available:
+## Persyaratan
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- PHP 8.3 atau lebih baru
+- Composer
+- Node.js 20.19+ atau 22.12+, beserta npm
 
-## React Compiler
+## Menjalankan aplikasi
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Aplikasi terdiri dari backend Laravel dan frontend React. Jalankan backend dan frontend di **dua terminal terpisah** dari direktori utama repository.
 
-## Expanding the Oxlint configuration
+### 1. Menyiapkan backend (pertama kali)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+Di terminal pertama, jalankan dari direktori utama repository:
+
+```powershell
+cd backend-laravel\backend
+composer install
+
+if (-not (Test-Path .env)) {
+    Copy-Item .env.example .env
+}
+
+php artisan key:generate
+
+if (-not (Test-Path database\database.sqlite)) {
+    New-Item -ItemType File -Path database\database.sqlite
+}
+
+php artisan migrate --seed
+```
+
+`composer install` memasang dependensi PHP dan biasanya cukup dijalankan sekali. Lewati jika folder `vendor` sudah tersedia. Penyalinan `.env`, pembuatan app key, dan pembuatan file SQLite juga merupakan setup awal. Jalankan `php artisan migrate --seed` saat pertama menyiapkan database atau ketika database perlu dibuat ulang.
+
+### 2. Menjalankan backend
+
+Setelah setup awal selesai, jalankan backend di terminal pertama:
+
+```powershell
+cd backend-laravel\backend
+php artisan serve --host 127.0.0.1 --port 8000
+```
+
+Backend berjalan di `http://127.0.0.1:8000`. Biarkan terminal ini tetap terbuka.
+
+### 3. Menyiapkan dan menjalankan frontend
+
+Di terminal kedua, jalankan dari direktori utama repository:
+
+```powershell
+cd frontend
+
+if (-not (Test-Path .env)) {
+    Copy-Item .env.example .env
+}
+
+npm install
+```
+
+`npm install` cukup dijalankan saat pertama kali atau ketika dependensi frontend berubah. Untuk menjalankan frontend, gunakan:
+
+```powershell
+cd frontend
+npm run dev
+```
+
+Buka alamat yang ditampilkan Vite, biasanya `http://localhost:5173`. Biarkan terminal frontend tetap terbuka dan pastikan backend juga berjalan agar fitur yang menggunakan API dapat digunakan.
+
+Frontend menggunakan `VITE_API_URL` untuk menentukan alamat backend. Nilai bawaan di `.env.example` adalah `http://localhost:8000`. Ubah nilai tersebut jika backend berjalan di alamat atau port lain, lalu jalankan ulang server frontend.
+
+## Build frontend
+
+Untuk membuat build produksi frontend:
+
+```powershell
+npm run build
+```
+
+Hasil build akan tersedia di folder `dist`.

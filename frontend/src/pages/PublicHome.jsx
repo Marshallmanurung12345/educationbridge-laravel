@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
+import heroImage from "../assets/sekolah1.jpeg";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -14,16 +15,13 @@ function resolveImageUrl(value) {
   }
 }
 
-function formatDate(value) {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-
-  return date.toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+function hasNumber(value) {
+  return (
+    value !== null &&
+    value !== undefined &&
+    value !== "" &&
+    Number.isFinite(Number(value))
+  );
 }
 
 function campaignLocation(campaign) {
@@ -39,140 +37,161 @@ function campaignLocation(campaign) {
   return officialLocation || campaign.location || "Lokasi belum tersedia";
 }
 
-function priorityLabel(campaign, score) {
-  if (campaign.priority_label) return campaign.priority_label;
-  if (score >= 80) return "Sangat Prioritas";
-  if (score >= 60) return "Prioritas Tinggi";
-  if (score >= 40) return "Prioritas Sedang";
-  return "Prioritas Standar";
+function campaignProgress(campaign) {
+  if (hasNumber(campaign.progress_percent)) {
+    return Math.min(100, Math.max(0, Number(campaign.progress_percent)));
+  }
+
+  if (
+    hasNumber(campaign.raised_amount) &&
+    hasNumber(campaign.target_amount) &&
+    Number(campaign.target_amount) > 0
+  ) {
+    return Math.min(
+      100,
+      Math.max(
+        0,
+        Math.round(
+          (Number(campaign.raised_amount) / Number(campaign.target_amount)) *
+            100,
+        ),
+      ),
+    );
+  }
+
+  return null;
 }
 
-function priorityStyle(score) {
-  if (score >= 80) return "bg-[#fae8e6] text-[#a63c32]";
-  if (score >= 60) return "bg-[#fff1dc] text-[#9a5b10]";
-  if (score >= 40) return "bg-[#e8eef7] text-[#34567e]";
-  return "bg-[#eef0f2] text-[#52606d]";
-}
-
-function CampaignPhoto({ imageUrl, title, className = "" }) {
+function CampaignPhoto({ imageUrl, title }) {
   const [failed, setFailed] = useState(false);
   const source = resolveImageUrl(imageUrl);
 
-  if (source && !failed) {
+  if (!source || failed) {
     return (
-      <img
-        src={source}
-        alt={`Dokumentasi: ${title}`}
-        className={`${className} object-cover`}
-        onError={() => setFailed(true)}
-      />
+      <div
+        role="img"
+        aria-label={`Foto dokumentasi belum tersedia untuk ${title}`}
+        className="flex aspect-[16/9] w-full items-center justify-center bg-[#edf1f4] px-4 text-center"
+      >
+        <div>
+          <span
+            aria-hidden="true"
+            className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white text-xl text-[#526a83]"
+          >
+            ▧
+          </span>
+          <span className="text-xs font-medium text-[#64748b]">
+            Foto kebutuhan belum tersedia
+          </span>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div
-      role="img"
-      aria-label={`Foto dokumentasi belum tersedia untuk ${title}`}
-      className={`${className} flex items-center justify-center bg-[#edf0f2] px-4 text-center`}
-    >
-      <div>
-        <span
-          aria-hidden="true"
-          className="mx-auto mb-2 flex h-9 w-9 items-center justify-center border border-[#cbd3dc] text-lg text-[#718096]"
-        >
-          ▧
-        </span>
-        <span className="text-xs font-medium text-[#64748b]">
-          Foto dokumentasi belum tersedia
-        </span>
-      </div>
-    </div>
+    <img
+      src={source}
+      alt={`Dokumentasi kebutuhan: ${title}`}
+      className="aspect-[16/9] w-full object-cover"
+      onError={() => setFailed(true)}
+    />
   );
 }
 
 function NeedCard({ campaign }) {
-  const score = Number(campaign.priority_score) || 0;
-  const target = Number(campaign.target_amount) || 0;
-  const raised = Number(campaign.raised_amount) || 0;
-  const progress = Math.min(
-    100,
-    Math.max(
-      0,
-      Number(
-        campaign.progress_percent ??
-          (target > 0 ? Math.round((raised / target) * 100) : 0),
-      ),
-    ),
-  );
+  const progress = campaignProgress(campaign);
+  const hasAmounts =
+    hasNumber(campaign.raised_amount) && hasNumber(campaign.target_amount);
+  const score = hasNumber(campaign.priority_score)
+    ? Number(campaign.priority_score)
+    : null;
+  const schoolName =
+    campaign.school?.name ||
+    campaign.school_name ||
+    "Nama sekolah belum tersedia";
 
   return (
-    <Link
-      to={`/kampanye/${campaign.id}`}
-      className="group min-w-0 overflow-hidden border border-[#e2e8ef] bg-white transition-colors hover:border-[#b9c6d5] focus-visible:outline-offset-4"
-    >
-      <CampaignPhoto
-        imageUrl={campaign.image_url}
-        title={campaign.title}
-        className="aspect-[16/9] w-full"
-      />
-      <div className="p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-[#526a83]">
-            {campaign.category || "Kategori belum tersedia"}
+    <article className="group min-w-0 overflow-hidden rounded-xl border border-[#e5eaf0] bg-white shadow-[0_2px_10px_rgba(23,52,91,0.05)] transition-shadow hover:shadow-[0_8px_24px_rgba(23,52,91,0.11)]">
+      <Link
+        to={`/kampanye/${campaign.id}`}
+        aria-label={`Lihat kebutuhan: ${campaign.title}`}
+        className="relative block overflow-hidden focus-visible:outline-offset-[-3px]"
+      >
+        <CampaignPhoto imageUrl={campaign.image_url} title={campaign.title} />
+        {score !== null && (
+          <span className="absolute right-3 top-3 rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-semibold text-[#17345b] shadow-sm">
+            {campaign.priority_label || "Priority Score"} · {score}/100
           </span>
-          <span
-            className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${priorityStyle(score)}`}
-          >
-            {priorityLabel(campaign, score)}
-          </span>
-        </div>
-        <h3 className="mt-3 min-h-[48px] font-display text-lg leading-6 text-[#17365d]">
+        )}
+      </Link>
+
+      <div className="p-4 sm:p-5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#a96517]">
+          {campaign.category || "Kategori belum tersedia"}
+        </p>
+        <h3 className="mt-2 line-clamp-2 min-h-12 text-base font-semibold leading-6 text-[#17345b] sm:text-[17px]">
           {campaign.title}
         </h3>
-        <p className="mt-2 text-sm font-medium text-[#34465d]">
-          {campaign.school?.name || campaign.school_name}
+        <p className="mt-2 truncate text-sm font-medium text-[#34465d]">
+          {schoolName}
         </p>
-        <p className="mt-1 min-h-8 text-xs leading-4 text-[#718096]">
-          {campaignLocation(campaign)}
-        </p>
-
-        <div className="mt-3 flex items-center justify-between border-t border-[#edf0f4] pt-3 text-xs">
-          <span className="text-[#64748b]">Priority Score</span>
-          <span className="font-semibold text-[#17365d]">{score}/100</span>
-        </div>
-
-        <div className="mt-3">
-          <div
-            className="h-1.5 overflow-hidden rounded-full bg-[#edf0f4]"
-            role="progressbar"
-            aria-label={`Dana terkumpul untuk ${campaign.title}`}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={progress}
+        <p className="mt-1 flex min-h-9 items-start gap-1.5 text-xs leading-5 text-[#718096]">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 20 20"
+            className="mt-0.5 h-4 w-4 shrink-0 fill-current"
           >
+            <path d="M10 1.8a6.2 6.2 0 0 0-6.2 6.2c0 4.3 6.2 10.2 6.2 10.2s6.2-5.9 6.2-10.2A6.2 6.2 0 0 0 10 1.8Zm0 8.7a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z" />
+          </svg>
+          <span>{campaignLocation(campaign)}</span>
+        </p>
+
+        {progress !== null ? (
+          <div className="mt-3">
             <div
-              className="h-full rounded-full bg-[#17365d]"
-              style={{ width: `${progress}%` }}
-            />
+              className="h-2 overflow-hidden rounded-full bg-[#edf0f4]"
+              role="progressbar"
+              aria-label={`Progress donasi untuk ${campaign.title}`}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progress}
+            >
+              <div
+                className="h-full rounded-full bg-[#f28c28]"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-[#718096]">
+              <span>{hasAmounts ? `${progress}% terkumpul` : `${progress}%`}</span>
+              {hasAmounts && (
+                <span className="font-medium text-[#17345b]">
+                  Target {formatRupiah(campaign.target_amount)}
+                </span>
+              )}
+            </div>
+            {hasAmounts && (
+              <p className="mt-1 text-xs text-[#64748b]">
+                <strong className="font-semibold text-[#17345b]">
+                  {formatRupiah(campaign.raised_amount)}
+                </strong>{" "}
+                terkumpul
+              </p>
+            )}
           </div>
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[11px] text-[#64748b]">
-            <span>
-              <strong className="font-semibold text-[#34465d]">
-                {formatRupiah(raised)}
-              </strong>{" "}
-              terkumpul
-            </span>
-            <span>{progress}%</span>
-          </div>
-          <p className="mt-1 text-[11px] text-[#64748b]">
-            Target {formatRupiah(target)}
+        ) : (
+          <p className="mt-3 text-xs text-[#718096]">
+            Informasi donasi belum tersedia.
           </p>
-        </div>
-        <span className="mt-4 block text-sm font-semibold text-[#2767b1]">
-          Lihat kebutuhan <span aria-hidden="true">→</span>
-        </span>
+        )}
+
+        <Link
+          to={`/kampanye/${campaign.id}`}
+          className="mt-4 inline-flex min-h-10 items-center text-sm font-semibold text-[#17345b] transition-colors group-hover:text-[#c56c13]"
+        >
+          Lihat Kebutuhan <span aria-hidden="true" className="ml-1">→</span>
+        </Link>
       </div>
-    </Link>
+    </article>
   );
 }
 
@@ -180,6 +199,7 @@ export default function PublicHome() {
   const [needs, setNeeds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -199,118 +219,75 @@ export default function PublicHome() {
     return () => {
       isMounted = false;
     };
-  }, []);
-
-  const heroCampaign = needs.find((campaign) => campaign.image_url) || needs[0];
-  const schoolSources = [
-    ...new Set(
-      needs.map((campaign) => campaign.school?.data_source).filter(Boolean),
-    ),
-  ];
+  }, [retryCount]);
 
   return (
-    <div className="bg-[#faf9f6] text-[#23364f]">
+    <div className="bg-white text-[#17345b]">
       <main>
-        <section className="px-5 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12">
-          <div className="mx-auto grid max-w-[1200px] items-center gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#718096]">
-                Pendidikan untuk semua, tanpa batas
-              </p>
-              <h1 className="mt-4 max-w-[520px] font-display text-4xl leading-[1.08] text-[#17365d] sm:text-5xl lg:text-[3.5rem]">
-                Setiap sekolah punya kebutuhan.{" "}
-                <span className="text-[#c47d20]">Mari bantu bersama.</span>
-              </h1>
-              <p className="mt-5 max-w-[500px] text-[15px] leading-7 text-[#5d7087]">
-                EducationBridge menghubungkan sekolah yang membutuhkan dukungan
-                dengan individu, perusahaan, dan mitra untuk menciptakan
-                kesempatan pendidikan yang lebih merata.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link
-                  to="/kampanye"
-                  className="inline-flex min-h-11 items-center rounded-lg bg-[#17365d] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#245083]"
-                >
-                  Jelajahi Kebutuhan
-                </Link>
-                <Link
-                  to="/ajukan"
-                  className="inline-flex min-h-11 items-center rounded-lg border border-[#cbd3dc] px-4 py-2.5 text-sm font-semibold text-[#17365d] transition-colors hover:bg-white"
-                >
-                  Ajukan Kebutuhan
-                </Link>
-              </div>
-
-              <div className="mt-7 grid grid-cols-3 gap-3 border-t border-[#e5e9ee] pt-5">
-                {[
-                  ["▤", "Data Pendidikan", "Sumber data tersedia"],
-                  ["✓", "Tepat Sasaran", "Prioritas kebutuhan"],
-                  ["↔", "Kolaborasi", "Sekolah dan mitra"],
-                ].map(([icon, title, detail]) => (
-                  <div key={title} className="min-w-0">
-                    <span
-                      aria-hidden="true"
-                      className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#f4ead7] text-sm font-semibold text-[#9a6b1c]"
-                    >
-                      {icon}
-                    </span>
-                    <p className="text-xs font-semibold text-[#17365d]">
-                      {title}
-                    </p>
-                    <p className="mt-1 text-[10px] leading-4 text-[#718096]">
-                      {detail}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="min-w-0">
-              <figure className="overflow-hidden rounded-lg border border-[#e2e8ef] bg-white">
-                <CampaignPhoto
-                  imageUrl={heroCampaign?.image_url}
-                  title={heroCampaign?.title || "sekolah"}
-                  className="aspect-[16/10] w-full"
-                />
-                <figcaption className="flex flex-wrap justify-between gap-x-4 gap-y-1 border-t border-[#e2e8ef] px-3 py-2 text-[11px] text-[#64748b]">
-                  <span>
-                    {heroCampaign?.image_url
-                      ? "Foto dokumentasi kebutuhan"
-                      : "Dokumentasi sekolah belum tersedia"}
-                  </span>
-                  {heroCampaign && (
-                    <>
-                      <span>{campaignLocation(heroCampaign)}</span>
-                      {formatDate(heroCampaign.updated_at) && (
-                        <span>
-                          Kebutuhan diperbarui{" "}
-                          {formatDate(heroCampaign.updated_at)}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </figcaption>
-              </figure>
+        <section
+          aria-labelledby="hero-title"
+          className="relative flex min-h-[450px] items-center justify-center bg-cover bg-center px-5 py-14 text-center sm:min-h-[430px] sm:px-8 sm:py-16"
+          style={{
+            backgroundImage: `linear-gradient(rgba(10, 24, 42, 0.62), rgba(10, 24, 42, 0.68)), url("${heroImage}")`,
+            backgroundPosition: "center 52%",
+          }}
+        >
+          <div className="mx-auto w-full max-w-[900px] text-white">
+            <h1
+              id="hero-title"
+              className="mx-auto max-w-[800px] text-3xl font-semibold leading-tight tracking-[-0.025em] sm:text-4xl lg:text-[3.25rem]"
+            >
+              Bersama, Wujudkan{" "}
+              <span className="text-[#ffad55]">
+                Pendidikan yang Lebih Baik
+              </span>{" "}
+              di Wilayah 3T
+            </h1>
+            <p className="mx-auto mt-5 max-w-[690px] text-sm leading-6 text-white/90 sm:text-base sm:leading-7">
+              Dukung sekolah-sekolah di daerah tertinggal, terdepan, dan terluar
+              agar setiap anak memiliki kesempatan belajar yang lebih layak.
+            </p>
+            <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link
+                to="/ajukan"
+                className="inline-flex min-h-12 items-center justify-center rounded-lg bg-[#f28c28] px-8 text-sm font-semibold text-white transition-colors hover:bg-[#dc7616] focus-visible:outline-white"
+              >
+                Galang Dana
+              </Link>
+              <Link
+                to="/kampanye"
+                className="inline-flex min-h-12 items-center justify-center rounded-lg border border-white/80 bg-[#17345b]/55 px-8 text-sm font-semibold text-white transition-colors hover:bg-[#17345b]/85 focus-visible:outline-white"
+              >
+                Donasi
+              </Link>
             </div>
           </div>
         </section>
 
-        <section className="bg-white px-5 py-10 sm:px-8 lg:px-12 lg:py-12">
+        <section
+          id="kebutuhan"
+          aria-labelledby="needs-title"
+          className="scroll-mt-20 bg-[#f8fafc] px-5 py-9 sm:px-8 sm:py-11 lg:px-12"
+        >
           <div className="mx-auto max-w-[1200px]">
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
               <div>
-                <h2 className="font-display text-3xl leading-tight text-[#17365d]">
-                  Kebutuhan yang perlu diperhatikan
+                <h2
+                  id="needs-title"
+                  className="text-2xl font-semibold leading-tight text-[#17345b] sm:text-[28px]"
+                >
+                  Kebutuhan yang Perlu Diperhatikan
                 </h2>
-                <p className="mt-2 text-sm text-[#687b90]">
+                <p className="mt-2 text-sm leading-6 text-[#687b90]">
                   Beberapa kebutuhan sekolah yang membutuhkan dukungan lebih
                   cepat.
                 </p>
               </div>
               <Link
                 to="/kampanye"
-                className="text-sm font-semibold text-[#2767b1] hover:text-[#17365d]"
+                className="inline-flex min-h-10 shrink-0 items-center text-sm font-semibold text-[#17345b] hover:text-[#c56c13]"
               >
-                Lihat semua kebutuhan <span aria-hidden="true">→</span>
+                Lihat Semua Kebutuhan <span aria-hidden="true" className="ml-1">→</span>
               </Link>
             </div>
 
@@ -319,42 +296,48 @@ export default function PublicHome() {
                 Memuat kebutuhan sekolah...
               </p>
             ) : loadFailed ? (
-              <p className="py-10 text-sm text-[#687b90]" role="status">
-                Kebutuhan sekolah belum dapat dimuat. Coba lagi nanti.
-              </p>
+              <div className="py-10 text-sm text-[#687b90]" role="alert">
+                <p>Kebutuhan sekolah belum dapat dimuat.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoading(true);
+                    setLoadFailed(false);
+                    setRetryCount((count) => count + 1);
+                  }}
+                  className="mt-2 font-semibold text-[#17345b] underline underline-offset-2"
+                >
+                  Coba lagi
+                </button>
+              </div>
             ) : needs.length === 0 ? (
               <p className="py-10 text-sm text-[#687b90]" role="status">
-                Belum ada kebutuhan terverifikasi yang dapat ditampilkan.
+                Belum ada kebutuhan sekolah terverifikasi untuk ditampilkan.
               </p>
             ) : (
-              <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {needs.map((campaign) => (
                   <NeedCard key={campaign.id} campaign={campaign} />
                 ))}
               </div>
             )}
-
-            {needs.length > 0 && (
-              <p className="mt-4 border-t border-[#e5e9ee] pt-3 text-[11px] leading-5 text-[#718096]">
-                {schoolSources.length > 0
-                  ? `Sumber identitas sekolah: ${schoolSources.join(", ")}. `
-                  : "Sumber identitas sekolah mengikuti data yang tersedia. "}
-                Foto ditampilkan hanya jika dokumentasi tersedia pada campaign.
-              </p>
-            )}
           </div>
         </section>
 
-        <section className="px-5 py-10 sm:px-8 lg:px-12">
-          <div className="mx-auto flex max-w-[1200px] flex-col items-start justify-between gap-5 border-t border-[#dce5ee] pt-8 sm:flex-row sm:items-center">
-            <h2 className="max-w-xl font-display text-2xl leading-tight text-[#17365d] sm:text-3xl">
-              Karena setiap anak berhak belajar di tempat yang layak.
+        <section
+          id="dampak"
+          className="scroll-mt-20 bg-white px-5 py-8 sm:px-8 lg:px-12"
+        >
+          <div className="mx-auto flex max-w-[1200px] flex-col items-start justify-between gap-4 border-t border-[#e5eaf0] pt-7 sm:flex-row sm:items-center">
+            <h2 className="max-w-xl text-xl font-semibold leading-snug text-[#17345b] sm:text-2xl">
+              Bersama, buka kesempatan belajar yang lebih layak bagi anak-anak
+              di wilayah 3T.
             </h2>
             <Link
               to="/kampanye"
-              className="inline-flex min-h-11 shrink-0 items-center rounded-lg bg-[#17365d] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#245083]"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-[#17345b] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#234a78]"
             >
-              Jelajahi Kebutuhan
+              Dukung Kebutuhan Sekolah
             </Link>
           </div>
         </section>
