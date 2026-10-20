@@ -42,7 +42,12 @@ class CampaignController extends Controller
             default => $query->orderByDesc('priority_score'),
         };
 
-        return response()->json($query->get());
+        $campaigns = $query->get();
+        if ($request->user()?->role !== 'admin') {
+            $campaigns->each(fn (Campaign $campaign) => $campaign->makeHidden('user_id'));
+        }
+
+        return response()->json($campaigns);
     }
 
     // School accounts must be verified; donors may submit on behalf of a school.
@@ -164,6 +169,8 @@ class CampaignController extends Controller
         $campaign->load('school');
         if ($user?->role === 'admin' || $user?->id === $campaign->user_id) {
             $campaign->load('user:id,name,email,role,organization_name,phone');
+        } else {
+            $campaign->makeHidden('user_id');
         }
 
         return response()->json($campaign);

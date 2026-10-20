@@ -16,7 +16,6 @@ const roleLinks = {
     ["admin", "/admin"],
     ["schoolAccounts", "/admin/akun-sekolah"],
     ["auditLogs", "/admin/audit-log"],
-    ["allNeeds", "/kampanye"],
   ],
   sekolah: [
     ["school", "/ajukan"],
@@ -113,10 +112,13 @@ export default function Nav() {
   const { nav } = translations;
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isAdmin = user?.role === "admin";
+  const primaryLinks = isAdmin ? roleLinks.admin : publicLinks;
   const userRoleLinks =
     user?.role === "sekolah" && user.account_status !== "verified"
       ? [["schoolStatus", "/status-verifikasi"], ["browse", "/kampanye"]]
       : roleLinks[user?.role] || [];
+  const profileLinks = isAdmin ? [] : userRoleLinks;
 
   async function onLogout() {
     await logout();
@@ -136,7 +138,7 @@ export default function Nav() {
     <header className="sticky top-0 z-30 border-b border-[#29496f] bg-[#17345b]">
       <div className="mx-auto flex min-h-[68px] w-full max-w-[1280px] items-center justify-between gap-3 px-4 sm:gap-4 sm:px-8 lg:px-10">
         <Link
-          to="/"
+          to={isAdmin ? "/admin" : "/"}
           onClick={closeMobileMenu}
           className="flex shrink-0 items-center gap-2.5"
         >
@@ -159,7 +161,7 @@ export default function Nav() {
           aria-label={nav.primaryNavigation}
           className="hidden items-center gap-1 lg:flex"
         >
-          {publicLinks.map(([key, to]) =>
+          {primaryLinks.map(([key, to]) =>
             key === "impact" ? (
               <a
                 key={key}
@@ -214,7 +216,7 @@ export default function Nav() {
                   </span>
                 </summary>
                 <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-[#e5eaf0] bg-white p-2 shadow-lg">
-                  {userRoleLinks.map(([key, to]) => (
+                  {profileLinks.map(([key, to]) => (
                     <Link
                       key={to}
                       to={to}
@@ -279,7 +281,7 @@ export default function Nav() {
             aria-label={nav.mobileNavigation}
             className="mx-auto max-w-[1280px]"
           >
-            {publicLinks.map(([key, to]) =>
+            {primaryLinks.map(([key, to]) =>
               key === "impact" ? (
                 <a
                   key={key}
@@ -319,7 +321,7 @@ export default function Nav() {
                   </span>
                   <NotificationMenu user={user} />
                 </div>
-                {userRoleLinks.map(([key, to]) => (
+                {profileLinks.map(([key, to]) => (
                   <NavLink
                     key={to}
                     to={to}

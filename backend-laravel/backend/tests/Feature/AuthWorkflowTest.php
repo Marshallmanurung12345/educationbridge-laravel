@@ -70,6 +70,45 @@ class AuthWorkflowTest extends TestCase
         }
     }
 
+    public function test_registered_donor_can_log_in_and_logout_revokes_the_token(): void
+    {
+        $user = $this->createUser('individu', 'donor@example.test');
+
+        $login = $this->postJson('/api/login', [
+            'email' => 'DONOR@example.test',
+            'password' => 'strong-password',
+        ])->assertOk()
+            ->assertJsonPath('user.role', 'individu');
+
+        $token = $login->json('token');
+        $this->withToken($token)
+            ->postJson('/api/logout')
+            ->assertOk();
+
+        $this->assertDatabaseMissing('personal_access_tokens', [
+            'tokenable_id' => $user->id,
+        ]);
+    }
+
+    public function test_school_profile_update_cannot_change_role_or_verify_itself(): void
+    {
+        $account = $this->createSchoolAccount('99999999');
+
+        $this->actingAs($account, 'sanctum')
+            ->putJson('/api/school-account', [
+                'name' => 'Kepala Sekolah Baru',
+                'email' => 'updated-school@example.test',
+                'organization_name' => 'SD Contoh',
+                'npsn' => '99999999',
+                'phone' => '081234567890',
+                'role' => 'admin',
+                'account_status' => 'verified',
+            ])
+            ->assertOk()
+            ->assertJsonPath('role', 'sekolah')
+            ->assertJsonPath('account_status', 'pending_verification');
+    }
+
     public function test_admin_can_verify_a_school_with_an_official_npsn_and_action_is_audited(): void
     {
         $school = $this->createSchool();
@@ -214,10 +253,12 @@ class AuthWorkflowTest extends TestCase
 
         $this->getJson('/api/campaigns?status=verified')
             ->assertOk()
-            ->assertJsonMissingPath('0.user');
+            ->assertJsonMissingPath('0.user')
+            ->assertJsonMissingPath('0.user_id');
         $this->getJson("/api/campaigns/{$campaign->id}")
             ->assertOk()
-            ->assertJsonMissingPath('user');
+            ->assertJsonMissingPath('user')
+            ->assertJsonMissingPath('user_id');
         $this->getJson("/api/campaigns/{$campaign->id}/donations")
             ->assertOk()
             ->assertJsonPath('0.amount', 10000)

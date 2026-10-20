@@ -80,3 +80,5 @@ npm run build
 ```
 
 Hasil build akan tersedia di folder `dist`.
+
+

@@ -1,5 +1,6 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Navigate, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Nav from "./components/Nav";
 import Footer from "./components/Footer";
@@ -19,19 +20,36 @@ import SchoolAccountReview from "./pages/SchoolAccountReview";
 import AuditLogPage from "./pages/AuditLogPage";
 
 export default function App() {
-  const location = useLocation();
-  const isAuthPage = ["/masuk", "/daftar", "/status-verifikasi"].includes(location.pathname);
-
   return (
     <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
+function AppContent() {
+  const location = useLocation();
+  const { user, ready } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const isAuthPage = ["/masuk", "/daftar", "/status-verifikasi"].includes(location.pathname);
+  const publicPage = (page) => {
+    if (!ready) return null;
+    return isAdmin ? <Navigate to="/admin" replace /> : page;
+  };
+
+  return (
+    <>
       <WelcomeOverlay />
       <div className="min-h-screen flex flex-col">
         <Nav />
         <main className="flex-1">
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/kampanye" element={<Campaigns />} />
-            <Route path="/kampanye/:id" element={<CampaignDetail />} />
+            <Route path="/" element={publicPage(<Home />)} />
+            <Route path="/kampanye" element={publicPage(<Campaigns />)} />
+            <Route
+              path="/kampanye/:id"
+              element={publicPage(<CampaignDetail />)}
+            />
             <Route path="/masuk" element={<Login />} />
             <Route path="/daftar" element={<Register />} />
             <Route
@@ -105,8 +123,8 @@ export default function App() {
             />
           </Routes>
         </main>
-        {!isAuthPage && <Footer />}
+        {!isAuthPage && !isAdmin && <Footer />}
       </div>
-    </AuthProvider>
+    </>
   );
 }

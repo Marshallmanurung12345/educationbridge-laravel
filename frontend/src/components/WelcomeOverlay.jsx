@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.png";
 import anaksd from "../assets/anaksd.png";
 
 export default function WelcomeOverlay() {
+  const { user, ready } = useAuth();
   const [show, setShow] = useState(
     () => sessionStorage.getItem("eb_global_welcome_seen") !== "true",
   );
@@ -26,7 +28,7 @@ export default function WelcomeOverlay() {
     setShow(false);
   }
 
-  if (!show) return null;
+  if (!ready || user?.role === "admin" || !show) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-3 backdrop-blur-sm transition-all sm:p-4">

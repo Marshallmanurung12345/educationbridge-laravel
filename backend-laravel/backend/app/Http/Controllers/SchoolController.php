@@ -37,8 +37,11 @@ class SchoolController extends Controller
     public function show($npsn)
     {
         $school = School::where('npsn', $npsn)->orWhere('id', $npsn)->firstOrFail();
-        return response()->json($school->load([
+        $school->load([
             'campaigns' => fn ($query) => $query->where('status', 'verified'),
-        ]));
+        ]);
+        $school->campaigns->each(fn ($campaign) => $campaign->makeHidden('user_id'));
+
+        return response()->json($school);
     }
 }

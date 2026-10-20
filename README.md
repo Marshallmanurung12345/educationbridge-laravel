@@ -66,3 +66,9 @@ POST /api/campaigns
 POST /api/campaigns/{id}/donations
 GET  /api/stats
 ```
+
+akun yang bisa di akses 
+Peran	Email	Kata sandi
+Admin	admin@educationbridge.id	password
+Sekolah	sekolah1@educationbridge.id	password
+Donatur	individu@educationbridge.id	password
