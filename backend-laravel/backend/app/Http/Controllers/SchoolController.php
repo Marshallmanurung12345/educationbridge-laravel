@@ -30,7 +30,21 @@ class SchoolController extends Controller
             $query->where('jenjang', $request->query('jenjang'));
         }
 
-        return response()->json($query->orderBy('name')->get());
+        if ($request->filled('provinsi')) {
+            $query->where('provinsi', $request->query('provinsi'));
+        }
+
+        if ($request->filled('kabupaten_kota')) {
+            $query->where('kabupaten_kota', $request->query('kabupaten_kota'));
+        }
+
+        $query->orderBy('name');
+        if ($request->filled('limit')) {
+            $limit = max(1, min(50, $request->integer('limit', 20)));
+            $query->limit($limit);
+        }
+
+        return response()->json($query->get());
     }
 
     // Detail data sekolah resmi berdasarkan NPSN

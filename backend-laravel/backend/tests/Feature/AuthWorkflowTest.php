@@ -221,6 +221,53 @@ class AuthWorkflowTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_school_dashboard_only_returns_campaigns_owned_by_the_school(): void
+    {
+        $school = $this->createSchool();
+        $account = $this->createSchoolAccount($school->npsn);
+        $account->account_status = 'verified';
+        $account->school_id = $school->id;
+        $account->save();
+        $otherSchool = $this->createUser('sekolah', 'other-school@example.test');
+
+        foreach ([
+            [$account, 'Pengajuan milik akun'],
+            [$otherSchool, 'Pengajuan milik sekolah lain'],
+        ] as [$owner, $title]) {
+            Campaign::create([
+                'user_id' => $owner->id,
+                'school_id' => $school->id,
+                'school_name' => 'SD Negeri Contoh',
+                'location' => 'Papua',
+                'category' => 'Fasilitas',
+                'title' => $title,
+                'description' => 'Detail pengajuan.',
+                'target_amount' => 1000000,
+                'status' => 'pending',
+            ]);
+        }
+
+        $this->actingAs($account, 'sanctum')
+            ->getJson('/api/my-campaigns')
+            ->assertOk()
+            ->assertJsonPath('summary.total_campaigns', 1)
+            ->assertJsonPath('campaigns.0.title', 'Pengajuan milik akun');
+
+        $this->actingAs($otherSchool, 'sanctum')
+            ->getJson('/api/my-campaigns')
+            ->assertOk()
+            ->assertJsonMissing(['title' => 'Pengajuan milik akun']);
+    }
+
+    public function test_non_school_cannot_access_school_dashboard_api(): void
+    {
+        $donor = $this->createUser('individu', 'donor@example.test');
+
+        $this->actingAs($donor, 'sanctum')
+            ->getJson('/api/my-campaigns')
+            ->assertForbidden();
+    }
+
     public function test_donor_can_submit_a_school_campaign_for_admin_review(): void
     {
         $school = $this->createSchool();
@@ -251,6 +298,36 @@ class AuthWorkflowTest extends TestCase
         $this->getJson('/api/campaigns?status=pending')->assertJsonCount(0);
     }
 
+    public function test_school_submission_uses_the_reported_number_of_affected_students(): void
+    {
+        $school = $this->createSchool();
+        $school->jumlah_siswa = 342;
+        $school->save();
+        $account = $this->createSchoolAccount($school->npsn);
+        $account->account_status = 'verified';
+        $account->school_id = $school->id;
+        $account->save();
+
+        $this->actingAs($account, 'sanctum')
+            ->postJson('/api/campaigns', [
+                'school_id' => $school->id,
+                'category' => 'Fasilitas',
+                'title' => 'Perbaikan ruang kelas',
+                'description' => 'Atap kelas mengalami kebocoran.',
+                'rab_description' => 'Pembelian material.',
+                'start_date' => now()->toDateString(),
+                'end_date' => now()->addMonth()->toDateString(),
+                'target_amount' => 10000000,
+                'student_count' => 28,
+                'urgency' => 3,
+                'facility_condition' => 2,
+                'access_score' => 3,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('student_count', 28)
+            ->assertJsonPath('status', 'pending');
+    }
+
     public function test_public_campaign_endpoints_do_not_expose_pending_campaigns(): void
     {
         $owner = $this->createUser('sekolah', 'owner@example.test');
@@ -270,6 +347,28 @@ class AuthWorkflowTest extends TestCase
             ->assertJsonCount(0);
         $this->getJson("/api/campaigns/{$campaign->id}")
             ->assertNotFound();
+    }
+
+    public function test_school_search_filters_the_official_dataset_and_limits_results(): void
+    {
+        $this->createSchool();
+        School::create([
+            'npsn' => '87654321',
+            'name' => 'SMP Negeri Data Contoh',
+            'jenjang' => 'SMP',
+            'status_sekolah' => 'NEGERI',
+            'provinsi' => 'Maluku',
+            'kabupaten_kota' => 'Kabupaten Contoh',
+            'kecamatan' => 'Kecamatan Contoh',
+        ]);
+
+        $this->getJson('/api/schools?q=12345678&jenjang=SD&provinsi=Papua&limit=1')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.npsn', '12345678');
+        $this->getJson('/api/schools?q=12345678&provinsi=Maluku')
+            ->assertOk()
+            ->assertJsonCount(0);
     }
 
     public function test_public_campaign_and_donation_responses_hide_user_identity(): void

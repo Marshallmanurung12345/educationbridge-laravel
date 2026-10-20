@@ -51,14 +51,11 @@ export default function SchoolAccountStatus() {
   }
 
   return (
-    <main className="flex min-h-[calc(100svh-68px)] items-center justify-center bg-[#f8fafc] px-5 py-10">
-      <section className="w-full max-w-[600px] rounded-2xl border border-[#e5e7eb] bg-white p-6 shadow-[0_12px_32px_rgba(23,52,91,0.08)] sm:p-8">
-        <h1 className="text-2xl font-semibold text-[#17345B]">
-          Status Verifikasi Sekolah
-        </h1>
+    <main className="min-h-[calc(100svh-68px)] bg-[#F7F8FA] px-4 py-8 sm:px-6">
+      <section className="mx-auto w-full max-w-[760px] rounded-xl border border-[#E6EAF0] bg-white p-5 sm:p-8">
+        <h1 className="text-2xl font-semibold text-[#17345B]">Profil Sekolah</h1>
         <p className="mt-2 text-sm text-[#667085]">
-          Akun sekolah perlu diperiksa admin sebelum dapat mengajukan kebutuhan
-          pendanaan.
+          Informasi profil dan status pemeriksaan akun sekolah Anda.
         </p>
 
         <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4">
@@ -71,6 +68,25 @@ export default function SchoolAccountStatus() {
             </p>
           )}
         </div>
+
+        <dl className="mt-5 grid gap-4 rounded-lg border border-[#E6EAF0] bg-[#FBFCFD] p-4 text-sm sm:grid-cols-2">
+          <div>
+            <dt className="text-[#667085]">Nama sekolah</dt>
+            <dd className="mt-1 font-medium text-[#17345B]">{user.organization_name || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-[#667085]">NPSN</dt>
+            <dd className="mt-1 font-medium text-[#17345B]">{user.npsn || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-[#667085]">Kepala sekolah / perwakilan</dt>
+            <dd className="mt-1 font-medium text-[#17345B]">{user.name || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-[#667085]">Email dan telepon</dt>
+            <dd className="mt-1 font-medium text-[#17345B]">{user.email} · {user.phone || "—"}</dd>
+          </div>
+        </dl>
 
         {canEdit && (
           <form onSubmit={onSubmit} className="mt-6 space-y-4">

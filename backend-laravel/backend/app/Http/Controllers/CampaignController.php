@@ -103,7 +103,7 @@ class CampaignController extends Controller
         $data['school_id'] = $officialSchool->id;
         $data['school_name'] = $officialSchool->name;
         $data['location'] = "{$officialSchool->kecamatan}, {$officialSchool->kabupaten_kota}, {$officialSchool->provinsi}";
-        $data['student_count'] = $officialSchool->jumlah_siswa ?? ($data['student_count'] ?? 0);
+        $data['student_count'] = $data['student_count'] ?? $officialSchool->jumlah_siswa ?? 0;
         $data['remoteness'] = $officialSchool->is_3t ? 5 : ($data['remoteness'] ?? 3);
         $data['status'] = 'pending';
         unset($data['npsn']);
@@ -132,6 +132,7 @@ class CampaignController extends Controller
     public function mine(Request $request)
     {
         $user = $request->user();
+        abort_unless($user->role === 'sekolah', 403);
 
         $campaigns = $user->campaigns()
             ->with('school')

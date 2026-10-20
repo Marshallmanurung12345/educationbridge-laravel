@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../context/AuthContext";
 
+const categories = ["Fasilitas", "Buku", "Teknologi", "Beasiswa", "Laboratorium"];
 const categoryTags = {
   Fasilitas: ["renovasi", "infrastruktur"],
   Buku: ["buku", "literasi"],
@@ -13,9 +14,6 @@ const categoryTags = {
 
 const initialForm = {
   school_id: "",
-  npsn: "",
-  school_name: "",
-  location: "",
   category: "Fasilitas",
   title: "",
   description: "",
@@ -32,80 +30,145 @@ const initialForm = {
   access_score: 3,
 };
 
+const today = new Date().toISOString().slice(0, 10);
+
+function schoolLocation(school) {
+  return [school.kecamatan, school.kabupaten_kota, school.provinsi]
+    .filter(Boolean)
+    .join(", ");
+}
+
 export default function CreateCampaign() {
   const { user } = useAuth();
-  const [schoolsList, setSchoolsList] = useState([]);
-  const [schoolLoadError, setSchoolLoadError] = useState("");
-  const [form, setForm] = useState({
-    ...initialForm,
-    school_name: user?.organization_name || "",
-  });
-  const [error, setError] = useState("");
-  const [submitted, setSubmitted] = useState(null);
   const navigate = useNavigate();
   const isSchoolAccount = user?.role === "sekolah";
+  const [form, setForm] = useState(initialForm);
+  const [schoolSearch, setSchoolSearch] = useState("");
+  const [schoolLevel, setSchoolLevel] = useState("");
+  const [schoolProvince, setSchoolProvince] = useState("");
+  const [schoolResults, setSchoolResults] = useState([]);
+  const [selectedSchool, setSelectedSchool] = useState(user?.school || null);
+  const [searchingSchools, setSearchingSchools] = useState(false);
+  const [schoolLoadError, setSchoolLoadError] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(null);
 
   useEffect(() => {
-    api
-      .listSchools()
-      .then((data) => {
-        if (!Array.isArray(data)) {
-          throw new Error("Data sekolah resmi tidak tersedia.");
-        }
-        setSchoolsList(data);
-        if (isSchoolAccount) {
-          const linkedSchool = data.find(
-            (school) => String(school.id) === String(user.school_id),
-          );
-          if (!linkedSchool) {
-            setSchoolLoadError(
-              "Sekolah resmi belum terhubung ke akun ini. Hubungi admin untuk melengkapi verifikasi.",
-            );
-            return;
-          }
-            setForm((f) => ({
-              ...f,
-              school_id: linkedSchool.id,
-              npsn: linkedSchool.npsn,
-              school_name: linkedSchool.name,
-              location: `${linkedSchool.kecamatan}, ${linkedSchool.kabupaten_kota}, ${linkedSchool.provinsi}`,
-              student_count: linkedSchool.jumlah_siswa || f.student_count,
-              remoteness: linkedSchool.is_3t ? 5 : 3,
-            }));
-        }
-      })
-      .catch((loadError) => setSchoolLoadError(loadError.message));
-  }, [isSchoolAccount, user?.school_id]);
+    if (!isSchoolAccount || !user?.school) return;
+    const school = user.school;
+    setSelectedSchool(school);
+    setSchoolSearch(`${school.name} · ${school.npsn}`);
+    setForm((current) => ({
+      ...current,
+      school_id: school.id,
+      remoteness: school.is_3t ? 5 : 3,
+    }));
+  }, [isSchoolAccount, user?.school]);
 
-  function handleSchoolSelect(schoolId) {
-    const selected = schoolsList.find((s) => String(s.id) === String(schoolId));
-    if (selected) {
-      setForm((f) => ({
-        ...f,
-        school_id: selected.id,
-        npsn: selected.npsn,
-        school_name: selected.name,
-        location: `${selected.kecamatan}, ${selected.kabupaten_kota}, ${selected.provinsi}`,
-        student_count: selected.jumlah_siswa || f.student_count,
-        remoteness: selected.is_3t ? 5 : 3,
-      }));
+  useEffect(() => {
+    if (selectedSchool && schoolSearch === `${selectedSchool.name} · ${selectedSchool.npsn}`) {
+      return undefined;
     }
+
+    const query = schoolSearch.trim() || (isSchoolAccount ? user?.npsn || "" : "");
+    if (!isSchoolAccount && query.length < 2 && !schoolLevel && !schoolProvince) {
+      setSchoolResults([]);
+      setSchoolLoadError("");
+      return undefined;
+    }
+    if (isSchoolAccount && !query) {
+      setSchoolResults([]);
+      return undefined;
+    }
+
+    let active = true;
+    const timer = setTimeout(async () => {
+      setSearchingSchools(true);
+      setSchoolLoadError("");
+      try {
+        const params = {
+          ...(query.length >= 2 ? { q: query } : {}),
+          ...(schoolLevel ? { jenjang: schoolLevel } : {}),
+          ...(schoolProvince ? { provinsi: schoolProvince } : {}),
+          limit: 20,
+        };
+        const results = await api.listSchools(params);
+        if (!active) return;
+
+        const matches = Array.isArray(results) ? results : [];
+        const schoolMatches =
+          isSchoolAccount && user?.npsn
+            ? matches.filter((school) => school.npsn === user.npsn)
+            : matches;
+        setSchoolResults(schoolMatches);
+
+        if (isSchoolAccount && !selectedSchool) {
+          const linkedSchool = schoolMatches.find(
+            (school) => String(school.id) === String(user?.school_id),
+          );
+          if (linkedSchool) selectSchool(linkedSchool);
+          else if (schoolMatches.length === 0) {
+            setSchoolLoadError(
+              "Data sekolah resmi belum cocok dengan NPSN akun ini. Hubungi admin untuk pemeriksaan.",
+            );
+          }
+        }
+      } catch (loadError) {
+        if (active) setSchoolLoadError(loadError.message);
+      } finally {
+        if (active) setSearchingSchools(false);
+      }
+    }, 250);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [
+    isSchoolAccount,
+    schoolLevel,
+    schoolProvince,
+    schoolSearch,
+    selectedSchool,
+    user?.npsn,
+    user?.school_id,
+  ]);
+
+  const provinces = useMemo(
+    () => [...new Set(schoolResults.map((school) => school.provinsi).filter(Boolean))].sort(),
+    [schoolResults],
+  );
+
+  function selectSchool(school) {
+    setSelectedSchool(school);
+    setSchoolSearch(`${school.name} · ${school.npsn}`);
+    setSchoolResults([]);
+    setForm((current) => ({
+      ...current,
+      school_id: school.id,
+      remoteness: school.is_3t ? 5 : 3,
+    }));
   }
 
   function update(field, value) {
-    setForm((f) => ({ ...f, [field]: value }));
+    setForm((current) => ({ ...current, [field]: value }));
   }
 
-  async function onSubmit(e) {
-    e.preventDefault();
+  async function onSubmit(event) {
+    event.preventDefault();
     setError("");
+    if (!selectedSchool) {
+      setError("Pilih sekolah dari hasil pencarian data resmi.");
+      return;
+    }
+
+    setSubmitting(true);
     try {
       const created = await api.createCampaign({
         ...form,
-        tags: [
-          form.category.toLowerCase(),
-          ...(categoryTags[form.category] || []),
-        ],
+        school_id: selectedSchool.id,
+        tags: [form.category.toLowerCase(), ...(categoryTags[form.category] || [])],
         target_amount: Number(form.target_amount),
         student_count: Number(form.student_count),
         urgency: Number(form.urgency),
@@ -114,348 +177,249 @@ export default function CreateCampaign() {
         access_score: Number(form.access_score),
       });
       setSubmitted(created);
-    } catch (err) {
-      setError(err.message);
+    } catch (submitError) {
+      setError(submitError.message);
+    } finally {
+      setSubmitting(false);
     }
   }
 
   if (submitted) {
     return (
-      <div className="max-w-2xl mx-auto px-5 py-16 text-center">
-        <div className="inline-block rounded-full bg-amber-100 p-4 text-amber-800 text-3xl mb-4">
-          ⏳
-        </div>
-        <h1 className="font-display text-3xl font-bold text-[#17365d]">
-          Pengajuan Bantuan Terkirim!
-        </h1>
-        <p className="text-slate-600 mt-3 text-sm leading-relaxed max-w-lg mx-auto">
-          Terima kasih. Permohonan bantuan untuk{" "}
-          <strong>{submitted.title}</strong> di{" "}
-          <strong>{submitted.school_name}</strong> saat ini berada pada tahap{" "}
-          <strong>1. Menunggu Verifikasi (Pending)</strong>.
-        </p>
-
-        {/* STEP WORKFLOW PROGRESS CARD */}
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6 text-left shadow-sm">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
-            Alur Tahapan Verifikasi EducationBridge:
-          </h3>
-          <div className="space-y-4 text-xs">
-            <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white font-bold text-[11px]">
-                1
-              </span>
-              <div>
-                <strong className="block text-slate-900">
-                  1. Pengajuan Sekolah & RAB (Selesai)
-                </strong>
-                <span className="text-slate-500">
-                  Data permohonan, RAB, dan dokumen pendukung telah diterima
-                  sistem.
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white font-bold text-[11px]">
-                2
-              </span>
-              <div>
-                <strong className="block text-amber-800">
-                  2. Pemeriksaan Awal Admin (Proses)
-                </strong>
-                <span className="text-slate-500">
-                  Admin mengecek kesesuaian NPSN dan data induk Kemendikdasmen.
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-600 font-bold text-[11px]">
-                3
-              </span>
-              <div>
-                <strong className="block text-slate-700">
-                  3. Verifikasi Lapangan & Dokumen
-                </strong>
-                <span className="text-slate-500">
-                  Verifikator menelaah foto kondisi terbaru, RAB, dan surat
-                  pengajuan Kepsek.
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-600 font-bold text-[11px]">
-                4
-              </span>
-              <div>
-                <strong className="block text-slate-700">
-                  4. Hitung Priority Score & Publikasi Rekomendasi
-                </strong>
-                <span className="text-slate-500">
-                  Setelah terverifikasi, Priority Score dihitung otomatis &
-                  kampanye tayang di Rekomendasi.
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 flex justify-center gap-3">
+      <main className="min-h-[calc(100svh-68px)] bg-[#F7F8FA] px-4 py-12 sm:px-6">
+        <section className="mx-auto max-w-xl rounded-xl border border-[#E6EAF0] bg-white p-6 text-center shadow-sm sm:p-8">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-2xl text-emerald-700">✓</span>
+          <h1 className="mt-4 text-2xl font-semibold text-[#17345B]">Pengajuan berhasil dikirim</h1>
+          <p className="mt-2 text-sm leading-6 text-[#667085]">
+            Kebutuhan <strong className="text-[#17345B]">{submitted.title}</strong> untuk {submitted.school_name} akan diperiksa admin sebelum ditampilkan kepada publik.
+          </p>
           <button
-            onClick={() => navigate("/kampanye")}
-            className="rounded-lg bg-[#1a2d4d] px-5 py-2.5 text-xs font-bold text-white shadow hover:bg-slate-800"
+            type="button"
+            onClick={() => navigate(isSchoolAccount ? "/dashboard-sekolah#pengajuan-saya" : "/kampanye")}
+            className="mt-6 min-h-11 rounded-lg bg-[#17345B] px-5 text-sm font-semibold text-white hover:bg-[#244a79]"
           >
-            Lihat Kebutuhan Sekolah
+            {isSchoolAccount ? "Lihat Pengajuan Saya" : "Jelajahi Kebutuhan Sekolah"}
           </button>
-          <button
-            onClick={() => setSubmitted(null)}
-            className="rounded-lg border border-slate-300 px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
-          >
-            Ajukan Kebutuhan Lain
-          </button>
-        </div>
-      </div>
+        </section>
+      </main>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-5 py-12">
-      <h1 className="font-display text-3xl">
-        {isSchoolAccount ? "Ajukan Kebutuhan Sekolah" : "Galang Dana untuk Sekolah"}
-      </h1>
-      <p className="text-ink-light mt-2 prose-measure">
-        Isi informasi sekolah dan kebutuhan. Admin akan meninjau pengajuan
-        sebelum ditampilkan kepada publik.
-      </p>
-
-      <form onSubmit={onSubmit} className="mt-8 space-y-5">
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-xs text-blue-900 mb-4">
-          <p className="font-bold">
-            Verifikasi Identitas Sekolah Kemendikdasmen:
-          </p>
-          <p className="mt-1">
-            {isSchoolAccount
-              ? "Data sekolah terverifikasi dan indikator lokasi berasal dari data resmi."
-              : "Pilih sekolah terdaftar yang akan dibantu. Sertakan hubungan Anda dengan sekolah dan bukti izin atau kewenangan."}
-          </p>
-        </div>
-
-        <Field label="Pilih Sekolah Terdaftar (Data Induk Kemendikdasmen)">
-          <select
-            required
-            value={form.school_id}
-            onChange={(e) => handleSchoolSelect(e.target.value)}
-            disabled={isSchoolAccount}
-            className="input font-semibold text-[#17365d]"
-          >
-            <option value="">Pilih sekolah</option>
-            {schoolsList.map((s) => (
-              <option key={s.id} value={s.id}>
-                [{s.npsn}] {s.name} - {s.kabupaten_kota}, {s.provinsi}{" "}
-                {s.is_3t ? "(3T)" : ""}
-              </option>
-            ))}
-          </select>
-        </Field>
-        {schoolLoadError && (
-          <p role="alert" className="text-sm text-red-700">
-            {schoolLoadError}
-          </p>
-        )}
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="NPSN Official (Otomatis)">
-            <input
-              readOnly
-              value={form.npsn || "Data belum tersedia"}
-              className="input bg-slate-100 font-mono font-bold"
-            />
-          </Field>
-          <Field label="Lokasi Administrasi Official">
-            <input
-              readOnly
-              value={form.location || "Data belum tersedia"}
-              className="input bg-slate-100"
-            />
-          </Field>
-        </div>
-
-        <Field label="Kategori kebutuhan">
-          <select
-            value={form.category}
-            onChange={(e) => update("category", e.target.value)}
-            className="input"
-          >
-            {Object.keys(categoryTags).map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field label="Judul campaign">
-          <input
-            required
-            value={form.title}
-            onChange={(e) => update("title", e.target.value)}
-            className="input"
-            placeholder="Contoh: Perbaikan Atap Kelas yang Bocor"
-          />
-        </Field>
-
-        <Field label="Deskripsi kebutuhan">
-          <textarea
-            required
-            rows={4}
-            value={form.description}
-            onChange={(e) => update("description", e.target.value)}
-            className="input"
-            placeholder="Jelaskan secara rinci latar belakang dan dampak kebutuhan sarana prasarana sekolah..."
-          />
-        </Field>
-
-        <Field label="Rencana Anggaran Biaya (RAB) / Perkiraan Rincian">
-          <textarea
-            required={!isSchoolAccount}
-            rows={3}
-            value={form.rab_description}
-            onChange={(e) => update("rab_description", e.target.value)}
-            className="input"
-            placeholder="Contoh: Pembelian 50 lembar atap seng (Rp 15 Juta), Semen 100 sak (Rp 7 Juta), Upah tukang (Rp 10 Juta)..."
-          />
-        </Field>
-
-        {!isSchoolAccount && (
-          <Field label="Hubungan dengan sekolah">
-            <input
-              required
-              value={form.applicant_relationship}
-              onChange={(e) => update("applicant_relationship", e.target.value)}
-              className="input"
-              placeholder="Contoh: alumni, orang tua siswa, relawan"
-            />
-          </Field>
-        )}
-
-        <Field label={isSchoolAccount ? "Dokumen pendukung / surat pengajuan" : "Bukti izin atau kewenangan dari sekolah"}>
-          <input
-            required={!isSchoolAccount}
-            value={form.supporting_document}
-            onChange={(e) => update("supporting_document", e.target.value)}
-            className="input"
-            placeholder="Contoh: Nomor Surat: 045/SDN1-WM/2026 atau Link Drive Dokumen Pendukung & Foto Kondisi"
-          />
-        </Field>
-
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Tanggal mulai penggalangan">
-            <input
-              required
-              type="date"
-              value={form.start_date}
-              onChange={(e) => update("start_date", e.target.value)}
-              className="input"
-            />
-          </Field>
-          <Field label="Batas akhir penggalangan">
-            <input
-              required
-              type="date"
-              min={form.start_date || undefined}
-              value={form.end_date}
-              onChange={(e) => update("end_date", e.target.value)}
-              className="input"
-            />
-          </Field>
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-5">
-          <Field label="Target dana (Rp)">
-            <input
-              required
-              type="number"
-              min="0"
-              value={form.target_amount}
-              onChange={(e) => update("target_amount", e.target.value)}
-              className="input"
-            />
-          </Field>
-          <Field label="Jumlah siswa terdampak">
-            <input
-              required
-              type="number"
-              min="0"
-              value={form.student_count}
-              onChange={(e) => update("student_count", e.target.value)}
-              className="input"
-            />
-          </Field>
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <RangeField
-            label="Urgensi"
-            value={form.urgency}
-            onChange={(v) => update("urgency", v)}
-            hint="1 = bisa ditunda, 5 = darurat"
-          />
-          <RangeField
-            label="Kondisi fasilitas"
-            value={form.facility_condition}
-            onChange={(v) => update("facility_condition", v)}
-            hint="1 = rusak berat, 5 = baik"
-          />
-          <RangeField
-            label="Keterpencilan lokasi"
-            value={form.remoteness}
-            onChange={(v) => update("remoteness", v)}
-            hint="1 = perkotaan, 5 = 3T"
-          />
-          <RangeField
-            label="Akses pendidikan"
-            value={form.access_score}
-            onChange={(v) => update("access_score", v)}
-            hint="1 = sangat terbatas, 5 = mudah"
-          />
-        </div>
-
-        {error && <p className="text-clay text-sm">{error}</p>}
-
-        <button className="bg-navy text-paper px-6 py-3 hover:bg-navy-light transition-colors">
-          Kirim untuk verifikasi
+    <main className="min-h-[calc(100svh-68px)] bg-[#F7F8FA] px-4 py-7 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[960px]">
+        <button
+          type="button"
+          onClick={() => navigate(isSchoolAccount ? "/dashboard-sekolah" : -1)}
+          className="mb-3 text-sm font-medium text-[#1D62B5] hover:underline"
+        >
+          ← Kembali
         </button>
-      </form>
-    </div>
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-[#17345B] sm:text-[28px]">
+              {isSchoolAccount ? "Ajukan Kebutuhan Sekolah" : "Ajukan Kebutuhan untuk Sekolah"}
+            </h1>
+            <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[#667085]">
+              Isi data sekolah dan kebutuhan secara jelas. Admin akan memeriksa pengajuan sebelum dipublikasikan.
+            </p>
+          </div>
+          <p className="rounded-lg border border-[#F3D3A8] bg-[#FFF8EF] px-3 py-2 text-xs text-[#80501D]">
+            Pengajuan ditinjau admin sebelum tampil untuk publik.
+          </p>
+        </div>
+
+        <form onSubmit={onSubmit} className="space-y-4">
+          <Section number="1" title="Informasi Sekolah" description="Pilih sekolah dari data resmi. NPSN dan lokasi akan terisi otomatis.">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Pilih Sekolah" className="sm:col-span-2">
+                {isSchoolAccount ? (
+                  <input
+                    value={selectedSchool ? `${selectedSchool.name} · ${selectedSchool.npsn}` : schoolSearch}
+                    readOnly
+                    required
+                    aria-label="Sekolah terdaftar"
+                    className="w-full rounded-lg border border-[#DCE2EA] bg-[#F3F5F8] px-3 py-2.5 text-sm text-[#475467]"
+                  />
+                ) : (
+                  <div className="relative">
+                    <input
+                      value={schoolSearch}
+                      onChange={(event) => {
+                        setSchoolSearch(event.target.value);
+                        setSelectedSchool(null);
+                        setForm((current) => ({ ...current, school_id: "" }));
+                      }}
+                      onFocus={(event) => {
+                        if (event.target.value) setSchoolResults((current) => current);
+                      }}
+                      autoComplete="off"
+                      placeholder="Ketik nama sekolah atau NPSN (minimal 2 karakter)"
+                      className="w-full rounded-lg border border-[#DCE2EA] bg-white px-3 py-2.5 text-sm text-[#17345B] outline-none focus:border-[#17345B] focus:ring-2 focus:ring-[#17345B]/10"
+                    />
+                    {(schoolSearch.trim().length >= 2 || schoolLevel || schoolProvince) && !selectedSchool && (
+                      <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-64 overflow-y-auto rounded-lg border border-[#E2E7EE] bg-white py-1 shadow-lg">
+                        {searchingSchools ? (
+                          <p className="px-3 py-3 text-sm text-[#667085]">Mencari data sekolah…</p>
+                        ) : schoolResults.length === 0 ? (
+                          <p className="px-3 py-3 text-sm text-[#667085]">Tidak ada sekolah yang cocok pada data tersedia.</p>
+                        ) : (
+                          schoolResults.map((school) => (
+                            <button key={school.id} type="button" onClick={() => selectSchool(school)} className="block w-full px-3 py-2.5 text-left hover:bg-[#F7F8FA]">
+                              <span className="block text-sm font-medium text-[#17345B]">{school.name}</span>
+                              <span className="mt-0.5 block text-xs text-[#667085]">NPSN {school.npsn} · {schoolLocation(school)}{school.is_3t ? " · 3T (data resmi)" : ""}</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Field>
+
+              {!isSchoolAccount && (
+                <>
+                  <Field label="Filter jenjang">
+                    <select value={schoolLevel} onChange={(event) => setSchoolLevel(event.target.value)} className="w-full rounded-lg border border-[#DCE2EA] bg-white px-3 py-2.5 text-sm text-[#17345B]">
+                      <option value="">Semua jenjang</option>
+                      {["SD", "SMP", "SMA", "SMK", "SLB", "MI", "MTs", "MA"].map((level) => <option key={level} value={level}>{level}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Filter provinsi">
+                    <select value={schoolProvince} onChange={(event) => setSchoolProvince(event.target.value)} className="w-full rounded-lg border border-[#DCE2EA] bg-white px-3 py-2.5 text-sm text-[#17345B]">
+                      <option value="">Semua provinsi</option>
+                      {provinces.map((province) => <option key={province} value={province}>{province}</option>)}
+                    </select>
+                  </Field>
+                </>
+              )}
+
+              <Field label="NPSN resmi">
+                <input readOnly value={selectedSchool?.npsn || ""} placeholder="Terisi setelah sekolah dipilih" className="w-full rounded-lg border border-[#DCE2EA] bg-[#F3F5F8] px-3 py-2.5 text-sm text-[#475467]" />
+              </Field>
+              <Field label="Lokasi administratif">
+                <input readOnly value={selectedSchool ? schoolLocation(selectedSchool) : ""} placeholder="Terisi setelah sekolah dipilih" className="w-full rounded-lg border border-[#DCE2EA] bg-[#F3F5F8] px-3 py-2.5 text-sm text-[#475467]" />
+              </Field>
+            </div>
+            {schoolLoadError && <p role="alert" className="mt-3 text-sm text-rose-700">{schoolLoadError}</p>}
+            <p className="mt-3 rounded-lg bg-[#EFF6FF] px-3 py-2.5 text-xs leading-5 text-[#345B83]">
+              Data sekolah memakai dataset lokal dari{" "}
+              <a href="https://data.kemendikdasmen.go.id/data-induk" target="_blank" rel="noreferrer" className="font-semibold underline">Data Induk Kemendikdasmen</a>.
+              {" "}Data ini bukan sinkronisasi real-time; tanggal pembaruan sumber belum tercatat. Admin tetap memeriksa pengajuan sebelum kebutuhan ditampilkan kepada publik.
+            </p>
+          </Section>
+
+          <Section number="2" title="Informasi Kebutuhan" description="Jelaskan kebutuhan, perkiraan biaya, dan dampak untuk siswa.">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Kategori kebutuhan">
+                <select required value={form.category} onChange={(event) => update("category", event.target.value)} className="form-control">
+                  {categories.map((category) => <option key={category}>{category}</option>)}
+                </select>
+              </Field>
+              <Field label="Nama kebutuhan">
+                <input required maxLength={255} value={form.title} onChange={(event) => update("title", event.target.value)} className="form-control" placeholder="Contoh: Perbaikan atap ruang kelas" />
+              </Field>
+              <Field label="Deskripsi kebutuhan" className="sm:col-span-2">
+                <textarea required rows={4} value={form.description} onChange={(event) => update("description", event.target.value)} className="form-control" placeholder="Jelaskan kondisi saat ini, alasan kebutuhan ini penting, dan dampaknya bagi kegiatan belajar." />
+              </Field>
+              <Field label="Rencana Anggaran Biaya (RAB) / perkiraan rincian" className="sm:col-span-2">
+                <textarea required={!isSchoolAccount} rows={3} value={form.rab_description} onChange={(event) => update("rab_description", event.target.value)} className="form-control" placeholder="Contoh: bahan perbaikan Rp 15.000.000, upah pengerjaan Rp 5.000.000." />
+              </Field>
+              {!isSchoolAccount && (
+                <Field label="Hubungan dengan sekolah">
+                  <input required value={form.applicant_relationship} onChange={(event) => update("applicant_relationship", event.target.value)} className="form-control" placeholder="Contoh: alumni, orang tua siswa, relawan" />
+                </Field>
+              )}
+              <Field label={isSchoolAccount ? "Tautan dokumen/foto kondisi (opsional)" : "Tautan bukti izin atau foto (wajib)"}>
+                <input
+                  required={!isSchoolAccount}
+                  type="url"
+                  maxLength={2048}
+                  value={form.supporting_document}
+                  onChange={(event) => update("supporting_document", event.target.value)}
+                  className="form-control"
+                  placeholder="https://…"
+                />
+                <span className="mt-1 block text-xs text-[#8893A3]">Masukkan tautan yang dapat diperiksa admin. Unggah berkas langsung belum tersedia.</span>
+              </Field>
+              <Field label="Tanggal mulai penggalangan">
+                <input required type="date" min={today} value={form.start_date} onChange={(event) => update("start_date", event.target.value)} className="form-control" />
+              </Field>
+              <Field label="Batas akhir penggalangan">
+                <input required type="date" min={form.start_date || today} value={form.end_date} onChange={(event) => update("end_date", event.target.value)} className="form-control" />
+              </Field>
+              <Field label="Target dana (Rp)">
+                <input required type="number" min="1" step="1000" value={form.target_amount} onChange={(event) => update("target_amount", event.target.value)} className="form-control" placeholder="Contoh: 50000000" />
+              </Field>
+              <Field label="Jumlah siswa terdampak">
+                <input required type="number" min="0" step="1" value={form.student_count} onChange={(event) => update("student_count", event.target.value)} className="form-control" placeholder="Contoh: 120" />
+              </Field>
+            </div>
+          </Section>
+
+          <Section number="3" title="Kondisi dan Prioritas" description="Nilai kondisi berdasarkan keadaan sebenarnya. Priority Score akhir dihitung sistem dan dapat diperiksa admin.">
+            {selectedSchool?.is_3t && (
+              <p className="mb-4 rounded-lg bg-[#EFF6FF] px-3 py-2.5 text-xs text-[#345B83]">
+                Data sekolah resmi menandai lokasi ini sebagai wilayah 3T. Keterpencilan akan memperhitungkan informasi resmi tersebut.
+              </p>
+            )}
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <RangeField label="Urgensi kebutuhan" value={form.urgency} onChange={(value) => update("urgency", value)} low="Bisa ditunda" high="Sangat mendesak" />
+              <RangeField label="Kondisi fasilitas" value={form.facility_condition} onChange={(value) => update("facility_condition", value)} low="Rusak berat" high="Kondisi baik" />
+              <RangeField label="Keterpencilan lokasi" value={form.remoteness} onChange={(value) => update("remoteness", value)} low="Sangat mudah dijangkau" high="Sangat terpencil" />
+              <RangeField label="Akses pendidikan" value={form.access_score} onChange={(value) => update("access_score", value)} low="Sangat terbatas" high="Mudah diakses" />
+            </div>
+            <p className="mt-4 rounded-lg bg-[#F8F9FB] px-3 py-2.5 text-xs leading-5 text-[#667085]">
+              Nilai ini menggambarkan kondisi yang dilaporkan, bukan Priority Score akhir. Sistem menghitung skor dari urgensi, fasilitas, jumlah siswa, akses, dan data wilayah.
+            </p>
+          </Section>
+
+          {error && <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</p>}
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E6EAF0] bg-white p-4">
+            <p className="text-xs text-[#667085]">Pengajuan akan diperiksa admin sebelum ditampilkan kepada publik.</p>
+            <button type="submit" disabled={submitting || (isSchoolAccount && user?.account_status !== "verified")} className="min-h-11 rounded-lg bg-[#F28C28] px-5 text-sm font-semibold text-white hover:bg-[#DC7616] disabled:cursor-not-allowed disabled:opacity-50">
+              {submitting ? "Mengirim pengajuan…" : "Ajukan untuk Verifikasi"}
+            </button>
+          </div>
+        </form>
+      </div>
+      <style>{`.form-control{width:100%;border:1px solid #DCE2EA;border-radius:.5rem;background:#fff;padding:.625rem .75rem;font-size:.875rem;color:#17345B;outline:none}.form-control:focus{border-color:#17345B;box-shadow:0 0 0 2px rgb(23 52 91 / .1)}.form-control::placeholder{color:#98A2B3}`}</style>
+    </main>
   );
 }
 
-function Field({ label, children }) {
+function Section({ number, title, description, children }) {
   return (
-    <label className="block">
-      <span className="text-sm text-ink-light">{label}</span>
-      <div className="mt-1">{children}</div>
+    <section className="rounded-xl border border-[#E6EAF0] bg-white p-4 shadow-[0_2px_8px_rgba(23,52,91,0.03)] sm:p-5">
+      <div className="mb-4 flex items-start gap-3">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#E7F0FC] text-sm font-semibold text-[#17345B]">{number}</span>
+        <div>
+          <h2 className="font-semibold text-[#17345B]">{title}</h2>
+          <p className="mt-0.5 text-xs leading-5 text-[#667085]">{description}</p>
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Field({ label, children, className = "" }) {
+  return (
+    <label className={`block ${className}`}>
+      <span className="mb-1.5 block text-xs font-medium text-[#344054]">{label}</span>
+      {children}
     </label>
   );
 }
 
-function RangeField({ label, value, onChange, hint }) {
+function RangeField({ label, value, onChange, low, high }) {
   return (
-    <label className="block">
-      <span className="text-sm text-ink-light">
-        {label}: <strong className="text-ink">{value}</strong>
+    <label className="rounded-lg border border-[#E6EAF0] bg-white p-3">
+      <span className="flex items-center justify-between gap-2 text-xs font-medium text-[#344054]">
+        {label}<strong className="text-[#17345B]">{value}/5</strong>
       </span>
-      <input
-        type="range"
-        min="1"
-        max="5"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full mt-2"
-      />
-      <span className="text-xs text-ink-light">{hint}</span>
+      <input type="range" min="1" max="5" value={value} onChange={(event) => onChange(Number(event.target.value))} className="mt-3 w-full accent-[#F28C28]" />
+      <span className="mt-1 flex justify-between gap-2 text-[10px] text-[#8893A3]"><span>{low}</span><span>{high}</span></span>
     </label>
   );
 }
