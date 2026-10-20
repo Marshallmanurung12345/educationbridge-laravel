@@ -16,6 +16,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',              // admin | sekolah | individu | perusahaan | pemerintah
+        'account_status',
+        'verification_note',
         'organization_name', // nama sekolah / perusahaan / instansi (opsional)
         'school_id',
         'npsn',

@@ -40,6 +40,12 @@ export function AuthProvider({ children }) {
     return user;
   }
 
+  async function updateSchoolProfile(payload) {
+    const updatedUser = await authApi.updateSchoolProfile(payload);
+    setUser(updatedUser);
+    return updatedUser;
+  }
+
   async function logout() {
     try {
       await authApi.logout();
@@ -52,7 +58,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, ready, login, register, logout }}>
+    <AuthContext.Provider     value={{ user, ready, login, register, updateSchoolProfile, logout }}>
       {children}
     </AuthContext.Provider>
   );

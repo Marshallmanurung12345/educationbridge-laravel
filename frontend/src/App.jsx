@@ -14,10 +14,13 @@ import PerusahaanDashboard from "./pages/PerusahaanDashboard";
 import SmartMatch from "./pages/SmartMatch";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import SchoolAccountStatus from "./pages/SchoolAccountStatus";
+import SchoolAccountReview from "./pages/SchoolAccountReview";
+import AuditLogPage from "./pages/AuditLogPage";
 
 export default function App() {
   const location = useLocation();
-  const isAuthPage = ["/masuk", "/daftar"].includes(location.pathname);
+  const isAuthPage = ["/masuk", "/daftar", "/status-verifikasi"].includes(location.pathname);
 
   return (
     <AuthProvider>
@@ -31,11 +34,37 @@ export default function App() {
             <Route path="/kampanye/:id" element={<CampaignDetail />} />
             <Route path="/masuk" element={<Login />} />
             <Route path="/daftar" element={<Register />} />
+            <Route
+              path="/status-verifikasi"
+              element={
+                <ProtectedRoute roles={["sekolah"]}>
+                  <SchoolAccountStatus />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/akun-sekolah"
+              element={
+                <ProtectedRoute roles={["admin"]}>
+                  <SchoolAccountReview />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/audit-log"
+              element={
+                <ProtectedRoute roles={["admin"]}>
+                  <AuditLogPage />
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="/ajukan"
               element={
-                <ProtectedRoute roles={["sekolah"]}>
+                <ProtectedRoute
+                  roles={["sekolah", "individu", "perusahaan", "pemerintah"]}
+                >
                   <CreateCampaign />
                 </ProtectedRoute>
               }

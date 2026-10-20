@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\School;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -9,21 +10,39 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    // Registrasi publik hanya untuk 4 role non-admin. Akun admin dibuat lewat seeder.
+    // Public registration is limited to schools and donors; admin accounts are provisioned separately.
     public function register(Request $request)
     {
+        $request->merge([
+            'email' => strtolower(trim((string) $request->input('email'))),
+        ]);
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
-            'role' => 'required|in:sekolah,individu,perusahaan,pemerintah',
-            'organization_name' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:30',
+            'password' => 'required|string|min:8',
+            'role' => 'required|in:sekolah,individu',
+            'organization_name' => 'required_if:role,sekolah|nullable|string|max:255',
+            'npsn' => 'required_if:role,sekolah|nullable|digits:8',
+            'phone' => 'required_if:role,sekolah|nullable|string|max:30',
         ]);
 
+        $school = $data['role'] === 'sekolah'
+            ? School::where('npsn', $data['npsn'])->first()
+            : null;
+
         $user = User::create([
-            ...$data,
+            'name' => $data['name'],
+            'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'role' => $data['role'],
+            'organization_name' => $data['organization_name'] ?? null,
+            'npsn' => $data['npsn'] ?? null,
+            'school_id' => $school?->id,
+            'phone' => $data['phone'] ?? null,
+            'account_status' => $data['role'] === 'sekolah'
+                ? 'pending_verification'
+                : 'verified',
         ]);
 
         $token = $user->createToken('educationbridge')->plainTextToken;
@@ -33,6 +52,10 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        $request->merge([
+            'email' => strtolower(trim((string) $request->input('email'))),
+        ]);
+
         $data = $request->validate([
             'email' => 'required|email',
             'password' => 'required|string',

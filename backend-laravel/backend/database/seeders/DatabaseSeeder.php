@@ -17,6 +17,10 @@ class DatabaseSeeder extends Seeder
         // 1. Seed Official Government School Dataset
         $this->call(SchoolSeeder::class);
 
+        if (!app()->environment('local', 'testing')) {
+            return;
+        }
+
         // Retrieve official real schools from Kemendikdasmen dataset
         $wamena = School::where('npsn', '60301416')->first();
         $sula = School::where('npsn', '60200843')->first();

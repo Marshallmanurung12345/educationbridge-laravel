@@ -14,6 +14,8 @@ const publicLinks = [
 const roleLinks = {
   admin: [
     ["admin", "/admin"],
+    ["schoolAccounts", "/admin/akun-sekolah"],
+    ["auditLogs", "/admin/audit-log"],
     ["allNeeds", "/kampanye"],
   ],
   sekolah: [
@@ -23,15 +25,18 @@ const roleLinks = {
   individu: [
     ["browse", "/kampanye"],
     ["recommendations", "/cocok"],
+    ["fundraise", "/ajukan"],
   ],
   perusahaan: [
     ["csr", "/dashboard-perusahaan"],
     ["adoption", "/cocok"],
     ["browse", "/kampanye"],
+    ["fundraise", "/ajukan"],
   ],
   pemerintah: [
     ["government", "/dashboard-pemerintah"],
     ["map", "/kampanye"],
+    ["fundraise", "/ajukan"],
   ],
 };
 
@@ -108,6 +113,10 @@ export default function Nav() {
   const { nav } = translations;
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const userRoleLinks =
+    user?.role === "sekolah" && user.account_status !== "verified"
+      ? [["schoolStatus", "/status-verifikasi"], ["browse", "/kampanye"]]
+      : roleLinks[user?.role] || [];
 
   async function onLogout() {
     await logout();
@@ -205,7 +214,7 @@ export default function Nav() {
                   </span>
                 </summary>
                 <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-[#e5eaf0] bg-white p-2 shadow-lg">
-                  {(roleLinks[user.role] || []).map(([key, to]) => (
+                  {userRoleLinks.map(([key, to]) => (
                     <Link
                       key={to}
                       to={to}
@@ -310,7 +319,7 @@ export default function Nav() {
                   </span>
                   <NotificationMenu user={user} />
                 </div>
-                {(roleLinks[user.role] || []).map(([key, to]) => (
+                {userRoleLinks.map(([key, to]) => (
                   <NavLink
                     key={to}
                     to={to}

@@ -21,6 +21,7 @@ const initialForm = {
   description: "",
   rab_description: "",
   supporting_document: "",
+  applicant_relationship: "",
   start_date: "",
   end_date: "",
   target_amount: "",
@@ -34,6 +35,7 @@ const initialForm = {
 export default function CreateCampaign() {
   const { user } = useAuth();
   const [schoolsList, setSchoolsList] = useState([]);
+  const [schoolLoadError, setSchoolLoadError] = useState("");
   const [form, setForm] = useState({
     ...initialForm,
     school_name: user?.organization_name || "",
@@ -41,29 +43,39 @@ export default function CreateCampaign() {
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(null);
   const navigate = useNavigate();
+  const isSchoolAccount = user?.role === "sekolah";
 
   useEffect(() => {
     api
       .listSchools()
       .then((data) => {
-        if (Array.isArray(data)) {
-          setSchoolsList(data);
-          if (data.length > 0 && !form.school_id) {
-            const first = data[0];
+        if (!Array.isArray(data)) {
+          throw new Error("Data sekolah resmi tidak tersedia.");
+        }
+        setSchoolsList(data);
+        if (isSchoolAccount) {
+          const linkedSchool = data.find(
+            (school) => String(school.id) === String(user.school_id),
+          );
+          if (!linkedSchool) {
+            setSchoolLoadError(
+              "Sekolah resmi belum terhubung ke akun ini. Hubungi admin untuk melengkapi verifikasi.",
+            );
+            return;
+          }
             setForm((f) => ({
               ...f,
-              school_id: first.id,
-              npsn: first.npsn,
-              school_name: first.name,
-              location: `${first.kecamatan}, ${first.kabupaten_kota}, ${first.provinsi}`,
-              student_count: first.jumlah_siswa || f.student_count,
-              remoteness: first.is_3t ? 5 : 3,
+              school_id: linkedSchool.id,
+              npsn: linkedSchool.npsn,
+              school_name: linkedSchool.name,
+              location: `${linkedSchool.kecamatan}, ${linkedSchool.kabupaten_kota}, ${linkedSchool.provinsi}`,
+              student_count: linkedSchool.jumlah_siswa || f.student_count,
+              remoteness: linkedSchool.is_3t ? 5 : 3,
             }));
-          }
         }
       })
-      .catch(() => {});
-  }, []);
+      .catch((loadError) => setSchoolLoadError(loadError.message));
+  }, [isSchoolAccount, user?.school_id]);
 
   function handleSchoolSelect(schoolId) {
     const selected = schoolsList.find((s) => String(s.id) === String(schoolId));
@@ -192,10 +204,10 @@ export default function CreateCampaign() {
 
         <div className="mt-8 flex justify-center gap-3">
           <button
-            onClick={() => navigate("/admin")}
+            onClick={() => navigate("/kampanye")}
             className="rounded-lg bg-[#1a2d4d] px-5 py-2.5 text-xs font-bold text-white shadow hover:bg-slate-800"
           >
-            Buka Panel Verifikasi Admin
+            Lihat Kebutuhan Sekolah
           </button>
           <button
             onClick={() => setSubmitted(null)}
@@ -210,10 +222,12 @@ export default function CreateCampaign() {
 
   return (
     <div className="max-w-2xl mx-auto px-5 py-12">
-      <h1 className="font-display text-3xl">Ajukan Kebutuhan Sekolah</h1>
+      <h1 className="font-display text-3xl">
+        {isSchoolAccount ? "Ajukan Kebutuhan Sekolah" : "Galang Dana untuk Sekolah"}
+      </h1>
       <p className="text-ink-light mt-2 prose-measure">
-        Isi formulir berikut untuk mengajukan kebutuhan bantuan. Tim kami akan
-        memverifikasi sebelum campaign tayang.
+        Isi informasi sekolah dan kebutuhan. Admin akan meninjau pengajuan
+        sebelum ditampilkan kepada publik.
       </p>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-5">
@@ -222,18 +236,21 @@ export default function CreateCampaign() {
             Verifikasi Identitas Sekolah Kemendikdasmen:
           </p>
           <p className="mt-1">
-            Pilih nama sekolah Anda yang terdaftar pada Data Induk Pendidikan
-            Kemendikdasmen. Data lokasi, NPSN, dan indikator 3T akan diambil
-            secara otomatis dari database resmi.
+            {isSchoolAccount
+              ? "Data sekolah terverifikasi dan indikator lokasi berasal dari data resmi."
+              : "Pilih sekolah terdaftar yang akan dibantu. Sertakan hubungan Anda dengan sekolah dan bukti izin atau kewenangan."}
           </p>
         </div>
 
         <Field label="Pilih Sekolah Terdaftar (Data Induk Kemendikdasmen)">
           <select
+            required
             value={form.school_id}
             onChange={(e) => handleSchoolSelect(e.target.value)}
+            disabled={isSchoolAccount}
             className="input font-semibold text-[#17365d]"
           >
+            <option value="">Pilih sekolah</option>
             {schoolsList.map((s) => (
               <option key={s.id} value={s.id}>
                 [{s.npsn}] {s.name} - {s.kabupaten_kota}, {s.provinsi}{" "}
@@ -242,6 +259,11 @@ export default function CreateCampaign() {
             ))}
           </select>
         </Field>
+        {schoolLoadError && (
+          <p role="alert" className="text-sm text-red-700">
+            {schoolLoadError}
+          </p>
+        )}
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="NPSN Official (Otomatis)">
@@ -297,6 +319,7 @@ export default function CreateCampaign() {
 
         <Field label="Rencana Anggaran Biaya (RAB) / Perkiraan Rincian">
           <textarea
+            required={!isSchoolAccount}
             rows={3}
             value={form.rab_description}
             onChange={(e) => update("rab_description", e.target.value)}
@@ -305,8 +328,21 @@ export default function CreateCampaign() {
           />
         </Field>
 
-        <Field label="Dokumen Pendukung / Surat Pengajuan Kepsek & Link Foto">
+        {!isSchoolAccount && (
+          <Field label="Hubungan dengan sekolah">
+            <input
+              required
+              value={form.applicant_relationship}
+              onChange={(e) => update("applicant_relationship", e.target.value)}
+              className="input"
+              placeholder="Contoh: alumni, orang tua siswa, relawan"
+            />
+          </Field>
+        )}
+
+        <Field label={isSchoolAccount ? "Dokumen pendukung / surat pengajuan" : "Bukti izin atau kewenangan dari sekolah"}>
           <input
+            required={!isSchoolAccount}
             value={form.supporting_document}
             onChange={(e) => update("supporting_document", e.target.value)}
             className="input"

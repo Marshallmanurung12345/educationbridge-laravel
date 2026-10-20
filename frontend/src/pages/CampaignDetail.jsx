@@ -531,7 +531,7 @@ export default function CampaignDetail() {
                   key={donation.id}
                   className="flex justify-between gap-4 py-3 text-sm"
                 >
-                  <span className="text-[#53677f]">{donation.donor_name}</span>
+                  <span className="text-[#53677f]">Donatur</span>
                   <span className="font-semibold text-[#17365d]">
                     {formatRupiah(donation.amount)}
                   </span>

@@ -4,20 +4,6 @@ import { useAuth } from "../context/AuthContext";
 import { defaultRouteForRole } from "./Login";
 import logo from "../assets/logo.png";
 
-const donorSubRoles = [
-  { value: "individu", label: "Individu", hint: "Donatur Perseorangan" },
-  {
-    value: "perusahaan",
-    label: "Perusahaan",
-    hint: "Penyalur CSR / Instansi Swasta",
-  },
-  {
-    value: "pemerintah",
-    label: "Pemerintah / Mitra",
-    hint: "Dinas Pendidikan / Instansi Pemerintah",
-  },
-];
-
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -26,8 +12,9 @@ export default function Register() {
     name: "",
     email: "",
     password: "",
-    role: "individu", // default donor type
+    role: "individu",
     organization_name: "",
+    npsn: "",
     phone: "",
   });
   const [error, setError] = useState("");
@@ -36,9 +23,18 @@ export default function Register() {
   function handleMainCategoryChange(cat) {
     setMainCategory(cat);
     if (cat === "sekolah") {
-      setForm((f) => ({ ...f, role: "sekolah" }));
+      setForm((f) => ({
+        ...f,
+        role: "sekolah",
+        organization_name: "",
+        npsn: "",
+      }));
     } else {
-      setForm((f) => ({ ...f, role: "individu" }));
+      setForm((f) => ({
+        ...f,
+        role: "individu",
+        organization_name: "",
+      }));
     }
   }
 
@@ -52,7 +48,9 @@ export default function Register() {
     setLoading(true);
     try {
       const user = await register(form);
-      navigate(defaultRouteForRole(user.role), { replace: true });
+      navigate(defaultRouteForRole(user.role, user.account_status), {
+        replace: true,
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -60,32 +58,39 @@ export default function Register() {
     }
   }
 
-  const needsOrg = form.role !== "individu";
+  const isSchool = form.role === "sekolah";
 
   return (
-    <div className="mx-auto grid max-w-[1180px] gap-6 px-4 py-8 lg:grid-cols-[0.85fr_1fr] lg:py-14">
-      <div className="order-2 rounded-[30px] border border-[#e0e3e8] bg-white p-6 shadow-[0_20px_50px_rgba(17,24,39,0.07)] sm:p-10 lg:order-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c47d20]">
-          Mulai berkontribusi
-        </p>
-        <h1 className="mt-3 font-display text-4xl text-[#1d273a]">
-          Buat akun baru
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-[#667085]">
-          Pilih peran Anda di EducationBridge dan mulai terhubung dengan
-          kebutuhan pendidikan.
-        </p>
+    <div className="flex min-h-[calc(100svh-68px)] items-center justify-center bg-[#f8fafc] px-5 py-8">
+      <section className="w-full max-w-[480px] rounded-2xl border border-[#e5e7eb] bg-white p-6 shadow-[0_12px_32px_rgba(23,52,91,0.08)] sm:p-8">
+        <div className="mb-6 flex flex-col items-center text-center">
+          <Link to="/" aria-label="EducationBridge - Beranda">
+            <img
+              src={logo}
+              alt="EducationBridge"
+              className="h-14 w-14 object-contain"
+            />
+          </Link>
+          <h1 className="mt-3 text-2xl font-semibold text-[#17345B]">Daftar</h1>
+          <p className="mt-1.5 text-sm text-[#667085]">
+            Buat akun EducationBridge.
+          </p>
+        </div>
 
-        <div className="mt-7 grid grid-cols-2 gap-3">
+        <div className="mb-5 grid grid-cols-2 gap-2.5">
           <button
             type="button"
             onClick={() => handleMainCategoryChange("sekolah")}
-            className={`rounded-xl border p-4 text-left transition ${mainCategory === "sekolah" ? "border-[#1a2d4d] bg-[#eef3fb] ring-2 ring-[#1a2d4d]" : "border-[#e0e3e8] bg-[#fafbfc] hover:border-[#9aa7ba]"}`}
+            className={`rounded-lg border p-3 text-left transition ${
+              mainCategory === "sekolah"
+                ? "border-[#17345B] bg-[#f1f5f9] ring-1 ring-[#17345B]"
+                : "border-[#e0e3e8] bg-white hover:border-[#9aa7ba]"
+            }`}
           >
-            <span className="block text-sm font-bold text-[#1d273a]">
+            <span className="block text-sm font-semibold text-[#17345B]">
               Sekolah
             </span>
-            <span className="mt-1 block text-xs leading-5 text-[#667085]">
+            <span className="mt-1 block text-xs leading-4 text-[#667085]">
               Mengajukan kebutuhan bantuan
             </span>
           </button>
@@ -93,146 +98,136 @@ export default function Register() {
           <button
             type="button"
             onClick={() => handleMainCategoryChange("donatur")}
-            className={`rounded-xl border p-4 text-left transition ${mainCategory === "donatur" ? "border-[#1a2d4d] bg-[#eef3fb] ring-2 ring-[#1a2d4d]" : "border-[#e0e3e8] bg-[#fafbfc] hover:border-[#9aa7ba]"}`}
+            className={`rounded-lg border p-3 text-left transition ${
+              mainCategory === "donatur"
+                ? "border-[#17345B] bg-[#f1f5f9] ring-1 ring-[#17345B]"
+                : "border-[#e0e3e8] bg-white hover:border-[#9aa7ba]"
+            }`}
           >
-            <span className="block text-sm font-bold text-[#1d273a]">
-              Donatur / Mitra
+            <span className="block text-sm font-semibold text-[#17345B]">
+              Donatur
             </span>
-            <span className="mt-1 block text-xs leading-5 text-[#667085]">
+            <span className="mt-1 block text-xs leading-4 text-[#667085]">
               Ingin membantu / menyalurkan bantuan
             </span>
           </button>
         </div>
 
-        {mainCategory === "donatur" && (
-          <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/60 p-3.5">
-            <label className="block text-xs font-bold text-[#1a2d4d] uppercase tracking-wider">
-              Pilih Tipe Donatur / Mitra:
-            </label>
-            <select
-              value={form.role}
-              onChange={(e) => update("role", e.target.value)}
-              className="mt-2 w-full rounded-lg border border-[#c3d1e6] bg-white px-3 py-2 text-sm font-semibold text-[#1d273a] focus:outline-none focus:ring-2 focus:ring-[#1a2d4d]"
-            >
-              {donorSubRoles.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label} — {r.hint}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        <form onSubmit={onSubmit} className="mt-7 space-y-5">
+        <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-[#344054]">
-              Nama lengkap
+            <label className="block text-sm font-medium text-[#17345B]">
+              {isSchool ? "Nama kepala sekolah / perwakilan" : "Nama lengkap / penanggung jawab"}
             </label>
             <input
               required
               value={form.name}
               onChange={(e) => update("name", e.target.value)}
-              className="input mt-2 rounded-xl"
+              className="input mt-1.5 rounded-md border-[#d0d5dd] focus:border-[#17345B]"
               placeholder="Nama Anda"
             />
           </div>
-          {needsOrg && (
+          {isSchool && (
             <div>
-              <label className="text-sm font-medium text-[#344054]">
-                {form.role === "sekolah"
-                  ? "Nama sekolah"
-                  : "Nama perusahaan / instansi"}
+              <label className="block text-sm font-medium text-[#17345B]">
+                Nama sekolah
               </label>
               <input
+                required={isSchool}
                 value={form.organization_name}
                 onChange={(e) => update("organization_name", e.target.value)}
-                className="input mt-2 rounded-xl"
-                placeholder="Nama organisasi"
+                className="input mt-1.5 rounded-md border-[#d0d5dd] focus:border-[#17345B]"
+                placeholder="Nama sekolah"
               />
             </div>
           )}
+          {isSchool && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-[#17345B]">
+                  NPSN
+                </label>
+                <input
+                  required
+                  inputMode="numeric"
+                  maxLength={8}
+                  pattern="[0-9]{8}"
+                  value={form.npsn}
+                  onChange={(e) => update("npsn", e.target.value.replace(/\D/g, ""))}
+                  className="input mt-1.5 rounded-md border-[#d0d5dd] focus:border-[#17345B]"
+                  placeholder="8 digit NPSN"
+                />
+                <p className="mt-1 text-xs text-[#667085]">
+                  Akun sekolah menunggu pemeriksaan admin, meskipun NPSN cocok.
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#17345B]">
+                  Nomor telepon
+                </label>
+                <input
+                  required
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => update("phone", e.target.value)}
+                  className="input mt-1.5 rounded-md border-[#d0d5dd] focus:border-[#17345B]"
+                  placeholder="08xxxxxxxxxx"
+                />
+              </div>
+            </>
+          )}
           <div>
-            <label className="text-sm font-medium text-[#344054]">Email</label>
+            <label className="block text-sm font-medium text-[#17345B]">
+              Email
+            </label>
             <input
               required
               type="email"
               value={form.email}
               onChange={(e) => update("email", e.target.value)}
-              className="input mt-2 rounded-xl"
+              className="input mt-1.5 rounded-md border-[#d0d5dd] focus:border-[#17345B]"
               placeholder="nama@email.com"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-[#344054]">
+            <label className="block text-sm font-medium text-[#17345B]">
               Kata sandi
             </label>
             <input
               required
               type="password"
-              minLength={6}
+              minLength={8}
               value={form.password}
               onChange={(e) => update("password", e.target.value)}
-              className="input mt-2 rounded-xl"
-              placeholder="Minimal 6 karakter"
+              className="input mt-1.5 rounded-md border-[#d0d5dd] focus:border-[#17345B]"
+              placeholder="Minimal 8 karakter"
             />
           </div>
           {error && (
-            <p className="rounded-xl bg-[#fff1ef] px-4 py-3 text-sm text-[#c24135]">
+            <p
+              role="alert"
+              className="rounded-md bg-[#fff1ef] px-4 py-3 text-sm text-[#c24135]"
+            >
               {error}
             </p>
           )}
           <button
             disabled={loading}
-            className="w-full rounded-xl bg-[#1a2d4d] py-3 text-sm font-semibold text-white transition hover:bg-[#263f69] disabled:opacity-50"
+            className="w-full rounded-md bg-[#F28C28] py-3 text-sm font-semibold text-white transition hover:bg-[#dc7616] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Memproses..." : "Daftar"}
           </button>
         </form>
 
-        <p className="mt-7 text-center text-sm text-[#667085]">
+        <p className="mt-6 text-center text-sm text-[#667085]">
           Sudah punya akun?{" "}
           <Link
             to="/masuk"
-            className="font-semibold text-[#1a2d4d] underline underline-offset-4"
+            className="font-semibold text-[#17345B] underline underline-offset-4"
           >
-            Masuk di sini
+            Masuk
           </Link>
         </p>
-      </div>
-
-      <div className="relative order-1 min-h-[360px] overflow-hidden rounded-[30px] bg-[#1a2d4d] lg:order-2 lg:min-h-[680px]">
-        <img
-          src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1200&q=85"
-          alt="Buku dan perlengkapan belajar"
-          className="absolute inset-0 h-full w-full object-cover opacity-70"
-        />
-        <div className="absolute inset-0 bg-[#132641]/65" />
-        <div className="relative flex h-full flex-col justify-between p-8 text-white sm:p-10">
-          <Link
-            to="/"
-            className="flex items-center gap-3 font-display text-2xl"
-          >
-            <img
-              src={logo}
-              alt="EducationBridge Logo"
-              className="h-8 w-auto max-h-8 object-contain"
-            />
-            <span>EducationBridge</span>
-          </Link>
-          <div>
-            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#f3c36b]">
-              Pendidikan untuk semua
-            </p>
-            <h2 className="max-w-md font-display text-5xl leading-[0.98]">
-              Setiap peran punya dampak.
-            </h2>
-            <p className="mt-5 max-w-md leading-7 text-[#e7edf7]">
-              Bergabunglah sebagai sekolah, individu, perusahaan, atau mitra
-              pemerintah.
-            </p>
-          </div>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }

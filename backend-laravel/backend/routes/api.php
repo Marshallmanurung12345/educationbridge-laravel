@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\MatchController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SchoolController;
+use App\Http\Controllers\SchoolAccountController;
 use App\Http\Controllers\StatsController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,8 +32,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
-    // Hanya role "sekolah" boleh mengajukan campaign
-    Route::post('/campaigns', [CampaignController::class, 'store'])->middleware('role:sekolah');
+    Route::put('/school-account', [SchoolAccountController::class, 'updateOwnProfile']);
+    Route::get('/admin/school-accounts', [SchoolAccountController::class, 'index'])->middleware('role:admin');
+    Route::put('/admin/school-accounts/{user}/status', [SchoolAccountController::class, 'updateStatus'])->middleware('role:admin');
+    Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->middleware('role:admin');
+
+    // Schools and donors may submit campaigns for admin review.
+    Route::post('/campaigns', [CampaignController::class, 'store'])->middleware('role:sekolah,individu,perusahaan,pemerintah');
 
     // Daftar campaign milik sekolah yang sedang login (Dashboard Sekolah)
     Route::get('/my-campaigns', [CampaignController::class, 'mine'])->middleware('role:sekolah');
@@ -50,8 +57,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-donations', [DonationController::class, 'mine'])
         ->middleware('role:individu,perusahaan,pemerintah');
 
-    // Laporan dampak hanya bisa dibuat oleh sekolah pemilik campaign (dicek di controller)
-    Route::post('/campaigns/{campaign}/reports', [ReportController::class, 'store'])->middleware('role:sekolah');
+    // The owner may report progress for an active campaign.
+    Route::post('/campaigns/{campaign}/reports', [ReportController::class, 'store'])->middleware('role:sekolah,individu,perusahaan,pemerintah');
 
     // Notifikasi Sistem
     Route::get('/notifications', [NotificationController::class, 'index']);

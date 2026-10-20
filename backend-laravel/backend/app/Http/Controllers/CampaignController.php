@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Campaign;
+use App\Models\AuditLog;
 use App\Models\Notification;
 use App\Models\School;
 use Illuminate\Http\Request;
@@ -12,7 +13,13 @@ class CampaignController extends Controller
     // Publik: siapa saja bisa melihat daftar campaign (filter status/category, sort)
     public function index(Request $request)
     {
-        $query = Campaign::query()->with(['school', 'user:id,name,organization_name']);
+        $query = Campaign::query()->with('school');
+
+        if ($request->user()?->role === 'admin') {
+            $query->with('user:id,name,email,role,organization_name,phone');
+        } else {
+            $query->where('status', 'verified');
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->query('status'));
@@ -38,13 +45,14 @@ class CampaignController extends Controller
         return response()->json($query->get());
     }
 
-    // Hanya role "sekolah" (dibatasi lewat middleware role:sekolah di routes/api.php)
+    // School accounts must be verified; donors may submit on behalf of a school.
     public function store(Request $request)
     {
         $user = $request->user();
+        $isSchool = $user->role === 'sekolah';
 
         $data = $request->validate([
-            'school_id' => 'nullable|exists:schools,id',
+            'school_id' => $isSchool ? 'nullable|exists:schools,id' : 'required|exists:schools,id',
             'npsn' => 'nullable|string|exists:schools,npsn',
             'school_name' => 'nullable|string|max:255',
             'location' => 'nullable|string|max:255',
@@ -52,8 +60,9 @@ class CampaignController extends Controller
             'tags' => 'nullable|array',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'rab_description' => 'nullable|string',
-            'supporting_document' => 'nullable|string',
+            'rab_description' => $isSchool ? 'nullable|string' : 'required|string',
+            'supporting_document' => $isSchool ? 'nullable|string|max:2048' : 'required|string|max:2048',
+            'applicant_relationship' => $isSchool ? 'nullable|string|max:255' : 'required|string|max:255',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'target_amount' => 'required|integer|min:1',
@@ -65,43 +74,49 @@ class CampaignController extends Controller
             'image_url' => 'nullable|string',
         ]);
 
-        $officialSchool = null;
-        if (!empty($data['school_id'])) {
-            $officialSchool = School::find($data['school_id']);
-        } elseif (!empty($data['npsn'])) {
-            $officialSchool = School::where('npsn', $data['npsn'])->first();
-        } elseif ($user->school_id) {
+        if ($isSchool && $user->account_status !== 'verified') {
+            return response()->json([
+                'message' => 'Akun sekolah harus diverifikasi admin sebelum dapat mengajukan kebutuhan.',
+            ], 403);
+        }
+
+        if ($isSchool) {
             $officialSchool = $user->school;
-        }
-
-        if ($officialSchool) {
-            $data['school_id'] = $officialSchool->id;
-            $data['school_name'] = $officialSchool->name;
-            $data['location'] = "{$officialSchool->kecamatan}, {$officialSchool->kabupaten_kota}, {$officialSchool->provinsi}";
-            $data['student_count'] = $officialSchool->jumlah_siswa ?? ($data['student_count'] ?? 0);
-            $data['remoteness'] = $officialSchool->is_3t ? 5 : ($data['remoteness'] ?? 3);
+            if (!$officialSchool || $officialSchool->npsn !== $user->npsn) {
+                return response()->json([
+                    'message' => 'Data sekolah terverifikasi belum terhubung dengan akun ini.',
+                ], 422);
+            }
         } else {
-            $data['school_name'] = $data['school_name'] ?? 'Sekolah';
-            $data['location'] = $data['location'] ?? 'Indonesia';
+            $officialSchool = School::find($data['school_id']);
         }
 
+        if (!$officialSchool) {
+            return response()->json(['message' => 'Sekolah yang dipilih tidak ditemukan.'], 422);
+        }
+
+        $data['school_id'] = $officialSchool->id;
+        $data['school_name'] = $officialSchool->name;
+        $data['location'] = "{$officialSchool->kecamatan}, {$officialSchool->kabupaten_kota}, {$officialSchool->provinsi}";
+        $data['student_count'] = $officialSchool->jumlah_siswa ?? ($data['student_count'] ?? 0);
+        $data['remoteness'] = $officialSchool->is_3t ? 5 : ($data['remoteness'] ?? 3);
+        $data['status'] = 'pending';
+        unset($data['npsn']);
         $campaign = $user->campaigns()->create($data);
 
-        // Notifikasi untuk Admin (Ada pengajuan baru)
         Notification::create([
             'target_role' => 'admin',
             'type' => 'campaign_submitted',
             'title' => '📥 Pengajuan Campaign Baru',
-            'message' => "Sekolah {$campaign->school_name} mengajukan permohonan bantuan '{$campaign->title}'. Silakan lakukan pemeriksaan.",
+            'message' => "{$user->name} mengajukan bantuan '{$campaign->title}' untuk {$campaign->school_name}. Silakan lakukan pemeriksaan.",
             'campaign_id' => $campaign->id,
         ]);
 
-        // Notifikasi untuk Sekolah Pengaju
         Notification::create([
             'user_id' => $user->id,
             'type' => 'campaign_submitted',
             'title' => '⏳ Pengajuan Berhasil Terkirim',
-            'message' => "Permohonan bantuan '{$campaign->title}' berhasil diajukan dan sedang dalam proses verifikasi oleh Admin.",
+            'message' => "Pengajuan '{$campaign->title}' berhasil dikirim dan sedang menunggu pemeriksaan admin.",
             'campaign_id' => $campaign->id,
         ]);
 
@@ -136,9 +151,22 @@ class CampaignController extends Controller
         ]);
     }
 
-    public function show(Campaign $campaign)
+    public function show(Request $request, Campaign $campaign)
     {
-        return response()->json($campaign->load(['school', 'user:id,name,organization_name']));
+        $user = $request->user();
+        abort_unless(
+            $campaign->status === 'verified' ||
+                $user?->role === 'admin' ||
+                $user?->id === $campaign->user_id,
+            404,
+        );
+
+        $campaign->load('school');
+        if ($user?->role === 'admin' || $user?->id === $campaign->user_id) {
+            $campaign->load('user:id,name,email,role,organization_name,phone');
+        }
+
+        return response()->json($campaign);
     }
 
     // Pemilik (sekolah) boleh edit data campaign miliknya; admin boleh ubah status verifikasi.
@@ -151,6 +179,14 @@ class CampaignController extends Controller
         if (!$isOwner && !$isAdmin) {
             return response()->json(['message' => 'Anda tidak berhak mengubah campaign ini.'], 403);
         }
+        if ($user->role === 'sekolah' && $user->account_status !== 'verified') {
+            return response()->json(['message' => 'Akun sekolah tidak aktif.'], 403);
+        }
+        if ($isOwner && !$isAdmin && !in_array($campaign->status, ['pending', 'needs_revision'], true)) {
+            return response()->json([
+                'message' => 'Pengajuan hanya dapat diubah saat menunggu pemeriksaan atau memerlukan perbaikan.',
+            ], 403);
+        }
 
         $rules = [
             'school_name' => 'sometimes|string|max:255',
@@ -161,6 +197,7 @@ class CampaignController extends Controller
             'description' => 'sometimes|string',
             'rab_description' => 'sometimes|nullable|string',
             'supporting_document' => 'sometimes|nullable|string',
+            'applicant_relationship' => 'sometimes|nullable|string|max:255',
             'start_date' => 'sometimes|date',
             'end_date' => 'sometimes|date|after_or_equal:start_date',
             'target_amount' => 'sometimes|integer|min:1',
@@ -173,8 +210,10 @@ class CampaignController extends Controller
         ];
 
         if ($isAdmin) {
-            $rules['status'] = 'sometimes|in:pending,needs_revision,verified,rejected';
+            $rules['status'] = 'sometimes|in:pending,needs_revision,verified,rejected,completed,suspended';
             $rules['verification_note'] = 'sometimes|nullable|string';
+        } else {
+            unset($rules['school_name'], $rules['location']);
         }
 
         $data = $request->validate($rules);
@@ -184,7 +223,27 @@ class CampaignController extends Controller
         }
 
         $oldStatus = $campaign->status;
+        $oldPriorityScore = $campaign->priority_score;
+        $oldValues = $campaign->only(array_keys($data));
         $campaign->update($data);
+
+        if ($isAdmin && $data) {
+            $scoreFields = ['urgency', 'facility_condition', 'remoteness', 'student_count', 'access_score'];
+            if (array_intersect($scoreFields, array_keys($data))) {
+                $oldValues['priority_score'] = $oldPriorityScore;
+                $data['priority_score'] = $campaign->priority_score;
+            }
+
+            AuditLog::create([
+                'actor_id' => $user->id,
+                'action' => 'campaign_reviewed_or_updated',
+                'subject_type' => Campaign::class,
+                'subject_id' => $campaign->id,
+                'old_values' => $oldValues,
+                'new_values' => $data,
+                'note' => $data['verification_note'] ?? null,
+            ]);
+        }
 
         // Notifikasi Perubahan Status dari Admin ke Sekolah
         if ($isAdmin && isset($data['status']) && $data['status'] !== $oldStatus) {
@@ -221,6 +280,19 @@ class CampaignController extends Controller
     // Hanya admin (dibatasi lewat middleware role:admin di routes/api.php)
     public function destroy(Campaign $campaign)
     {
+        if ($campaign->donations()->exists()) {
+            return response()->json([
+                'message' => 'Campaign dengan transaksi donasi tidak dapat dihapus.',
+            ], 422);
+        }
+
+        AuditLog::create([
+            'actor_id' => request()->user()->id,
+            'action' => 'campaign_deleted',
+            'subject_type' => Campaign::class,
+            'subject_id' => $campaign->id,
+            'old_values' => ['status' => $campaign->status, 'title' => $campaign->title],
+        ]);
         $campaign->delete();
 
         return response()->json(null, 204);

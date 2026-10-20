@@ -34,6 +34,8 @@ export const authApi = {
     request(`/login`, { method: "POST", body: JSON.stringify(data) }),
   logout: () => request(`/logout`, { method: "POST" }),
   me: () => request(`/me`),
+  updateSchoolProfile: (data) =>
+    request(`/school-account`, { method: "PUT", body: JSON.stringify(data) }),
 };
 
 export const api = {
@@ -52,6 +54,13 @@ export const api = {
   updateCampaign: (id, data) =>
     request(`/campaigns/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   deleteCampaign: (id) => request(`/campaigns/${id}`, { method: "DELETE" }),
+  listSchoolAccounts: () => request(`/admin/school-accounts`),
+  listAuditLogs: () => request(`/admin/audit-logs`),
+  updateSchoolAccountStatus: (id, data) =>
+    request(`/admin/school-accounts/${id}/status`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
   match: (focusTags = []) =>
     request(`/match?focus=${encodeURIComponent(focusTags.join(","))}`),
   listDonations: (id) => request(`/campaigns/${id}/donations`),

@@ -11,6 +11,22 @@ export default function ProtectedRoute({ roles, children }) {
     return <Navigate to="/masuk" state={{ from: location.pathname }} replace />;
   }
 
+  if (
+    user.role === "sekolah" &&
+    user.account_status !== "verified" &&
+    location.pathname !== "/status-verifikasi"
+  ) {
+    return <Navigate to="/status-verifikasi" replace />;
+  }
+
+  if (
+    user.role === "sekolah" &&
+    user.account_status === "verified" &&
+    location.pathname === "/status-verifikasi"
+  ) {
+    return <Navigate to="/ajukan" replace />;
+  }
+
   if (roles && !roles.includes(user.role)) {
     return (
       <div className="max-w-lg mx-auto px-5 py-20 text-center">

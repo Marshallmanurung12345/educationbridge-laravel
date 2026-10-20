@@ -11,7 +11,13 @@ class DonationController extends Controller
 {
     public function index(Campaign $campaign)
     {
-        return response()->json($campaign->donations()->latest()->get());
+        abort_unless($campaign->status === 'verified', 404);
+        return response()->json(
+            $campaign->donations()
+                ->select(['id', 'amount', 'created_at'])
+                ->latest()
+                ->get(),
+        );
     }
 
     // Riwayat donasi milik user yang sedang login (dipakai Dashboard Donatur).
@@ -73,7 +79,12 @@ class DonationController extends Controller
             $donation = $locked->donations()->create([
                 'user_id' => $user->id,
                 'donor_name' => $user->organization_name ?: $user->name,
-                'donor_type' => $user->role,
+                'donor_type' => match ($user->role) {
+                    'individu' => 'individu',
+                    'perusahaan' => 'perusahaan',
+                    'pemerintah' => 'pemerintah',
+                    default => 'individu',
+                },
                 'amount' => $data['amount'],
                 'payment_method' => $data['payment_method'],
                 'message' => $data['message'] ?? '',

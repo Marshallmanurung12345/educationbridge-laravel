@@ -20,6 +20,7 @@ class Campaign extends Model
         'description',
         'rab_description',
         'supporting_document',
+        'applicant_relationship',
         'verification_note',
         'start_date',
         'end_date',

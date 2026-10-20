@@ -10,15 +10,26 @@ class ReportController extends Controller
 {
     public function index(Campaign $campaign)
     {
+        abort_unless($campaign->status === 'verified', 404);
         return response()->json($campaign->reports()->latest()->get());
     }
 
-    // Hanya sekolah pemilik campaign yang boleh mengunggah laporan dampak.
+    // Only the campaign owner may submit a progress report.
     public function store(Request $request, Campaign $campaign)
     {
-        if ($request->user()->id !== $campaign->user_id) {
+        if (
+            $request->user()->role === 'sekolah' &&
+            $request->user()->account_status !== 'verified'
+        ) {
+            return response()->json(['message' => 'Akun sekolah tidak aktif.'], 403);
+        }
+
+        if (
+            $request->user()->id !== $campaign->user_id ||
+            !in_array($campaign->status, ['verified', 'completed'], true)
+        ) {
             return response()->json([
-                'message' => 'Hanya sekolah pengaju yang dapat menambahkan laporan untuk campaign ini.',
+                'message' => 'Hanya pemilik campaign aktif yang dapat menambahkan laporan.',
             ], 403);
         }
 
