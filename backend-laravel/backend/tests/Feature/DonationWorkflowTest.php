@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Campaign;
 use App\Models\Donation;
+use App\Models\Report;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -92,6 +93,83 @@ class DonationWorkflowTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1)
             ->assertJsonPath('0.amount', 100000);
+    }
+
+    public function test_donor_dashboard_can_link_to_reports_for_completed_campaigns(): void
+    {
+        $donor = $this->createUser('individu', 'donor@example.test');
+        $campaign = $this->createCampaign([
+            'target_amount' => 100000,
+            'raised_amount' => 100000,
+            'status' => 'completed',
+        ]);
+        Donation::create([
+            'campaign_id' => $campaign->id,
+            'user_id' => $donor->id,
+            'donor_name' => $donor->name,
+            'donor_type' => 'individu',
+            'amount' => 100000,
+            'payment_method' => 'bank_bca',
+        ]);
+        Report::create([
+            'campaign_id' => $campaign->id,
+            'title' => 'Perbaikan ruang kelas',
+            'narrative' => 'Atap ruang kelas telah diperbaiki.',
+        ]);
+
+        $this->actingAs($donor, 'sanctum')
+            ->getJson('/api/my-donations')
+            ->assertOk()
+            ->assertJsonPath('donations.0.campaign.reports_count', 1)
+            ->assertJsonPath('donations.0.campaign.status', 'completed');
+
+        $this->getJson("/api/campaigns/{$campaign->id}")
+            ->assertOk()
+            ->assertJsonPath('status', 'completed');
+
+        $this->getJson("/api/campaigns/{$campaign->id}/reports")
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.title', 'Perbaikan ruang kelas');
+    }
+
+    public function test_donor_dashboard_summaries_are_zero_when_the_account_has_no_activity(): void
+    {
+        $donor = $this->createUser('individu', 'donor@example.test');
+
+        $this->actingAs($donor, 'sanctum')
+            ->getJson('/api/my-donations')
+            ->assertOk()
+            ->assertJsonPath('total_donated', 0)
+            ->assertJsonPath('total_donation_count', 0)
+            ->assertJsonPath('campaigns_supported', 0)
+            ->assertJsonCount(0, 'donations');
+
+        $this->getJson('/api/my-submissions')
+            ->assertOk()
+            ->assertJsonPath('summary.total_submissions', 0)
+            ->assertJsonPath('summary.pending', 0)
+            ->assertJsonCount(0, 'campaigns.data');
+    }
+
+    public function test_donation_records_selected_bank_name_without_payment_verification(): void
+    {
+        $donor = $this->createUser('individu', 'donor@example.test');
+        $campaign = $this->createCampaign();
+
+        $this->actingAs($donor, 'sanctum')
+            ->postJson("/api/campaigns/{$campaign->id}/donations", [
+                'amount' => 25000,
+                'payment_method' => 'bank_bca',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('payment_method', 'bank_bca');
+
+        $this->assertDatabaseHas('donations', [
+            'campaign_id' => $campaign->id,
+            'payment_method' => 'bank_bca',
+            'amount' => 25000,
+        ]);
     }
 
     private function createCampaign(array $overrides = []): Campaign

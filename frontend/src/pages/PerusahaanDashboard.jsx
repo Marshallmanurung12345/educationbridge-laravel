@@ -96,7 +96,7 @@ export default function PerusahaanDashboard() {
               <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#9a6b1c]">
                 Dashboard Perusahaan
               </p>
-              <h1 className="mt-2 font-display text-3xl font-semibold text-[#17365d] sm:text-4xl">
+              <h1 className="page-title mt-2 text-[#17365d]">
                 Program CSR
               </h1>
               <p className="mt-2 text-sm text-[#64748b]">

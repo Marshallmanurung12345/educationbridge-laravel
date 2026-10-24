@@ -16,12 +16,41 @@ class MatchController extends Controller
             ->filter()
             ->values();
 
-        $campaigns = Campaign::with(['school', 'user:id,name,organization_name'])->where('status', 'verified')->get();
+        $summary = $request->boolean('summary');
+        $query = Campaign::query();
+        if ($summary) {
+            $query
+                ->select([
+                    'id',
+                    'school_id',
+                    'school_name',
+                    'location',
+                    'category',
+                    'title',
+                    'end_date',
+                    'target_amount',
+                    'raised_amount',
+                    'student_count',
+                    'urgency',
+                    'image_url',
+                    'status',
+                    'priority_score',
+                    'tags',
+                ])
+                ->with('school:id,npsn,name,provinsi,kabupaten_kota,kecamatan,desa_kelurahan,jumlah_siswa,jumlah_guru,is_3t,status_3t_detail,data_source');
+        } else {
+            $query->with(['school', 'user:id,name,organization_name']);
+        }
 
-        $scored = $campaigns->map(function (Campaign $c) use ($focus) {
+        $campaigns = $query->where('status', 'verified')->get();
+
+        $scored = $campaigns->map(function (Campaign $c) use ($focus, $summary) {
             $tags = collect($c->tags ?? [])->map(fn ($t) => strtolower($t));
             $overlap = $focus->isEmpty() ? 0 : $tags->intersect($focus)->count();
 
+            if ($summary) {
+                $c->makeHidden(['user_id', 'priority_breakdown']);
+            }
             $arr = $c->toArray();
             $arr['match_score'] = $overlap;
 

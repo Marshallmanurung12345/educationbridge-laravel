@@ -42,7 +42,7 @@ export default function AdminSchools() {
       <div className="mx-auto max-w-[1500px]">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-[#17345B]">Data Sekolah</h1>
+            <h1 className="page-title text-[#17345B]">Data Sekolah</h1>
             <p className="mt-1 text-sm text-[#667085]">Data sekolah resmi yang tersedia untuk dicocokkan dengan pengajuan.</p>
           </div>
           <label className="block w-full sm:w-80">

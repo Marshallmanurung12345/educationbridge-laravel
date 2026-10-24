@@ -132,7 +132,7 @@ export default function Home() {
             <p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-[#55718f]">
               Bersama untuk pendidikan yang lebih merata
             </p>
-            <h1 className="max-w-[620px] font-display text-[3.25rem] leading-[0.98] text-[#17365d] sm:text-[4.5rem]">
+            <h1 className="hero-title max-w-[620px]">
               Memahami Kebutuhan.
               <br />
               <span className="text-[#1d62b5]">Menghubungkan Dukungan.</span>

@@ -41,7 +41,7 @@ export default function Login() {
               className="h-14 w-14 object-contain"
             />
           </Link>
-          <h1 className="mt-3 text-2xl font-semibold text-[#17345B]">Masuk</h1>
+          <h1 className="page-title mt-3 text-[#17345B]">Masuk</h1>
           <p className="mt-1.5 text-sm text-[#667085]">
             Selamat datang kembali.
           </p>

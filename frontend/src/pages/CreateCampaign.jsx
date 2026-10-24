@@ -250,7 +250,7 @@ export default function CreateCampaign() {
       <main className="min-h-[calc(100svh-68px)] bg-[#F7F8FA] px-4 py-12 sm:px-6">
         <section className="mx-auto max-w-xl rounded-xl border border-[#E6EAF0] bg-white p-6 text-center shadow-sm sm:p-8">
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-2xl text-emerald-700">✓</span>
-          <h1 className="mt-4 text-2xl font-semibold text-[#17345B]">
+          <h1 className="page-title mt-4 text-[#17345B]">
             {isEditing ? "Perubahan pengajuan tersimpan" : "Pengajuan berhasil dikirim"}
           </h1>
           <p className="mt-2 text-sm leading-6 text-[#667085]">
@@ -284,7 +284,7 @@ export default function CreateCampaign() {
         </button>
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-[#17345B] sm:text-[28px]">
+            <h1 className="page-title text-[#17345B]">
               {isEditing ? "Perbarui Pengajuan Kebutuhan" : isSchoolAccount ? "Ajukan Kebutuhan Sekolah" : "Ajukan Kebutuhan untuk Sekolah"}
             </h1>
             <p className="mt-1.5 max-w-2xl text-sm leading-6 text-[#667085]">

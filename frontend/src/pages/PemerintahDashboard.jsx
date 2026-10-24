@@ -205,7 +205,7 @@ export default function PemerintahDashboard() {
                   Terintegrasi Kemendikdasmen
                 </span>
               </div>
-              <h1 className="mt-3 font-display text-3xl font-bold sm:text-4xl">
+              <h1 className="page-title mt-3 font-bold">
                 Dashboard Evaluasi Pemerataan Pendidikan
               </h1>
               <p className="mt-2 text-sm text-slate-300 max-w-2xl leading-relaxed">

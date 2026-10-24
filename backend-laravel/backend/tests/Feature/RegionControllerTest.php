@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -35,6 +36,21 @@ class RegionControllerTest extends TestCase
         $this->getJson('/api/regions/regencies/11')
             ->assertOk()
             ->assertJsonPath('data.0.code', '11.01');
+    }
+
+    public function test_it_caches_successful_region_responses(): void
+    {
+        Cache::forget('regions:provinces.json');
+        Http::fake([
+            'https://wilayah.id/api/provinces.json' => Http::response([
+                'data' => [['code' => '11', 'name' => 'Aceh']],
+            ]),
+        ]);
+
+        $this->getJson('/api/regions/provinces')->assertOk();
+        $this->getJson('/api/regions/provinces')->assertOk();
+
+        Http::assertSentCount(1);
     }
 
     public function test_it_rejects_invalid_levels_and_parent_codes(): void

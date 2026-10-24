@@ -69,8 +69,13 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(data),
     }),
-  match: (focusTags = []) =>
-    request(`/match?focus=${encodeURIComponent(focusTags.join(","))}`),
+  match: (focusTags = [], params = {}) => {
+    const qs = new URLSearchParams({
+      focus: focusTags.join(","),
+      ...params,
+    }).toString();
+    return request(`/match?${qs}`);
+  },
   listDonations: (id) => request(`/campaigns/${id}/donations`),
   createDonation: (id, data) =>
     request(`/campaigns/${id}/donations`, {

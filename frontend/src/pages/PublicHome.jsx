@@ -219,7 +219,7 @@ export default function PublicHome() {
           <div className="mx-auto w-full max-w-[900px] text-white drop-shadow-[0_2px_12px_rgba(10,24,42,0.28)]">
             <h1
               id="hero-title"
-              className="mx-auto max-w-[800px] text-[1.8rem] font-semibold leading-[1.12] tracking-[-0.025em] sm:text-[2.5rem] lg:text-5xl"
+              className="hero-title mx-auto max-w-[800px]"
             >
               Bersama{" "}
               <span className="text-[#ffad55]">Wujudkan Pendidikan</span>{" "}
@@ -256,7 +256,7 @@ export default function PublicHome() {
               <div>
                 <h2
                   id="needs-title"
-                  className="text-[1.4rem] font-semibold leading-tight text-[#17345b] sm:text-2xl"
+                  className="font-display text-2xl font-semibold leading-tight text-[#17345b] sm:text-3xl"
                 >
                   Kebutuhan Sekolah Terkini
                 </h2>

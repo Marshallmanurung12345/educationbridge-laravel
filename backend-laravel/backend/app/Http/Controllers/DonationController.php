@@ -25,7 +25,11 @@ class DonationController extends Controller
     {
         $donations = $request->user()
             ->donations()
-            ->with('campaign:id,title,school_name,status,raised_amount,target_amount')
+            ->with([
+                'campaign' => fn ($query) => $query
+                    ->select(['id', 'title', 'school_name', 'status', 'raised_amount', 'target_amount'])
+                    ->withCount('reports'),
+            ])
             ->latest()
             ->get();
 
@@ -44,7 +48,7 @@ class DonationController extends Controller
     {
         $data = $request->validate([
             'amount' => 'required|integer|min:10000',
-            'payment_method' => 'required|in:transfer_bank,e_wallet',
+            'payment_method' => 'required|in:transfer_bank,e_wallet,bank_bca,bank_mandiri,bank_bni,bank_bri,bank_bsi,bank_btn,bank_cimb_niaga,bank_ocbc,bank_danamon,bank_permata,bank_lainnya',
             'message' => 'nullable|string|max:500',
         ]);
 

@@ -13,9 +13,33 @@ class CampaignController extends Controller
     // Publik: siapa saja bisa melihat daftar campaign (filter status/category, sort)
     public function index(Request $request)
     {
-        $query = Campaign::query()->with('school');
+        $isAdmin = $request->user()?->role === 'admin';
+        $query = Campaign::query();
 
-        if ($request->user()?->role === 'admin') {
+        if ($request->boolean('summary') && ! $isAdmin) {
+            $query
+                ->select([
+                    'id',
+                    'school_id',
+                    'school_name',
+                    'location',
+                    'category',
+                    'title',
+                    'end_date',
+                    'target_amount',
+                    'raised_amount',
+                    'student_count',
+                    'urgency',
+                    'image_url',
+                    'status',
+                    'priority_score',
+                ])
+                ->with('school:id,npsn,name,provinsi,kabupaten_kota,kecamatan,desa_kelurahan,jumlah_siswa,jumlah_guru,is_3t,status_3t_detail,data_source');
+        } else {
+            $query->with('school');
+        }
+
+        if ($isAdmin) {
             $query->with('user:id,name,email,role,organization_name,phone');
         } else {
             $query->where('status', 'verified');
@@ -43,8 +67,11 @@ class CampaignController extends Controller
         };
 
         $campaigns = $query->get();
-        if ($request->user()?->role !== 'admin') {
+        if (! $isAdmin) {
             $campaigns->each(fn (Campaign $campaign) => $campaign->makeHidden('user_id'));
+        }
+        if ($request->boolean('summary') && ! $isAdmin) {
+            $campaigns->each(fn (Campaign $campaign) => $campaign->makeHidden('priority_breakdown'));
         }
 
         return response()->json($campaigns);
@@ -184,7 +211,7 @@ class CampaignController extends Controller
     {
         $user = $request->user();
         abort_unless(
-            $campaign->status === 'verified' ||
+            in_array($campaign->status, ['verified', 'completed'], true) ||
                 $user?->role === 'admin' ||
                 $user?->id === $campaign->user_id,
             404,

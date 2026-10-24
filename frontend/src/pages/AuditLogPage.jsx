@@ -17,7 +17,7 @@ export default function AuditLogPage() {
   return (
     <main className="min-h-[calc(100svh-68px)] bg-[#f8fafc] px-5 py-10 text-[#17345B]">
       <div className="mx-auto max-w-5xl">
-        <h1 className="text-2xl font-semibold">Audit Aktivitas</h1>
+        <h1 className="page-title">Audit Aktivitas</h1>
         <p className="mt-2 text-sm text-[#667085]">
           Catatan perubahan status akun sekolah dan tindakan admin.
         </p>

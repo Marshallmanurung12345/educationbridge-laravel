@@ -196,7 +196,7 @@ export default function AdminDashboard({ campaignQueue = false }) {
       <div className="mx-auto max-w-[1500px]">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-[#17345B]">
+            <h1 className="page-title text-[#17345B]">
               {campaignQueue ? "Tinjau Kebutuhan Sekolah" : "Ringkasan Admin"}
             </h1>
             <p className="mt-1 text-sm text-[#667085]">

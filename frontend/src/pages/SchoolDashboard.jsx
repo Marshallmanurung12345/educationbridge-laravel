@@ -69,7 +69,7 @@ export default function SchoolDashboard() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm text-[#667085]">Dashboard Sekolah</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#17345B]">
+            <h1 className="page-title mt-1 text-[#17345B]">
               {user.organization_name || "Sekolah Anda"}
             </h1>
             <p className="mt-1 text-sm text-[#667085]">

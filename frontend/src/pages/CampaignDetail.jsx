@@ -6,6 +6,19 @@ import { getCategoryImage } from "../categoryImages";
 
 const donationPresets = [50000, 100000, 250000, 500000];
 const donorRoles = ["individu", "perusahaan", "pemerintah"];
+const bankOptions = [
+  ["bank_bca", "BCA"],
+  ["bank_mandiri", "Mandiri"],
+  ["bank_bni", "BNI"],
+  ["bank_bri", "BRI"],
+  ["bank_bsi", "BSI"],
+  ["bank_btn", "BTN"],
+  ["bank_cimb_niaga", "CIMB Niaga"],
+  ["bank_ocbc", "OCBC"],
+  ["bank_danamon", "Danamon"],
+  ["bank_permata", "Permata"],
+  ["bank_lainnya", "Bank lainnya"],
+];
 
 const tabs = [
   ["tentang", "Tentang Kebutuhan"],
@@ -59,7 +72,7 @@ export default function CampaignDetail() {
   const [reportLoadError, setReportLoadError] = useState("");
   const [status, setStatus] = useState("");
   const [amount, setAmount] = useState(50000);
-  const [paymentMethod, setPaymentMethod] = useState("transfer_bank");
+  const [paymentMethod, setPaymentMethod] = useState("bank_bca");
   const [submittingDonation, setSubmittingDonation] = useState(false);
   const [message, setMessage] = useState("");
   const [reportTitle, setReportTitle] = useState("");
@@ -81,7 +94,7 @@ export default function CampaignDetail() {
 
   useEffect(() => {
     setImageFailed(false);
-    setActiveTab("tentang");
+    setActiveTab(window.location.hash === "#laporan-dampak" ? "donasi" : "tentang");
     load();
   }, [id]);
 
@@ -184,7 +197,7 @@ export default function CampaignDetail() {
               <p className="text-xs font-semibold uppercase tracking-wide text-[#667085]">
                 {campaign.category || "Kebutuhan Sekolah"}
               </p>
-              <h1 className="mt-1.5 text-xl font-semibold leading-snug text-[#101828] sm:text-2xl">
+              <h1 className="campaign-title mt-1.5 text-[#101828]">
                 {campaign.title}
               </h1>
               <p className="mt-1 text-sm font-medium text-[#344054]">
@@ -639,7 +652,12 @@ export default function CampaignDetail() {
 
               {!donationClosed && user && donorRoles.includes(user.role) && (
                 <form onSubmit={submitDonation} className="space-y-2.5">
-                  <p className="text-xs font-semibold text-[#344054]">Pilih nominal donasi</p>
+                  <label
+                    htmlFor="donation-amount"
+                    className="block text-xs font-semibold text-[#344054]"
+                  >
+                    Nominal donasi
+                  </label>
                   <div className="grid grid-cols-2 gap-2">
                     {donationPresets.map((preset) => (
                       <button
@@ -658,23 +676,31 @@ export default function CampaignDetail() {
                     ))}
                   </div>
                   <input
+                    id="donation-amount"
                     type="number"
                     min="10000"
+                    step="1000"
                     required
                     value={amount}
                     onChange={(e) => setAmount(Number(e.target.value))}
-                    placeholder="Nominal lainnya"
+                    placeholder="Masukkan nominal donasi"
                     className="min-h-9 w-full rounded-lg border border-[#eaecf0] px-3 text-sm text-[#101828] focus:border-[#f28c28] focus:outline-none"
                   />
                   <select
-                    aria-label="Metode pembayaran"
+                    aria-label="Pilih bank"
                     value={paymentMethod}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="min-h-9 w-full rounded-lg border border-[#eaecf0] bg-white px-3 text-sm text-[#344054] focus:border-[#f28c28] focus:outline-none"
                   >
-                    <option value="transfer_bank">Transfer bank</option>
-                    <option value="e_wallet">E-wallet</option>
+                    <option value="" disabled>Pilih bank</option>
+                    {bankOptions.map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
                   </select>
+                  <p className="text-[11px] leading-4 text-[#667085]">
+                    Pilihan bank hanya dicatat sebagai preferensi. Transfer belum diproses
+                    atau diverifikasi otomatis oleh aplikasi.
+                  </p>
                   <textarea
                     aria-label="Pesan untuk sekolah"
                     value={message}

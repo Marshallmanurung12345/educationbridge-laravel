@@ -240,8 +240,9 @@ export default function Campaigns() {
     const query = search.trim();
     const request =
       sort === "recommended"
-        ? api.match(["3t"])
+        ? api.match(["3t"], { summary: true })
         : api.listCampaigns({
+            summary: true,
             status: "verified",
             sort: sort === "urgency" ? "priority" : sort,
             ...(query && { q: query }),
@@ -421,7 +422,7 @@ export default function Campaigns() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9a6b1c]">
               Pendidikan untuk semua
             </p>
-            <h1 className="mt-1.5 font-display text-3xl leading-tight text-[#17345B] sm:text-4xl">
+            <h1 className="page-title mt-1.5 text-[#17345B]">
               Jelajahi Kebutuhan Sekolah
             </h1>
             <p className="mt-1.5 max-w-xl text-sm leading-5 text-[#64748b]">

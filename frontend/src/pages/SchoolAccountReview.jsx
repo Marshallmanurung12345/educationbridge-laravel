@@ -81,7 +81,7 @@ export default function SchoolAccountReview() {
     <main className="min-h-[calc(100svh-68px)] bg-[#F7F8FA] px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1500px]">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-[#17345B]">Verifikasi Sekolah</h1>
+          <h1 className="page-title text-[#17345B]">Verifikasi Sekolah</h1>
           <p className="mt-1 text-sm text-[#667085]">Periksa data pendaftar dan kecocokan NPSN pada data sekolah resmi.</p>
         </div>
 

@@ -19,8 +19,8 @@ export default {
         sage: "#4F7A5B",
       },
       fontFamily: {
-        display: ["Fraunces", "serif"],
-        body: ['"IBM Plex Sans"', "sans-serif"],
+        display: ["Lora", "serif"],
+        body: ["Inter", "sans-serif"],
       },
       boxShadow: {
         card: "4px 4px 0 0 #16233B",

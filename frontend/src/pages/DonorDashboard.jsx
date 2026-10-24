@@ -10,6 +10,21 @@ const statusLabels = {
   completed: "Selesai",
   suspended: "Ditangguhkan",
 };
+const paymentMethodLabels = {
+  transfer_bank: "Transfer bank",
+  e_wallet: "E-wallet",
+  bank_bca: "BCA",
+  bank_mandiri: "Mandiri",
+  bank_bni: "BNI",
+  bank_bri: "BRI",
+  bank_bsi: "BSI",
+  bank_btn: "BTN",
+  bank_cimb_niaga: "CIMB Niaga",
+  bank_ocbc: "OCBC",
+  bank_danamon: "Danamon",
+  bank_permata: "Permata",
+  bank_lainnya: "Bank lainnya",
+};
 
 function dateLabel(value) {
   return value
@@ -89,23 +104,23 @@ export default function DonorDashboard() {
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#9a6b1c]">
               Ruang Donatur
             </p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+            <h1 className="page-title mt-1">
               Donasi Saya
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#667085]">
               Ringkasan donasi, pengajuan, dan aktivitas akun Anda.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <Link
               to="/kampanye"
-              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#C9D3DF] bg-white px-4 text-sm font-semibold text-[#17345B] hover:bg-[#F1F4F8]"
+              className="inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-[#F28C28] px-4 text-center text-sm font-semibold text-white hover:bg-[#DB7415] sm:w-auto"
             >
-              Cari Kebutuhan untuk Didonasikan
+              Cari Kebutuhan
             </Link>
             <Link
               to="/ajukan"
-              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#F28C28] px-4 text-sm font-semibold text-white hover:bg-[#DB7415]"
+              className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-[#C9D3DF] bg-white px-4 text-center text-sm font-semibold text-[#17345B] hover:bg-[#F1F4F8] sm:w-auto"
             >
               Ajukan Kebutuhan Sekolah
             </Link>
@@ -132,7 +147,7 @@ export default function DonorDashboard() {
               className="rounded-xl border border-[#E3E8EF] bg-white p-4 shadow-sm"
             >
               <p className="text-xs font-medium text-[#667085]">{label}</p>
-              <p className="mt-2 text-xl font-semibold text-[#17345B]">
+              <p className="mt-2 break-words text-xl font-semibold text-[#17345B]">
                 {available ? value : loading ? "Memuat…" : "Data belum tersedia"}
               </p>
             </article>
@@ -163,13 +178,13 @@ export default function DonorDashboard() {
               Memuat pengajuan…
             </p>
           ) : submissions.length === 0 ? (
-            <div className="px-5 py-8 text-center">
+            <div className="flex flex-col items-center gap-3 px-4 py-5 text-center sm:flex-row sm:justify-between sm:px-5">
               <p className="text-sm font-medium text-[#344054]">
-                Anda belum memiliki pengajuan kebutuhan.
+                Belum ada pengajuan kebutuhan. Anda dapat mengajukan kebutuhan sekolah kapan saja.
               </p>
               <Link
                 to="/ajukan"
-                className="mt-3 inline-flex min-h-10 items-center rounded-lg bg-[#17345B] px-4 text-sm font-semibold text-white hover:bg-[#244a79]"
+                className="inline-flex min-h-10 w-full shrink-0 items-center justify-center rounded-lg border border-[#C9D3DF] bg-white px-4 text-sm font-semibold text-[#17345B] hover:bg-[#F1F4F8] sm:w-auto"
               >
                 Ajukan Kebutuhan Sekolah
               </Link>
@@ -272,30 +287,38 @@ export default function DonorDashboard() {
               {donations.map((donation) => (
                 <li
                   key={donation.id}
-                  className="flex flex-col gap-2 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+                  className="grid min-w-0 gap-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5"
                 >
-                  <div>
-                    <p className="font-medium text-[#17345B]">
-                      {donation.campaign?.title || "Kebutuhan sekolah"}
+                  <div className="min-w-0">
+                    <p className="break-words font-semibold text-[#17345B]">
+                      {donation.campaign?.title || donation.campaign?.school_name || "Kebutuhan sekolah"}
                     </p>
-                    <p className="mt-1 text-xs text-[#667085]">
-                      {dateLabel(donation.created_at)} · {donation.payment_method || "Metode belum tersedia"}
-                    </p>
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#667085]">
+                      <span>{dateLabel(donation.created_at)}</span>
+                      <span>
+                        Metode: {paymentMethodLabels[donation.payment_method] || donation.payment_method || "Belum tersedia"}
+                      </span>
+                      {donation.id != null && <span>ID transaksi: #{donation.id}</span>}
+                    </div>
+                    <span className="mt-2 inline-flex rounded-full bg-[#f2f4f7] px-2.5 py-1 text-[11px] font-medium text-[#475467]">
+                      Tercatat · status pembayaran belum tersedia
+                    </span>
                   </div>
-                  <div className="flex items-center justify-between gap-4 sm:justify-end">
-                    <strong className="text-sm text-[#17345B]">
+                  <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 sm:justify-end">
+                    <strong className="text-base text-[#17345B]">
                       {formatRupiah(donation.amount)}
                     </strong>
-                    {donation.campaign?.status === "verified" ? (
+                    {donation.campaign?.reports_count > 0 &&
+                    ["verified", "completed"].includes(donation.campaign.status) ? (
                       <Link
                         to={`/kampanye/${donation.campaign_id}#laporan-dampak`}
                         className="text-xs font-semibold text-[#1D62B5] hover:underline"
                       >
-                        Laporan penggunaan dana
+                        Lihat laporan penggunaan dana
                       </Link>
                     ) : (
                       <span className="text-xs text-[#667085]">
-                        Kebutuhan tidak lagi dipublikasikan
+                        Laporan penggunaan dana belum tersedia.
                       </span>
                     )}
                   </div>

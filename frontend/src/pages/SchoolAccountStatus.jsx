@@ -53,7 +53,7 @@ export default function SchoolAccountStatus() {
   return (
     <main className="min-h-[calc(100svh-68px)] bg-[#F7F8FA] px-4 py-8 sm:px-6">
       <section className="mx-auto w-full max-w-[760px] rounded-xl border border-[#E6EAF0] bg-white p-5 sm:p-8">
-        <h1 className="text-2xl font-semibold text-[#17345B]">Profil Sekolah</h1>
+        <h1 className="page-title text-[#17345B]">Profil Sekolah</h1>
         <p className="mt-2 text-sm text-[#667085]">
           Informasi profil dan status pemeriksaan akun sekolah Anda.
         </p>

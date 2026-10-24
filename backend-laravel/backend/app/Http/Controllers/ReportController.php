@@ -10,7 +10,7 @@ class ReportController extends Controller
 {
     public function index(Campaign $campaign)
     {
-        abort_unless($campaign->status === 'verified', 404);
+        abort_unless(in_array($campaign->status, ['verified', 'completed'], true), 404);
         return response()->json($campaign->reports()->latest()->get());
     }
 

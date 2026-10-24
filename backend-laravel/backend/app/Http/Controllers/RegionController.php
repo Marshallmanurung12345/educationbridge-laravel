@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class RegionController extends Controller
@@ -40,21 +41,27 @@ class RegionController extends Controller
         $path = $parentCode
             ? "{$level}/{$parentCode}.json"
             : "{$level}.json";
+        $cacheKey = "regions:{$path}";
 
         try {
-            $upstream = Http::acceptJson()
-                ->timeout(10)
-                ->get("https://wilayah.id/api/{$path}");
+            $data = Cache::get($cacheKey);
+            if (! is_array($data)) {
+                $upstream = Http::acceptJson()
+                    ->timeout(10)
+                    ->get("https://wilayah.id/api/{$path}");
+
+                $data = $upstream->json('data');
+                if (! $upstream->successful() || ! is_array($data)) {
+                    return response()->json([
+                        'message' => 'Layanan data wilayah mengembalikan respons yang tidak valid. Coba lagi sebentar.',
+                    ], 502);
+                }
+
+                Cache::put($cacheKey, $data, now()->addDay());
+            }
         } catch (ConnectionException) {
             return response()->json([
                 'message' => 'Layanan data wilayah sedang tidak dapat dihubungi. Coba lagi sebentar.',
-            ], 502);
-        }
-
-        $data = $upstream->json('data');
-        if (! $upstream->successful() || ! is_array($data)) {
-            return response()->json([
-                'message' => 'Layanan data wilayah mengembalikan respons yang tidak valid.',
             ], 502);
         }
 

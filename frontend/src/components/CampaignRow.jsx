@@ -106,7 +106,7 @@ export default function CampaignRow({ campaign }) {
             )}
           </div>
 
-          <h2 className="mt-2 break-words font-display text-lg font-semibold leading-6 text-[#17345B] group-hover:underline decoration-[#F28C28] decoration-2 underline-offset-4">
+          <h2 className="campaign-title mt-2 break-words text-[#17345B] group-hover:underline decoration-[#F28C28] decoration-2 underline-offset-4">
             {campaign.title}
           </h2>
           <p className="mt-1 text-xs font-bold uppercase tracking-wide text-[#34465d]">
