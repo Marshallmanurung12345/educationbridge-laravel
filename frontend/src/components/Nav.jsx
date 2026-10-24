@@ -21,7 +21,6 @@ const roleLinks = {
     ["Jelajahi Kebutuhan", "/kampanye"],
   ],
   individu: [
-    ["Dashboard Donatur", "/dashboard-donatur"],
     ["Jelajahi Kebutuhan", "/kampanye"],
     ["Ajukan Kebutuhan", "/ajukan"],
   ],
@@ -158,7 +157,9 @@ export default function Nav() {
   const isAdmin = user?.role === "admin";
   const primaryLinks = isAdmin
     ? roleLinks.admin.map(([label, to]) => [label, to])
-    : publicLinks;
+    : user?.role === "individu"
+      ? [...publicLinks, ["Donasi Saya", "/dashboard-donatur"]]
+      : publicLinks;
   const userRoleLinks =
     user?.role === "sekolah" && user.account_status !== "verified"
       ? [["Status Verifikasi", "/status-verifikasi"], ["Jelajahi Kebutuhan", "/kampanye"]]

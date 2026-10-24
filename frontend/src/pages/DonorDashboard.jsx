@@ -90,7 +90,7 @@ export default function DonorDashboard() {
               Ruang Donatur
             </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-              Dashboard Donatur
+              Donasi Saya
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#667085]">
               Ringkasan donasi, pengajuan, dan aktivitas akun Anda.
@@ -101,7 +101,7 @@ export default function DonorDashboard() {
               to="/kampanye"
               className="inline-flex min-h-10 items-center justify-center rounded-lg border border-[#C9D3DF] bg-white px-4 text-sm font-semibold text-[#17345B] hover:bg-[#F1F4F8]"
             >
-              Jelajahi Kebutuhan
+              Cari Kebutuhan untuk Didonasikan
             </Link>
             <Link
               to="/ajukan"
