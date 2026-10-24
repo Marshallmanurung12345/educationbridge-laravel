@@ -61,9 +61,9 @@ export default function CampaignRow({ campaign }) {
   return (
     <Link
       to={`/kampanye/${campaign.id}`}
-      className="group grid min-w-0 gap-4 border-b border-[#e5eaf0] py-6 transition sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-6"
+      className="group mb-3 grid min-w-0 gap-4 rounded-xl border border-[#e5eaf0] bg-white p-3 shadow-sm transition hover:border-[#cad7e4] hover:shadow-md sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4 sm:p-4"
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-[#edf0f2] sm:aspect-auto sm:h-[130px]">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-[#edf0f2] sm:aspect-auto sm:min-h-[172px]">
         <img
           src={imageUrl}
           alt={`Dokumentasi kebutuhan: ${campaign.title}`}
@@ -81,90 +81,99 @@ export default function CampaignRow({ campaign }) {
         )}
       </div>
 
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold">
-          {school?.npsn && (
-            <span className="rounded bg-[#17345B] px-2 py-0.5 font-mono text-white">
-              NPSN: {school.npsn}
-            </span>
-          )}
-          {campaign.status === "verified" && (
-            <span className="rounded bg-[#e6f4fb] px-2 py-0.5 text-[#1b6a93]">
-              ✓ Terverifikasi Official
-            </span>
-          )}
-          {regionStatus && (
-            <span className="rounded bg-[#fdecec] px-2 py-0.5 text-[#c24135]">
-              {regionStatus}
-            </span>
-          )}
-          {campaign.category && (
-            <span className="rounded border border-[#e1e7ee] px-2 py-0.5 font-medium text-[#9a6b1c]">
-              {campaign.category}
-            </span>
-          )}
-        </div>
-
-        <h3 className="mt-2 break-words text-lg font-semibold leading-6 text-[#17345B] group-hover:underline decoration-[#F28C28] decoration-2 underline-offset-4">
-          {campaign.title}
-        </h3>
-        <p className="mt-1 text-sm font-semibold uppercase text-[#34465d]">
-          {school?.name || campaign.school_name || "Nama sekolah belum tersedia"}
-        </p>
-        <p className="mt-1 text-xs text-[#64748b]">📍 {location}</p>
-
-        <div className="mt-3 grid grid-cols-3 gap-3 rounded-lg border border-[#e5eaf0] bg-[#f4f7fa] p-3 text-xs">
-          <div>
-            <p className="text-[10px] uppercase text-[#7b8798]">Jumlah siswa:</p>
-            <p className="mt-0.5 font-semibold text-[#17345B]">
-              {studentCount != null ? `${studentCount} siswa` : "—"}
-            </p>
+      <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_142px]">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-semibold">
+            {school?.npsn && (
+              <span className="rounded bg-[#17345B] px-2 py-1 font-mono text-white">
+                NPSN: {school.npsn}
+              </span>
+            )}
+            {campaign.status === "verified" && (
+              <span className="rounded bg-[#e6f4fb] px-2 py-1 text-[#1b6a93]">
+                ✓ Terverifikasi
+              </span>
+            )}
+            {regionStatus && (
+              <span className="rounded bg-[#fdecec] px-2 py-1 text-[#c24135]">
+                {regionStatus}
+              </span>
+            )}
+            {campaign.category && (
+              <span className="rounded border border-[#e1e7ee] px-2 py-1 font-medium text-[#9a6b1c]">
+                {campaign.category}
+              </span>
+            )}
           </div>
-          <div>
-            <p className="text-[10px] uppercase text-[#7b8798]">Jumlah guru:</p>
-            <p className="mt-0.5 font-semibold text-[#17345B]">
-              {teacherCount != null ? `${teacherCount} guru` : "—"}
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] uppercase text-[#7b8798]">Sumber data sekolah:</p>
-            <p className="mt-0.5 font-semibold text-[#1b6a93]">{dataSource || "—"}</p>
-          </div>
-        </div>
 
-        <div
-          role="progressbar"
-          aria-label={`Dana terkumpul untuk ${campaign.title}`}
-          aria-valuemin="0"
-          aria-valuemax="100"
-          aria-valuenow={progress}
-          className="mt-4 h-2 overflow-hidden rounded-full bg-[#e6e9ed]"
-        >
+          <h2 className="mt-2 break-words font-display text-lg font-semibold leading-6 text-[#17345B] group-hover:underline decoration-[#F28C28] decoration-2 underline-offset-4">
+            {campaign.title}
+          </h2>
+          <p className="mt-1 text-xs font-bold uppercase tracking-wide text-[#34465d]">
+            {school?.name || campaign.school_name || "Nama sekolah belum tersedia"}
+          </p>
+          <p className="mt-1 text-xs text-[#64748b]">📍 {location}</p>
+
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="rounded-lg border border-[#e8edf2] bg-[#f8fafc] px-2.5 py-2">
+              <p className="text-[10px] text-[#7b8798]">Siswa</p>
+              <p className="mt-0.5 text-xs font-semibold text-[#17345B]">
+                {studentCount != null ? `${studentCount} siswa` : "—"}
+              </p>
+            </div>
+            <div className="rounded-lg border border-[#e8edf2] bg-[#f8fafc] px-2.5 py-2">
+              <p className="text-[10px] text-[#7b8798]">Guru</p>
+              <p className="mt-0.5 text-xs font-semibold text-[#17345B]">
+                {teacherCount != null ? `${teacherCount} guru` : "—"}
+              </p>
+            </div>
+            <div className="col-span-2 rounded-lg border border-[#e8edf2] bg-[#f8fafc] px-2.5 py-2 sm:col-span-1">
+              <p className="text-[10px] text-[#7b8798]">Sumber data</p>
+              <p className="mt-0.5 truncate text-xs font-semibold text-[#1b6a93]">
+                {dataSource || "—"}
+              </p>
+            </div>
+          </div>
+
           <div
-            className="h-full rounded-full bg-gradient-to-r from-[#1b6a93] to-[#2d8fc4] transition-[width] duration-700"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs">
-          <span className="text-[#64748b]">
-            Terkumpul{" "}
-            <strong className="ml-1 text-base font-bold text-[#1b6a93]">
-              {hasRaised ? formatRupiah(raised) : "—"}
-            </strong>
-          </span>
-          <span className="font-semibold text-[#34465d]">
-            {progress}% dari {hasTarget ? formatRupiah(target) : "—"}
-          </span>
+            role="progressbar"
+            aria-label={`Dana terkumpul untuk ${campaign.title}`}
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow={progress}
+            className="mt-3 h-2 overflow-hidden rounded-full bg-[#e6e9ed]"
+          >
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[#1b6a93] to-[#2d8fc4] transition-[width] duration-700"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+            <span className="text-[#64748b]">
+              <strong className="font-bold text-[#1b6a93]">
+                {hasRaised ? formatRupiah(raised) : "—"}
+              </strong>
+              {" "}terkumpul
+            </span>
+            <span className="font-semibold text-[#34465d]">
+              {progress}% dari {hasTarget ? formatRupiah(target) : "—"}
+            </span>
+          </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold">
-          <span className={hasScore ? scoreColor(score) : "text-[#64748b]"}>
-            {hasScore
-              ? `Priority Score: ${score} (${campaign.priority_label || "-"})`
-              : "Skor belum tersedia"}
-          </span>
-          <span className="text-[#1b6a93] transition group-hover:translate-x-1">
-            Lihat Detail &amp; Data Official →
+        <div className="flex flex-row items-center justify-between gap-3 rounded-lg bg-[#f8f6f5] p-3 sm:flex-col sm:items-stretch sm:justify-center">
+          <div>
+            <p className="text-[11px] font-medium text-[#64748b]">Priority Score</p>
+            <p className={`mt-1 text-3xl font-bold leading-none ${hasScore ? scoreColor(score) : "text-[#64748b]"}`}>
+              {hasScore ? score : "—"}
+              {hasScore && <span className="text-xs font-normal text-[#98a2b3]">/100</span>}
+            </p>
+            <p className="mt-2 text-[10px] font-semibold text-[#64748b]">
+              {hasScore ? campaign.priority_label || "Prioritas" : "Belum tersedia"}
+            </p>
+          </div>
+          <span className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-lg bg-[#F28C28] px-3 text-xs font-semibold text-white transition group-hover:bg-[#DB7415]">
+            Lihat Detail →
           </span>
         </div>
       </div>

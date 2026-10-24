@@ -7,7 +7,6 @@ import NotificationMenu from "./NotificationMenu";
 const publicLinks = [
   ["Beranda", "/"],
   ["Kebutuhan Sekolah", "/kampanye"],
-  ["Dampak", "/#dampak"],
 ];
 
 const roleLinks = {
@@ -197,32 +196,22 @@ export default function Nav() {
         </Link>
 
         <nav aria-label="Navigasi utama" className="hidden items-center gap-1 lg:flex">
-          {primaryLinks.map(([label, to]) =>
-            label === "Dampak" ? (
-              <a
-                key={to}
-                href={to}
-                className="border-b-2 border-transparent px-2.5 py-2 text-[13px] font-medium text-white/90 transition-colors hover:border-[#f28c28] hover:text-white"
-              >
-                {label}
-              </a>
-            ) : (
-              <NavLink
-                key={to}
-                to={to}
-                end={to === "/"}
-                className={({ isActive }) =>
-                  `border-b-2 px-2.5 py-2 text-[13px] font-medium transition-colors ${
-                    isActive
-                      ? "border-[#f28c28] text-white"
-                      : "border-transparent text-white/90 hover:text-white"
-                  }`
-                }
-              >
-                {label}
-              </NavLink>
-            ),
-          )}
+          {primaryLinks.map(([label, to]) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === "/"}
+              className={({ isActive }) =>
+                `border-b-2 px-2.5 py-2 text-[13px] font-medium transition-colors ${
+                  isActive
+                    ? "border-[#f28c28] text-white"
+                    : "border-transparent text-white/90 hover:text-white"
+                }`
+              }
+            >
+              {label}
+            </NavLink>
+          ))}
         </nav>
 
         <div className="hidden shrink-0 items-center gap-2 lg:flex">
@@ -274,32 +263,21 @@ export default function Nav() {
           className="border-t border-white/15 bg-[#17345b] px-4 pb-4 lg:hidden"
         >
           <nav aria-label="Navigasi mobile" className="mx-auto max-w-[1280px]">
-            {primaryLinks.map(([label, to]) =>
-              label === "Dampak" ? (
-                <a
-                  key={to}
-                  href={to}
-                  className="block border-b border-white/10 py-3 text-sm font-medium text-white/90 hover:text-[#ffad55]"
-                  onClick={closeMobileMenu}
-                >
-                  {label}
-                </a>
-              ) : (
-                <NavLink
-                  key={to}
-                  to={to}
-                  end={to === "/"}
-                  className={({ isActive }) =>
-                    `block border-b border-white/10 py-3 text-sm font-medium ${
-                      isActive ? "text-[#ffad55]" : "text-white/90"
-                    }`
-                  }
-                  onClick={closeMobileMenu}
-                >
-                  {label}
-                </NavLink>
-              ),
-            )}
+            {primaryLinks.map(([label, to]) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === "/"}
+                className={({ isActive }) =>
+                  `block border-b border-white/10 py-3 text-sm font-medium ${
+                    isActive ? "text-[#ffad55]" : "text-white/90"
+                  }`
+                }
+                onClick={closeMobileMenu}
+              >
+                {label}
+              </NavLink>
+            ))}
 
             {user ? (
               <>

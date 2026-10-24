@@ -45,6 +45,7 @@ class ImportOfficialSchools extends Command
                     'provinsi' => $item['provinsi'] ?? 'Data belum tersedia',
                     'kabupaten_kota' => $item['kabupaten_kota'] ?? 'Data belum tersedia',
                     'kecamatan' => $item['kecamatan'] ?? 'Data belum tersedia',
+                    'desa_kelurahan' => $item['desa_kelurahan'] ?? null,
                     'alamat' => $item['alamat'] ?? null,
                     'latitude' => $item['latitude'] ?? null,
                     'longitude' => $item['longitude'] ?? null,

@@ -17,6 +17,7 @@ class School extends Model
         'provinsi',
         'kabupaten_kota',
         'kecamatan',
+        'desa_kelurahan',
         'alamat',
         'latitude',
         'longitude',
