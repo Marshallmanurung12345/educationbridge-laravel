@@ -3,9 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Campaign;
+use App\Models\Donation;
 use App\Models\Notification;
 use Illuminate\Http\Request;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use App\Services\MidtransPaymentService;
+use RuntimeException;
 
 class DonationController extends Controller
 {
@@ -14,6 +20,7 @@ class DonationController extends Controller
         abort_unless(in_array($campaign->status, ['verified', 'completed'], true), 404);
         return response()->json(
             $campaign->donations()
+                ->where('payment_status', 'success')
                 ->select(['id', 'amount', 'created_at'])
                 ->latest()
                 ->get(),
@@ -33,50 +40,51 @@ class DonationController extends Controller
             ->latest()
             ->get();
 
-        $totalDonated = (int) $donations->sum('amount');
+        $successfulDonations = $donations->where('payment_status', 'success');
 
         return response()->json([
             'donations' => $donations,
-            'total_donated' => $totalDonated,
-            'total_donation_count' => $donations->count(),
-            'campaigns_supported' => $donations->pluck('campaign_id')->unique()->count(),
+            'total_donated' => (int) $successfulDonations->sum('amount'),
+            'total_donation_count' => $successfulDonations->count(),
+            'campaigns_supported' => $successfulDonations->pluck('campaign_id')->unique()->count(),
         ]);
     }
 
-    // Hanya role individu/perusahaan/pemerintah (middleware role:individu,perusahaan,pemerintah)
-    public function store(Request $request, Campaign $campaign)
+    public function store(Request $request, Campaign $campaign, MidtransPaymentService $midtrans)
     {
+        if (! $midtrans->isConfigured()) {
+            return response()->json([
+                'message' => 'Pembayaran belum dikonfigurasi. Silakan hubungi administrator.',
+            ], 503);
+        }
+
         $data = $request->validate([
             'amount' => 'required|integer|min:10000',
-            'payment_method' => 'required|in:transfer_bank,e_wallet,bank_bca,bank_mandiri,bank_bni,bank_bri,bank_bsi,bank_btn,bank_cimb_niaga,bank_ocbc,bank_danamon,bank_permata,bank_lainnya',
             'message' => 'nullable|string|max:500',
         ]);
 
         $user = $request->user();
+        if ($campaign->status !== 'verified') {
+            return response()->json(['message' => 'Kebutuhan ini sudah ditutup untuk donasi.'], 422);
+        }
+        if ($campaign->end_date && now()->startOfDay()->greaterThan($campaign->end_date)) {
+            return response()->json(['message' => 'Batas waktu donasi untuk kebutuhan ini sudah berakhir.'], 422);
+        }
+        if ((int) $campaign->raised_amount >= (int) $campaign->target_amount) {
+            return response()->json([
+                'message' => 'Kebutuhan ini sudah terpenuhi dan ditutup untuk donasi. Terima kasih atas dukungannya.',
+            ], 422);
+        }
 
-        // Lock the campaign so the donation that reaches the target closes it
-        // before another concurrent request can be accepted.
-        $result = DB::transaction(function () use ($campaign, $user, $data) {
+        $donation = DB::transaction(function () use ($campaign, $user, $data) {
             $locked = Campaign::query()->lockForUpdate()->findOrFail($campaign->id);
-
-            if ($locked->status !== 'verified') {
-                return ['error' => 'Kebutuhan ini sudah ditutup untuk donasi.'];
+            if ($locked->status !== 'verified' ||
+                ($locked->end_date && now()->startOfDay()->greaterThan($locked->end_date)) ||
+                (int) $locked->raised_amount >= (int) $locked->target_amount) {
+                return null;
             }
 
-            if ($locked->end_date && now()->startOfDay()->greaterThan($locked->end_date)) {
-                return ['error' => 'Batas waktu donasi untuk kebutuhan ini sudah berakhir.'];
-            }
-
-            $raisedAmount = (int) $locked->raised_amount;
-            $targetAmount = (int) $locked->target_amount;
-            if ($raisedAmount >= $targetAmount) {
-                $locked->status = 'completed';
-                $locked->save();
-
-                return ['error' => 'Kebutuhan ini sudah terpenuhi dan ditutup untuk donasi. Terima kasih atas dukungannya.'];
-            }
-
-            $donation = $locked->donations()->create([
+            return $locked->donations()->create([
                 'user_id' => $user->id,
                 'donor_name' => $user->organization_name ?: $user->name,
                 'donor_type' => match ($user->role) {
@@ -86,55 +94,177 @@ class DonationController extends Controller
                     default => 'individu',
                 },
                 'amount' => $data['amount'],
-                'payment_method' => $data['payment_method'],
+                'payment_status' => 'pending',
+                'order_id' => 'donation-' . Str::uuid(),
                 'message' => $data['message'] ?? '',
             ]);
-
-            $locked->raised_amount = $raisedAmount + (int) $data['amount'];
-            if ($locked->raised_amount >= $targetAmount) {
-                $locked->status = 'completed';
-            }
-            $locked->save();
-
-            return ['donation' => $donation];
         });
 
-        if (isset($result['error'])) {
+        if (! $donation) {
             return response()->json([
-                'message' => $result['error'],
+                'message' => 'Kebutuhan ini sudah ditutup untuk donasi.',
             ], 422);
         }
 
-        $donation = $result['donation'];
-        $formattedAmount = 'Rp ' . number_format($data['amount'], 0, ',', '.');
+        try {
+            $payment = $midtrans->createSnapTransaction($donation, $campaign, $user);
+        } catch (ConnectionException $exception) {
+            Log::warning('Could not connect to Midtrans when creating payment.', [
+                'order_id' => $donation->order_id,
+                'exception' => $exception->getMessage(),
+            ]);
 
-        // Notifikasi untuk Sekolah Penerima Donasi
-        Notification::create([
-            'user_id' => $campaign->user_id,
-            'type' => 'donation_received',
-            'title' => '💰 Donasi Baru Diterima!',
-            'message' => "{$donation->donor_name} menyalurkan donasi sebesar {$formattedAmount} untuk '{$campaign->title}'.",
-            'campaign_id' => $campaign->id,
-        ]);
+            return response()->json([
+                'message' => 'Status pembuatan pembayaran belum diketahui. Periksa riwayat donasi sebelum mencoba lagi.',
+                'order_id' => $donation->order_id,
+            ], 503);
+        } catch (RuntimeException $exception) {
+            $donation->update(['payment_status' => 'failed']);
 
-        // Notifikasi untuk Admin
-        Notification::create([
-            'target_role' => 'admin',
-            'type' => 'donation_received',
-            'title' => '💳 Donasi Baru Tercatat',
-            'message' => "Donasi sebesar {$formattedAmount} disalurkan oleh {$donation->donor_name} ke '{$campaign->title}'.",
-            'campaign_id' => $campaign->id,
-        ]);
+            return response()->json(['message' => $exception->getMessage()], 502);
+        }
 
-        // Notifikasi untuk donatur (bukti donasi tercatat)
-        Notification::create([
-            'user_id' => $user->id,
-            'type' => 'donation_sent',
-            'title' => '🙏 Terima kasih atas donasi Anda!',
-            'message' => "Donasi sebesar {$formattedAmount} untuk '{$campaign->title}' berhasil dicatat.",
-            'campaign_id' => $campaign->id,
-        ]);
+        return response()->json([
+            'donation' => $donation,
+            'payment_url' => $payment['redirect_url'],
+            'payment_status' => 'pending',
+        ], 201);
+    }
 
-        return response()->json($donation, 201);
+    public function handleMidtransNotification(Request $request, MidtransPaymentService $midtrans)
+    {
+        $notification = $request->all();
+        if (! $midtrans->isAuthenticNotification($notification)) {
+            return response()->json(['message' => 'Signature not valid.'], 401);
+        }
+
+        $orderId = $notification['order_id'];
+        $donation = Donation::query()->where('order_id', $orderId)->first();
+        if (! $donation) {
+            return response()->json(['message' => 'Transaction not found.'], 404);
+        }
+
+        try {
+            $providerStatus = $midtrans->getTransactionStatus($orderId);
+        } catch (ConnectionException $exception) {
+            Log::warning('Could not verify Midtrans notification.', [
+                'order_id' => $orderId,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return response()->json(['message' => 'Payment status verification is temporarily unavailable.'], 503);
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 503);
+        }
+
+        $updatedDonation = $this->applyProviderStatus($donation, $providerStatus);
+        if (! $updatedDonation) {
+            return response()->json(['message' => 'Transaction details did not match.'], 422);
+        }
+
+        return response()->json(['message' => 'Notification processed.']);
+    }
+
+    public function refreshMine(string $orderId, Request $request, MidtransPaymentService $midtrans)
+    {
+        $donation = $request->user()->donations()->where('order_id', $orderId)->firstOrFail();
+
+        if ($donation->payment_status === 'unverified') {
+            return response()->json($donation);
+        }
+
+        try {
+            $providerStatus = $midtrans->getTransactionStatus($orderId);
+        } catch (ConnectionException $exception) {
+            Log::warning('Could not refresh Midtrans payment status.', [
+                'order_id' => $orderId,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return response()->json(['message' => 'Status pembayaran belum dapat diperiksa. Silakan coba lagi.'], 503);
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 503);
+        }
+
+        $updatedDonation = $this->applyProviderStatus($donation, $providerStatus);
+        if (! $updatedDonation) {
+            return response()->json(['message' => 'Rincian transaksi tidak cocok.'], 422);
+        }
+
+        return response()->json($updatedDonation);
+    }
+
+    private function applyProviderStatus(Donation $donation, array $providerStatus): ?Donation
+    {
+        if (($providerStatus['order_id'] ?? null) !== $donation->order_id ||
+            ! isset($providerStatus['gross_amount']) ||
+            ! is_numeric($providerStatus['gross_amount']) ||
+            (int) round((float) $providerStatus['gross_amount']) !== (int) $donation->amount ||
+            (string) ($providerStatus['status_code'] ?? '') !== '200') {
+            return null;
+        }
+
+        $providerTransactionStatus = $providerStatus['transaction_status'] ?? '';
+        $nextStatus = match ($providerTransactionStatus) {
+            'settlement' => 'success',
+            'capture' => ($providerStatus['fraud_status'] ?? '') === 'accept' ? 'success' : 'pending',
+            'deny', 'cancel', 'expire' => 'failed',
+            default => 'pending',
+        };
+
+        return DB::transaction(function () use ($donation, $providerStatus, $nextStatus) {
+            $lockedDonation = Donation::query()->lockForUpdate()->findOrFail($donation->id);
+            if ($lockedDonation->payment_status === 'success') {
+                return $lockedDonation->fresh();
+            }
+
+            $lockedDonation->payment_method = $providerStatus['payment_type'] ?? $lockedDonation->payment_method;
+            $lockedDonation->midtrans_transaction_id =
+                $providerStatus['transaction_id'] ?? $lockedDonation->midtrans_transaction_id;
+            if ($nextStatus === 'success') {
+                $campaign = Campaign::query()->lockForUpdate()->findOrFail($lockedDonation->campaign_id);
+                $lockedDonation->payment_status = 'success';
+                $lockedDonation->save();
+
+                $campaign->raised_amount = (int) $campaign->raised_amount + (int) $lockedDonation->amount;
+                if ($campaign->status === 'verified' &&
+                    (int) $campaign->raised_amount >= (int) $campaign->target_amount) {
+                    $campaign->status = 'completed';
+                }
+                $campaign->save();
+
+                $formattedAmount = 'Rp ' . number_format((int) $lockedDonation->amount, 0, ',', '.');
+                Notification::create([
+                    'user_id' => $campaign->user_id,
+                    'type' => 'donation_received',
+                    'title' => 'Donasi terkonfirmasi',
+                    'message' => "Donasi sebesar {$formattedAmount} untuk '{$campaign->title}' telah dikonfirmasi oleh Midtrans.",
+                    'campaign_id' => $campaign->id,
+                ]);
+                Notification::create([
+                    'target_role' => 'admin',
+                    'type' => 'donation_received',
+                    'title' => 'Donasi terkonfirmasi',
+                    'message' => "Donasi sebesar {$formattedAmount} untuk '{$campaign->title}' telah dikonfirmasi oleh Midtrans.",
+                    'campaign_id' => $campaign->id,
+                ]);
+                if ($lockedDonation->user_id) {
+                    Notification::create([
+                        'user_id' => $lockedDonation->user_id,
+                        'type' => 'donation_sent',
+                        'title' => 'Donasi Anda berhasil',
+                        'message' => "Donasi sebesar {$formattedAmount} untuk '{$campaign->title}' telah dikonfirmasi.",
+                        'campaign_id' => $campaign->id,
+                    ]);
+                }
+            } else {
+                if ($nextStatus === 'failed' || $lockedDonation->payment_status !== 'failed') {
+                    $lockedDonation->payment_status = $nextStatus;
+                }
+                $lockedDonation->save();
+            }
+
+            return $lockedDonation->fresh();
+        });
     }
 }

@@ -66,6 +66,8 @@ export const api = {
   myCampaigns: () => request(`/my-campaigns`),
   mySubmissions: (page = 1) => request(`/my-submissions?page=${page}`),
   myDonations: () => request(`/my-donations`),
+  refreshDonationStatus: (orderId) =>
+    request(`/my-donations/status/${encodeURIComponent(orderId)}`),
   adminStats: () => request(`/admin/stats`),
   listAuditLogs: () => request(`/admin/audit-logs`),
   updateSchoolAccountStatus: (id, data) =>

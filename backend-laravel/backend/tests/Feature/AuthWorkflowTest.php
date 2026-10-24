@@ -324,6 +324,7 @@ class AuthWorkflowTest extends TestCase
             'donor_name' => $donor->name,
             'donor_type' => 'individu',
             'amount' => 25000,
+            'payment_status' => 'success',
         ]);
         Donation::create([
             'campaign_id' => $campaign->id,
@@ -523,6 +524,7 @@ class AuthWorkflowTest extends TestCase
             'donor_name' => 'Nama Donatur Rahasia',
             'donor_type' => 'individu',
             'amount' => 10000,
+            'payment_status' => 'success',
             'message' => 'Pesan pribadi',
         ]);
 

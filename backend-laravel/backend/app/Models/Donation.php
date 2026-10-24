@@ -13,6 +13,9 @@ class Donation extends Model
         'donor_type',
         'amount',
         'payment_method',
+        'payment_status',
+        'order_id',
+        'midtrans_transaction_id',
         'message',
     ];
 

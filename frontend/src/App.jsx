@@ -22,6 +22,7 @@ import AuditLogPage from "./pages/AuditLogPage";
 import AdminSchools from "./pages/AdminSchools";
 import SchoolDashboard from "./pages/SchoolDashboard";
 import DonorDashboard from "./pages/DonorDashboard";
+import PaymentStatus from "./pages/PaymentStatus";
 
 export default function App() {
   return (
@@ -77,6 +78,14 @@ function AppRoutes({ publicPage = (page) => page }) {
       />
       <Route path="/masuk" element={<Login />} />
       <Route path="/daftar" element={<Register />} />
+      <Route
+        path="/pembayaran/selesai"
+        element={
+          <ProtectedRoute roles={["individu", "perusahaan", "pemerintah"]}>
+            <PaymentStatus />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/dashboard-sekolah"
         element={

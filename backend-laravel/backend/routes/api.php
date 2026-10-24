@@ -28,6 +28,7 @@ Route::get('/campaigns/{campaign}/donations', [DonationController::class, 'index
 Route::get('/campaigns/{campaign}/reports', [ReportController::class, 'index']);
 Route::get('/match', [MatchController::class, 'index']);
 Route::get('/stats', [StatsController::class, 'index']);
+Route::post('/payments/midtrans/notification', [DonationController::class, 'handleMidtransNotification']);
 
 // ---------- PROTECTED (butuh login, Authorization: Bearer <token>) ----------
 Route::middleware('auth:sanctum')->group(function () {
@@ -62,6 +63,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Riwayat donasi milik sendiri (semua role donatur)
     Route::get('/my-donations', [DonationController::class, 'mine'])
+        ->middleware('role:individu,perusahaan,pemerintah');
+    Route::get('/my-donations/status/{orderId}', [DonationController::class, 'refreshMine'])
         ->middleware('role:individu,perusahaan,pemerintah');
 
     // The owner may report progress for an active campaign.

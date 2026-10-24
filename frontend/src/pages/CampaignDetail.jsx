@@ -6,19 +6,6 @@ import { getCategoryImage } from "../categoryImages";
 
 const donationPresets = [50000, 100000, 250000, 500000];
 const donorRoles = ["individu", "perusahaan", "pemerintah"];
-const bankOptions = [
-  ["bank_bca", "BCA"],
-  ["bank_mandiri", "Mandiri"],
-  ["bank_bni", "BNI"],
-  ["bank_bri", "BRI"],
-  ["bank_bsi", "BSI"],
-  ["bank_btn", "BTN"],
-  ["bank_cimb_niaga", "CIMB Niaga"],
-  ["bank_ocbc", "OCBC"],
-  ["bank_danamon", "Danamon"],
-  ["bank_permata", "Permata"],
-  ["bank_lainnya", "Bank lainnya"],
-];
 
 const tabs = [
   ["tentang", "Tentang Kebutuhan"],
@@ -72,7 +59,6 @@ export default function CampaignDetail() {
   const [reportLoadError, setReportLoadError] = useState("");
   const [status, setStatus] = useState("");
   const [amount, setAmount] = useState(50000);
-  const [paymentMethod, setPaymentMethod] = useState("bank_bca");
   const [submittingDonation, setSubmittingDonation] = useState(false);
   const [message, setMessage] = useState("");
   const [reportTitle, setReportTitle] = useState("");
@@ -103,10 +89,12 @@ export default function CampaignDetail() {
     setError("");
     setSubmittingDonation(true);
     try {
-      await api.createDonation(id, { amount: Number(amount), payment_method: paymentMethod, message });
-      setStatus("Terima kasih. Donasi Anda sudah tercatat.");
-      setMessage("");
-      load();
+      const result = await api.createDonation(id, { amount: Number(amount), message });
+      if (!result.payment_url) {
+        throw new Error("Tautan pembayaran belum tersedia. Periksa riwayat donasi Anda.");
+      }
+      setStatus("Mengarahkan ke halaman pembayaran Midtrans…");
+      window.location.assign(result.payment_url);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -686,20 +674,9 @@ export default function CampaignDetail() {
                     placeholder="Masukkan nominal donasi"
                     className="min-h-9 w-full rounded-lg border border-[#eaecf0] px-3 text-sm text-[#101828] focus:border-[#f28c28] focus:outline-none"
                   />
-                  <select
-                    aria-label="Pilih bank"
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="min-h-9 w-full rounded-lg border border-[#eaecf0] bg-white px-3 text-sm text-[#344054] focus:border-[#f28c28] focus:outline-none"
-                  >
-                    <option value="" disabled>Pilih bank</option>
-                    {bankOptions.map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
-                    ))}
-                  </select>
-                  <p className="text-[11px] leading-4 text-[#667085]">
-                    Pilihan bank hanya dicatat sebagai preferensi. Transfer belum diproses
-                    atau diverifikasi otomatis oleh aplikasi.
+                  <p className="rounded-md bg-[#f8fafc] px-3 py-2 text-[11px] leading-4 text-[#667085]">
+                    Pilih bank atau metode pembayaran yang tersedia di halaman aman Midtrans.
+                    Donasi baru dihitung setelah pembayaran dikonfirmasi otomatis.
                   </p>
                   <textarea
                     aria-label="Pesan untuk sekolah"
@@ -713,7 +690,7 @@ export default function CampaignDetail() {
                     disabled={submittingDonation}
                     className="min-h-10 w-full rounded-lg bg-[#f28c28] text-sm font-semibold text-white transition hover:bg-[#dc7616] disabled:cursor-wait disabled:opacity-60"
                   >
-                    {submittingDonation ? "Mencatat donasi..." : "♥ Donasi Sekarang"}
+                    {submittingDonation ? "Menyiapkan pembayaran..." : "♥ Lanjutkan ke Pembayaran"}
                   </button>
                   {status && <p role="status" className="text-xs text-green-700">{status}</p>}
                   {error && <p role="alert" className="text-xs text-red-600">{error}</p>}

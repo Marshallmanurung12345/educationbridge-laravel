@@ -24,6 +24,17 @@ const paymentMethodLabels = {
   bank_danamon: "Danamon",
   bank_permata: "Permata",
   bank_lainnya: "Bank lainnya",
+  bank_transfer: "Transfer bank",
+  gopay: "GoPay",
+  qris: "QRIS",
+  shopeepay: "ShopeePay",
+  credit_card: "Kartu kredit",
+};
+const paymentStatusLabels = {
+  pending: "Menunggu Pembayaran",
+  success: "Berhasil",
+  failed: "Gagal",
+  unverified: "Belum Terverifikasi",
 };
 
 function dateLabel(value) {
@@ -296,8 +307,18 @@ export default function DonorDashboard() {
                       </span>
                       {donation.id != null && <span>ID transaksi: #{donation.id}</span>}
                     </div>
-                    <span className="mt-2 inline-flex rounded-full bg-[#f2f4f7] px-2.5 py-1 text-[11px] font-medium text-[#475467]">
-                      Tercatat · status pembayaran belum tersedia
+                    <span
+                      className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                        donation.payment_status === "success"
+                          ? "bg-emerald-50 text-emerald-800"
+                          : donation.payment_status === "failed"
+                            ? "bg-rose-50 text-rose-800"
+                            : donation.payment_status === "pending"
+                              ? "bg-amber-50 text-amber-800"
+                              : "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {paymentStatusLabels[donation.payment_status] || "Status belum tersedia"}
                     </span>
                   </div>
                   <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 sm:justify-end">
@@ -316,6 +337,14 @@ export default function DonorDashboard() {
                       <span className="text-xs text-[#667085]">
                         Laporan penggunaan dana belum tersedia.
                       </span>
+                    )}
+                    {donation.order_id && (
+                      <Link
+                        to={`/pembayaran/selesai?order_id=${encodeURIComponent(donation.order_id)}`}
+                        className="w-full text-right text-xs font-semibold text-[#1D62B5] hover:underline"
+                      >
+                        Detail transaksi
+                      </Link>
                     )}
                   </div>
                 </li>
