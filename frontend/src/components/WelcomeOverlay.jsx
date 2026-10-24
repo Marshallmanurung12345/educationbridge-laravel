@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import logo from "../assets/logo.png";
+import logo from "../assets/logo.jpeg";
 import anaksd from "../assets/anaksd.png";
 
 export default function WelcomeOverlay() {

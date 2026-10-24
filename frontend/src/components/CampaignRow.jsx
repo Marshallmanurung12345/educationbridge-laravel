@@ -37,15 +37,23 @@ export default function CampaignRow({ campaign }) {
         .filter(Boolean)
         .join(", ") || "Lokasi belum tersedia"
     : campaign.location || "Lokasi belum tersedia";
-  const dataSource = school?.data_source || "Data belum tersedia";
+  const studentCount = school?.jumlah_siswa ?? campaign.student_count;
+  const teacherCount = school?.jumlah_guru;
+  const dataSource = school?.data_source;
+  const regionStatus =
+    school?.is_3t === true
+      ? school.status_3t_detail || "Wilayah 3T"
+      : school?.is_3t === false
+        ? "Bukan wilayah 3T"
+        : "Status wilayah belum tersedia";
   const imageUrl = resolveImageUrl(campaign.image_url);
 
   return (
     <Link
       to={`/kampanye/${campaign.id}`}
-      className="group grid grid-cols-[68px_minmax(0,1fr)_64px] items-center gap-3 border-b border-[#dfe5eb] py-4 hover:bg-[#f7f8fa] sm:grid-cols-[96px_minmax(0,1fr)_76px] sm:gap-5 sm:py-5"
+      className="group my-3 grid min-w-0 grid-cols-[72px_minmax(0,1fr)] items-start gap-3 rounded-xl border border-[#e1e7ee] bg-white p-3 transition hover:border-[#cbd6e2] hover:shadow-sm sm:my-4 sm:grid-cols-[112px_minmax(0,1fr)_92px] sm:items-center sm:gap-5 sm:p-4"
     >
-      <div className="aspect-[4/3] w-full overflow-hidden bg-[#edf0f2]">
+      <div className="aspect-[4/3] w-full overflow-hidden rounded-lg bg-[#edf0f2]">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -53,7 +61,8 @@ export default function CampaignRow({ campaign }) {
             className="h-full w-full object-cover"
             onError={(event) => {
               event.currentTarget.hidden = true;
-              event.currentTarget.nextElementSibling.hidden = false;
+              const placeholder = event.currentTarget.nextElementSibling;
+              if (placeholder) placeholder.hidden = false;
             }}
           />
         ) : null}
@@ -73,31 +82,44 @@ export default function CampaignRow({ campaign }) {
             {campaign.category || "Data belum tersedia"}
           </span>
           <span aria-hidden="true">·</span>
-          <span className="min-w-0">{location}</span>
-          <span className="border-l border-[#cbd3dc] pl-2 font-medium text-[#a63c32]">
-            {!school || school.is_3t === null || school.is_3t === undefined
-              ? "Status 3T: Data belum tersedia"
-              : school.is_3t
-                ? "Wilayah 3T terverifikasi"
-                : "Bukan wilayah 3T"}
+          <span className="min-w-0 break-words">{location}</span>
+          {campaign.status === "verified" && (
+            <span className="rounded-full bg-[#edf7f1] px-2 py-0.5 font-semibold text-[#28734b]">
+              Terverifikasi
+            </span>
+          )}
+          <span className="font-medium text-[#53677f]">
+            {regionStatus}
           </span>
         </div>
-        <h3 className="mt-1 font-display text-base leading-5 text-[#17365d] group-hover:underline decoration-marigold decoration-2 underline-offset-4 sm:text-lg sm:leading-6">
+        <h3 className="mt-1 break-words font-display text-base leading-5 text-[#17345B] group-hover:underline decoration-marigold decoration-2 underline-offset-4 sm:text-lg sm:leading-6">
           {campaign.title}
         </h3>
         <p className="mt-1 text-xs font-medium text-[#34465d] sm:text-sm">
-          {school?.name || campaign.school_name || "Data belum tersedia"}
+          {school?.name || campaign.school_name || "Nama sekolah belum tersedia"}
         </p>
-        <p className="mt-1 flex flex-wrap gap-x-2 text-[10px] leading-4 text-[#718096] sm:text-[11px]">
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] leading-4 text-[#718096] sm:text-[11px]">
+          <span>{school?.npsn ? `NPSN: ${school.npsn}` : "NPSN: Data belum tersedia"}</span>
           <span>
-            {school?.npsn ? `NPSN: ${school.npsn}` : "NPSN: Data belum tersedia"}
+            Siswa: {studentCount != null ? studentCount : "Data belum tersedia"}
           </span>
-          <span aria-hidden="true">·</span>
-          <span>Sumber: {dataSource}</span>
-        </p>
+          <span>
+            Guru: {teacherCount != null ? teacherCount : "Data belum tersedia"}
+          </span>
+          <span>
+            Sumber data: {dataSource || "Data belum tersedia"}
+          </span>
+        </div>
 
         <div className="mt-2.5 max-w-[480px]">
-          <div className="h-1.5 overflow-hidden rounded-full bg-[#e6e9ed]">
+          <div
+            role="progressbar"
+            aria-label={`Dana terkumpul untuk ${campaign.title}`}
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow={progress}
+            className="h-1.5 overflow-hidden rounded-full bg-[#e6e9ed]"
+          >
             <div
               className="h-full rounded-full bg-[#17365d]"
               style={{ width: `${progress}%` }}
@@ -115,15 +137,23 @@ export default function CampaignRow({ campaign }) {
             </span>
           </div>
         </div>
+        <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#edf0f4] pt-2 sm:hidden">
+          {hasScore ? (
+            <PriorityBadge score={score} label={campaign.priority_label} />
+          ) : (
+            <span className="text-[11px] text-[#64748b]">Skor belum tersedia</span>
+          )}
+          <span className="text-xs font-semibold text-[#17345B]">Lihat Detail →</span>
+        </div>
       </div>
-      <div className="flex flex-col items-center gap-2">
+      <div className="hidden flex-col items-center gap-2 sm:flex">
         {hasScore ? (
           <PriorityBadge score={score} label={campaign.priority_label} />
         ) : (
           <span className="text-center text-xs text-[#64748b]">Skor belum tersedia</span>
         )}
-        <span className="text-center text-[11px] font-semibold text-[#1D62B5]">
-          Lihat Detail
+        <span className="text-center text-[11px] font-semibold text-[#17345B]">
+          Lihat Detail →
         </span>
       </div>
     </Link>

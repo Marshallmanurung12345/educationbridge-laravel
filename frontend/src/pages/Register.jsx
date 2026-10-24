@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { defaultRouteForRole } from "./Login";
-import logo from "../assets/logo.png";
+import logo from "../assets/logo.jpeg";
 
 export default function Register() {
   const { register } = useAuth();

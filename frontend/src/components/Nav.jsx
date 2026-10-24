@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/useLanguage";
-import logo from "../assets/logo.png";
+import logo from "../assets/logo.jpeg";
 import NotificationMenu from "./NotificationMenu";
 
 const publicLinks = [
@@ -24,12 +24,10 @@ const roleLinks = {
   individu: [
     ["donorDashboard", "/dashboard-donatur"],
     ["browse", "/kampanye"],
-    ["recommendations", "/cocok"],
     ["fundraise", "/ajukan"],
   ],
   perusahaan: [
     ["csr", "/dashboard-perusahaan"],
-    ["adoption", "/cocok"],
     ["browse", "/kampanye"],
     ["fundraise", "/ajukan"],
   ],
@@ -101,6 +99,114 @@ function LanguageSwitcher({ language, setLanguage, label }) {
               )}
             </button>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProfileMenu({
+  user,
+  roleLabel,
+  links,
+  linkText,
+  logoutLabel,
+  onLogout,
+  onNavigate,
+  mobile = false,
+}) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    function closeOnOutsidePointer(event) {
+      if (!menuRef.current?.contains(event.target)) setOpen(false);
+    }
+
+    function closeOnEscape(event) {
+      if (event.key === "Escape") setOpen(false);
+    }
+
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
+  function closeMenu() {
+    setOpen(false);
+    onNavigate();
+  }
+
+  return (
+    <div ref={menuRef} className="relative min-w-0">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((isOpen) => !isOpen)}
+        className={
+          mobile
+            ? "flex min-h-11 w-full min-w-0 items-center justify-between gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-white/10"
+            : "flex min-h-10 min-w-0 max-w-56 items-center gap-2 rounded-lg px-2 py-1.5 text-left transition hover:bg-white/10"
+        }
+      >
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm font-semibold text-white">
+            {user.name?.charAt(0)?.toUpperCase() || "U"}
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-semibold text-white">
+              {user.name}
+            </span>
+            <span className="block truncate text-[11px] text-white/70">
+              {mobile ? roleLabel : "Menu profil"}
+            </span>
+          </span>
+        </span>
+        <span aria-hidden="true" className="shrink-0 text-xs text-white/70">
+          {open ? "▴" : "▾"}
+        </span>
+      </button>
+      {open && (
+        <div
+          role="menu"
+          aria-label="Menu profil"
+          className={
+            mobile
+              ? "mt-2 max-h-[min(60vh,24rem)] overflow-y-auto rounded-lg border border-white/15 bg-white p-2 text-[#42546b] shadow-lg"
+              : "absolute right-0 top-full z-[60] mt-2 max-h-[min(70vh,32rem)] w-60 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-lg border border-[#e5eaf0] bg-white p-2 text-[#42546b] shadow-xl"
+          }
+        >
+          {!mobile && (
+            <div className="border-b border-[#edf0f4] px-3 py-2">
+              <p className="truncate text-sm font-semibold text-[#17345b]">{user.name}</p>
+              <p className="text-xs text-[#718096]">{roleLabel}</p>
+            </div>
+          )}
+          {links.map(([key, to]) => (
+            <Link
+              key={to}
+              to={to}
+              role="menuitem"
+              onClick={closeMenu}
+              className="block min-h-10 rounded-md px-3 py-2.5 text-sm transition hover:bg-[#f5f7fa] hover:text-[#17345b]"
+            >
+              {linkText(key)}
+            </Link>
+          ))}
+          <button
+            type="button"
+            role="menuitem"
+            onClick={onLogout}
+            className="mt-1 block min-h-10 w-full border-t border-[#edf0f4] px-3 py-2.5 text-left text-sm font-medium text-[#a63c32] transition hover:bg-[#fff7f6]"
+          >
+            {logoutLabel}
+          </button>
         </div>
       )}
     </div>
@@ -199,42 +305,15 @@ export default function Nav() {
           {user ? (
             <>
               <NotificationMenu user={user} />
-              <details className="group relative">
-                <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-white/10">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-sm font-semibold text-white">
-                    {user.name?.charAt(0)?.toUpperCase() || "U"}
-                  </span>
-                  <span className="max-w-32">
-                    <span className="block truncate text-sm font-semibold text-white">
-                      {user.name}
-                    </span>
-                    <span className="block text-[11px] text-white/70">
-                      {nav.roles[user.role] || nav.roles.user}
-                    </span>
-                  </span>
-                  <span aria-hidden="true" className="text-xs text-white/70">
-                    ▾
-                  </span>
-                </summary>
-                <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-[#e5eaf0] bg-white p-2 shadow-lg">
-                  {profileLinks.map(([key, to]) => (
-                    <Link
-                      key={to}
-                      to={to}
-                      className="block rounded-md px-3 py-2 text-sm text-[#42546b] hover:bg-[#f5f7fa] hover:text-[#17345b]"
-                    >
-                      {linkText(key)}
-                    </Link>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={onLogout}
-                    className="mt-1 block w-full border-t border-[#edf0f4] px-3 py-2 text-left text-sm font-medium text-[#a63c32] hover:bg-[#fff7f6]"
-                  >
-                    {nav.links.logout}
-                  </button>
-                </div>
-              </details>
+              <ProfileMenu
+                user={user}
+                roleLabel={nav.roles[user.role] || nav.roles.user}
+                links={profileLinks}
+                linkText={linkText}
+                logoutLabel={nav.links.logout}
+                onLogout={onLogout}
+                onNavigate={closeMobileMenu}
+              />
             </>
           ) : (
             <>
@@ -312,33 +391,18 @@ export default function Nav() {
             {user ? (
               <>
                 <div className="flex items-center justify-between gap-3 border-b border-white/10 py-3">
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-semibold text-white">
-                      {user.name}
-                    </span>
-                    <span className="text-xs text-white/70">
-                      {nav.roles[user.role] || nav.roles.user}
-                    </span>
-                  </span>
+                  <ProfileMenu
+                    user={user}
+                    roleLabel={nav.roles[user.role] || nav.roles.user}
+                    links={profileLinks}
+                    linkText={linkText}
+                    logoutLabel={nav.links.logout}
+                    onLogout={onLogout}
+                    onNavigate={closeMobileMenu}
+                    mobile
+                  />
                   <NotificationMenu user={user} />
                 </div>
-                {profileLinks.map(([key, to]) => (
-                  <NavLink
-                    key={to}
-                    to={to}
-                    className="block border-b border-white/10 py-3 text-sm font-medium text-white/90"
-                    onClick={closeMobileMenu}
-                  >
-                    {linkText(key)}
-                  </NavLink>
-                ))}
-                <button
-                  type="button"
-                  onClick={onLogout}
-                  className="mt-4 w-full py-2 text-left text-sm font-semibold text-[#ffadad]"
-                >
-                  {nav.links.logout}
-                </button>
               </>
             ) : (
               <div className="flex gap-3 pt-4">

@@ -105,7 +105,7 @@ export default function PerusahaanDashboard() {
               </p>
             </div>
             <Link
-              to="/cocok"
+              to="/kampanye?sort=recommended"
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#17365d] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#214675]"
             >
               Cari program <span aria-hidden="true">→</span>

@@ -1,4 +1,4 @@
-import logo from "../assets/logo.png";
+import logo from "../assets/logo.jpeg";
 import { useLanguage } from "../context/useLanguage";
 
 export default function Footer() {
@@ -48,9 +48,6 @@ export default function Footer() {
             </a>
             <a className="block hover:text-[#ffad55]" href="/ajukan">
               {footer.fundraise}
-            </a>
-            <a className="block hover:text-[#ffad55]" href="/cocok">
-              {footer.recommendations}
             </a>
           </div>
         </div>

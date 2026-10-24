@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import NotificationMenu from "./NotificationMenu";
-import logo from "../assets/logo.png";
+import logo from "../assets/logo.jpeg";
 
 const links = [
   { label: "Ringkasan", to: "/admin", icon: "M3 3h8v8H3z M13 3h8v5h-8z M13 10h8v11h-8z M3 13h8v8H3z" },

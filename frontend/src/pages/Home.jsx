@@ -432,7 +432,7 @@ export default function Home() {
               ))}
             </div>
             <Link
-              to="/cocok"
+              to="/kampanye?sort=recommended"
               className="mt-5 inline-flex bg-[#17365d] px-4 py-3 text-xs font-bold text-white"
             >
               Lihat Rekomendasi →

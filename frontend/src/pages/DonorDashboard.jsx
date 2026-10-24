@@ -82,18 +82,18 @@ export default function DonorDashboard() {
   const pagination = submissionData?.campaigns;
 
   return (
-    <main className="min-h-screen bg-[#F7F8FA] px-4 py-8 text-[#17345B] sm:px-6 lg:px-8">
+    <main className="min-h-screen min-w-0 bg-[#F7F8FA] px-4 py-8 text-[#17345B] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <header className="flex flex-col gap-4 border-b border-[#E3E8EF] pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#F28C28]">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#9a6b1c]">
               Ruang Donatur
             </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
               Dashboard Donatur
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#667085]">
-              Pantau donasi yang tercatat dan status pengajuan kebutuhan sekolah Anda.
+              Ringkasan donasi, pengajuan, dan aktivitas akun Anda.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -122,10 +122,10 @@ export default function DonorDashboard() {
           className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
         >
           {[
-            ["Total donasi tercatat", formatRupiah(donationData?.total_donated), donationData?.total_donated != null],
-            ["Transaksi donasi", donationData?.total_donation_count, donationData?.total_donation_count != null],
-            ["Kebutuhan didukung", donationData?.campaigns_supported, donationData?.campaigns_supported != null],
-            ["Pengajuan kebutuhan", summary.total_submissions, summary.total_submissions != null],
+            ["Total Donasi Tercatat", formatRupiah(donationData?.total_donated), donationData?.total_donated != null],
+            ["Transaksi Donasi", donationData?.total_donation_count, donationData?.total_donation_count != null],
+            ["Kebutuhan Didukung", donationData?.campaigns_supported, donationData?.campaigns_supported != null],
+            ["Pengajuan Kebutuhan", summary.total_submissions, summary.total_submissions != null],
           ].map(([label, value, available]) => (
             <article
               key={label}

@@ -14,7 +14,6 @@ import CreateCampaign from "./pages/CreateCampaign";
 import AdminDashboard from "./pages/AdminDashboard";
 import PemerintahDashboard from "./pages/PemerintahDashboard";
 import PerusahaanDashboard from "./pages/PerusahaanDashboard";
-import SmartMatch from "./pages/SmartMatch";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import SchoolAccountStatus from "./pages/SchoolAccountStatus";
@@ -55,9 +54,9 @@ function AppContent() {
           <AppRoutes publicPage={publicPage} />
         </SchoolLayout>
       ) : (
-        <div className="flex min-h-screen flex-col">
+        <div className="flex min-h-screen min-w-0 flex-col">
           <Nav />
-          <main className="flex-1">
+          <main className="min-w-0 flex-1">
             <AppRoutes publicPage={publicPage} />
           </main>
           {!isAuthPage && <Footer />}
@@ -146,13 +145,7 @@ function AppRoutes({ publicPage = (page) => page }) {
       />
       <Route
         path="/cocok"
-        element={
-          <ProtectedRoute
-            roles={["individu", "perusahaan", "pemerintah"]}
-          >
-            <SmartMatch />
-          </ProtectedRoute>
-        }
+        element={<Navigate to="/kampanye?sort=recommended" replace />}
       />
       <Route
         path="/admin"
