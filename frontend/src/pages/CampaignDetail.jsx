@@ -6,6 +6,13 @@ import { getCategoryImage } from "../categoryImages";
 
 const donationPresets = [50000, 100000, 250000, 500000];
 const donorRoles = ["individu", "perusahaan", "pemerintah"];
+const donationBanks = [
+  ["bank_bca", "BCA"],
+  ["bank_bri", "BRI"],
+  ["bank_bni", "BNI"],
+  ["bank_mandiri", "Mandiri"],
+  ["bank_bsi", "BSI"],
+];
 
 const tabs = [
   ["tentang", "Tentang Kebutuhan"],
@@ -59,8 +66,8 @@ export default function CampaignDetail() {
   const [reportLoadError, setReportLoadError] = useState("");
   const [status, setStatus] = useState("");
   const [amount, setAmount] = useState(50000);
+  const [paymentMethod, setPaymentMethod] = useState("bank_bca");
   const [submittingDonation, setSubmittingDonation] = useState(false);
-  const [message, setMessage] = useState("");
   const [reportTitle, setReportTitle] = useState("");
   const [reportNarrative, setReportNarrative] = useState("");
   const [reportStatus, setReportStatus] = useState("");
@@ -89,12 +96,12 @@ export default function CampaignDetail() {
     setError("");
     setSubmittingDonation(true);
     try {
-      const result = await api.createDonation(id, { amount: Number(amount), message });
-      if (!result.payment_url) {
-        throw new Error("Tautan pembayaran belum tersedia. Periksa riwayat donasi Anda.");
-      }
-      setStatus("Mengarahkan ke halaman pembayaran Midtrans…");
-      window.location.assign(result.payment_url);
+      await api.createDonation(id, {
+        amount: Number(amount),
+        payment_method: paymentMethod,
+      });
+      setStatus("Donasi berhasil dicatat. Status pembayaran: Menunggu Pembayaran.");
+      load();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -641,6 +648,23 @@ export default function CampaignDetail() {
               {!donationClosed && user && donorRoles.includes(user.role) && (
                 <form onSubmit={submitDonation} className="space-y-2.5">
                   <label
+                    htmlFor="donation-bank"
+                    className="block text-xs font-semibold text-[#344054]"
+                  >
+                    Pilih bank
+                  </label>
+                  <select
+                    id="donation-bank"
+                    required
+                    value={paymentMethod}
+                    onChange={(event) => setPaymentMethod(event.target.value)}
+                    className="min-h-10 w-full rounded-lg border border-[#eaecf0] bg-white px-3 text-sm text-[#101828] focus:border-[#f28c28] focus:outline-none"
+                  >
+                    {donationBanks.map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                  <label
                     htmlFor="donation-amount"
                     className="block text-xs font-semibold text-[#344054]"
                   >
@@ -674,23 +698,11 @@ export default function CampaignDetail() {
                     placeholder="Masukkan nominal donasi"
                     className="min-h-9 w-full rounded-lg border border-[#eaecf0] px-3 text-sm text-[#101828] focus:border-[#f28c28] focus:outline-none"
                   />
-                  <p className="rounded-md bg-[#f8fafc] px-3 py-2 text-[11px] leading-4 text-[#667085]">
-                    Pilih bank atau metode pembayaran yang tersedia di halaman aman Midtrans.
-                    Donasi baru dihitung setelah pembayaran dikonfirmasi otomatis.
-                  </p>
-                  <textarea
-                    aria-label="Pesan untuk sekolah"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    rows={2}
-                    className="w-full resize-y rounded-lg border border-[#eaecf0] px-3 py-2 text-sm text-[#101828] focus:border-[#f28c28] focus:outline-none"
-                    placeholder="Pesan untuk sekolah (opsional)"
-                  />
                   <button
                     disabled={submittingDonation}
                     className="min-h-10 w-full rounded-lg bg-[#f28c28] text-sm font-semibold text-white transition hover:bg-[#dc7616] disabled:cursor-wait disabled:opacity-60"
                   >
-                    {submittingDonation ? "Menyiapkan pembayaran..." : "♥ Lanjutkan ke Pembayaran"}
+                    {submittingDonation ? "Mengirim..." : "♥ Kirim Donasi"}
                   </button>
                   {status && <p role="status" className="text-xs text-green-700">{status}</p>}
                   {error && <p role="alert" className="text-xs text-red-600">{error}</p>}

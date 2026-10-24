@@ -50,17 +50,11 @@ class DonationController extends Controller
         ]);
     }
 
-    public function store(Request $request, Campaign $campaign, MidtransPaymentService $midtrans)
+    public function store(Request $request, Campaign $campaign)
     {
-        if (! $midtrans->isConfigured()) {
-            return response()->json([
-                'message' => 'Pembayaran belum dikonfigurasi. Silakan hubungi administrator.',
-            ], 503);
-        }
-
         $data = $request->validate([
             'amount' => 'required|integer|min:10000',
-            'message' => 'nullable|string|max:500',
+            'payment_method' => 'required|in:bank_bca,bank_bri,bank_bni,bank_mandiri,bank_bsi',
         ]);
 
         $user = $request->user();
@@ -94,9 +88,9 @@ class DonationController extends Controller
                     default => 'individu',
                 },
                 'amount' => $data['amount'],
+                'payment_method' => $data['payment_method'],
                 'payment_status' => 'pending',
                 'order_id' => 'donation-' . Str::uuid(),
-                'message' => $data['message'] ?? '',
             ]);
         });
 
@@ -106,33 +100,8 @@ class DonationController extends Controller
             ], 422);
         }
 
-        try {
-            $payment = $midtrans->createSnapTransaction($donation, $campaign, $user);
-        } catch (ConnectionException $exception) {
-            Log::warning('Could not connect to Midtrans when creating payment.', [
-                'order_id' => $donation->order_id,
-                'exception' => $exception->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Status pembuatan pembayaran belum diketahui. Periksa riwayat donasi sebelum mencoba lagi.',
-                'order_id' => $donation->order_id,
-            ], 503);
-        } catch (RuntimeException $exception) {
-            Log::warning('Midtrans could not confirm Snap transaction creation.', [
-                'order_id' => $donation->order_id,
-                'exception' => $exception->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Status pembuatan pembayaran belum diketahui. Periksa riwayat donasi sebelum mencoba lagi.',
-                'order_id' => $donation->order_id,
-            ], 503);
-        }
-
         return response()->json([
             'donation' => $donation,
-            'payment_url' => $payment['redirect_url'],
             'payment_status' => 'pending',
         ], 201);
     }
@@ -179,6 +148,9 @@ class DonationController extends Controller
             ->firstOrFail();
 
         if ($donation->payment_status === 'unverified') {
+            return response()->json($donation);
+        }
+        if (str_starts_with((string) $donation->payment_method, 'bank_')) {
             return response()->json($donation);
         }
 

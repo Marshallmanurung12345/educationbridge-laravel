@@ -66,6 +66,7 @@ class DonationWorkflowTest extends TestCase
         $this->actingAs($donor, 'sanctum')
             ->postJson("/api/campaigns/{$campaign->id}/donations", [
                 'amount' => 10000,
+                'payment_method' => 'bank_bca',
             ])
             ->assertUnprocessable()
             ->assertJsonPath('message', 'Kebutuhan ini sudah ditutup untuk donasi.');
@@ -154,24 +155,29 @@ class DonationWorkflowTest extends TestCase
             ->assertJsonCount(0, 'campaigns.data');
     }
 
-    public function test_payment_remains_pending_until_midtrans_confirms_it(): void
+    public function test_bank_donation_is_created_without_gateway_configuration_and_remains_pending(): void
     {
         $donor = $this->createUser('individu', 'donor@example.test');
         $campaign = $this->createCampaign();
+        config(['services.midtrans.server_key' => null]);
 
-        $donation = $this->createPendingDonation($donor, $campaign, 25000);
+        $response = $this->actingAs($donor, 'sanctum')
+            ->postJson("/api/campaigns/{$campaign->id}/donations", [
+                'amount' => 25000,
+                'payment_method' => 'bank_bca',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('payment_status', 'pending')
+            ->assertJsonMissingPath('payment_url')
+            ->assertJsonPath('donation.payment_method', 'bank_bca');
+
+        $donation = Donation::findOrFail($response->json('donation.id'));
 
         $this->assertDatabaseHas('donations', [
             'id' => $donation->id,
             'payment_status' => 'pending',
+            'payment_method' => 'bank_bca',
             'amount' => 25000,
-        ]);
-        $this->assertSame(0, $campaign->fresh()->raised_amount);
-
-        $this->notifyMidtrans($donation, 'pending')->assertOk();
-        $this->assertDatabaseHas('donations', [
-            'id' => $donation->id,
-            'payment_status' => 'pending',
         ]);
         $this->assertSame(0, $campaign->fresh()->raised_amount);
 
@@ -190,25 +196,20 @@ class DonationWorkflowTest extends TestCase
         $this->assertDatabaseCount('donations', 0);
     }
 
-    public function test_uncertain_snap_creation_does_not_mark_payment_as_failed(): void
+    public function test_invalid_bank_is_rejected_without_creating_a_donation(): void
     {
         $donor = $this->createUser('individu', 'donor@example.test');
         $campaign = $this->createCampaign();
-        Http::fake([
-            'https://app.sandbox.midtrans.com/snap/v1/transactions' => Http::response([
-                'message' => 'Temporary provider error',
-            ], 500),
-        ]);
 
         $response = $this->actingAs($donor, 'sanctum')
-            ->postJson("/api/campaigns/{$campaign->id}/donations", ['amount' => 25000]);
+            ->postJson("/api/campaigns/{$campaign->id}/donations", [
+                'amount' => 25000,
+                'payment_method' => 'bank_unknown',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('payment_method');
 
-        $response->assertStatus(503)->assertJsonStructure(['order_id', 'message']);
-        $this->assertDatabaseHas('donations', [
-            'order_id' => $response->json('order_id'),
-            'payment_status' => 'pending',
-        ]);
-        $this->assertSame(0, $campaign->fresh()->raised_amount);
+        $this->assertDatabaseCount('donations', 0);
     }
 
     public function test_donor_cannot_refresh_another_users_payment_status(): void
@@ -226,6 +227,20 @@ class DonationWorkflowTest extends TestCase
             'id' => $donation->id,
             'payment_status' => 'pending',
         ]);
+    }
+
+    public function test_donor_can_view_their_bank_donation_status_without_gateway_configuration(): void
+    {
+        $donor = $this->createUser('individu', 'donor@example.test');
+        $campaign = $this->createCampaign();
+        $donation = $this->createPendingDonation($donor, $campaign, 25000);
+        config(['services.midtrans.server_key' => null]);
+
+        $this->actingAs($donor, 'sanctum')
+            ->getJson("/api/my-donations/status/{$donation->order_id}")
+            ->assertOk()
+            ->assertJsonPath('payment_status', 'pending')
+            ->assertJsonPath('payment_method', 'bank_bca');
     }
 
     public function test_failed_midtrans_payment_cannot_become_success_from_a_later_notification(): void
@@ -307,21 +322,15 @@ class DonationWorkflowTest extends TestCase
 
     private function createPendingDonation(User $donor, Campaign $campaign, int $amount): Donation
     {
-        Http::fake([
-            'https://app.sandbox.midtrans.com/snap/v1/transactions' => Http::response([
-                'token' => 'snap-token-test',
-                'redirect_url' => 'https://app.sandbox.midtrans.com/snap/v2/vtweb/test-token',
-            ], 201),
-        ]);
-
         $response = $this->actingAs($donor, 'sanctum')
             ->postJson("/api/campaigns/{$campaign->id}/donations", [
                 'amount' => $amount,
+                'payment_method' => 'bank_bca',
             ]);
         $response
             ->assertCreated()
             ->assertJsonPath('payment_status', 'pending')
-            ->assertJsonPath('payment_url', 'https://app.sandbox.midtrans.com/snap/v2/vtweb/test-token');
+            ->assertJsonPath('donation.payment_method', 'bank_bca');
 
         return Donation::findOrFail($response->json('donation.id'));
     }

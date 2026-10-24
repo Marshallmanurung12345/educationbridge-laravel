@@ -4,8 +4,8 @@ import { api, formatRupiah } from "../api";
 
 const statusCopy = {
   pending: {
-    title: "Menunggu konfirmasi pembayaran",
-    description: "Midtrans sedang memproses pembayaran. Status akan diperbarui setelah ada konfirmasi.",
+    title: "Menunggu Pembayaran",
+    description: "Donasi sudah dicatat. Pembayaran belum dikonfirmasi.",
     style: "border-amber-200 bg-amber-50 text-amber-900",
   },
   success: {
@@ -56,7 +56,10 @@ export default function PaymentStatus() {
 
     async function checkStatus() {
       const result = await refresh();
-      if (!active || result?.payment_status !== "pending" || attempts >= 11) return;
+      if (!active ||
+          result?.payment_status !== "pending" ||
+          String(result?.payment_method || "").startsWith("bank_") ||
+          attempts >= 11) return;
       attempts += 1;
       timeoutId = window.setTimeout(checkStatus, 5000);
     }
@@ -124,7 +127,8 @@ export default function PaymentStatus() {
                 </div>
               )}
             </dl>
-            {donation.payment_status === "pending" && (
+            {donation.payment_status === "pending" &&
+              !String(donation.payment_method || "").startsWith("bank_") && (
               <button
                 type="button"
                 onClick={() => setRetryKey((key) => key + 1)}
