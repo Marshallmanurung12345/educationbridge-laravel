@@ -12,20 +12,25 @@ const categories = [
   "Laboratorium",
 ];
 
-const categoryFocus = {
-  Fasilitas: ["renovasi", "infrastruktur", "fasilitas"],
-  Buku: ["literasi", "buku"],
-  Teknologi: ["teknologi", "internet"],
-  Beasiswa: ["beasiswa"],
-  Laboratorium: ["laboratorium"],
-};
+const recommendationFocusOptions = [
+  ["3t", "Wilayah 3T"],
+  ["renovasi", "Infrastruktur"],
+  ["teknologi", "Teknologi"],
+  ["literasi", "Buku & Literasi"],
+  ["beasiswa", "Beasiswa"],
+  ["sanitasi", "Sanitasi"],
+  ["lainnya", "Lainnya"],
+];
+const sortOptions = ["priority", "newest", "urgency", "recommended", "progress"];
 
 export default function Campaigns() {
   const [campaigns, setCampaigns] = useState([]);
   const [category, setCategory] = useState("Semua");
-  const [sort, setSort] = useState(() =>
-    new URLSearchParams(window.location.search).get("sort") || "priority",
-  );
+  const [sort, setSort] = useState(() => {
+    const requestedSort = new URLSearchParams(window.location.search).get("sort");
+    return sortOptions.includes(requestedSort) ? requestedSort : "priority";
+  });
+  const [recommendationFocus, setRecommendationFocus] = useState("3t");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -39,7 +44,7 @@ export default function Campaigns() {
     const query = search.trim();
     const request =
       sort === "recommended"
-        ? api.match(categoryFocus[category] || [])
+        ? api.match([recommendationFocus])
         : api.listCampaigns({
             status: "verified",
             sort: sort === "urgency" ? "priority" : sort,
@@ -87,7 +92,7 @@ export default function Campaigns() {
     return () => {
       active = false;
     };
-  }, [category, search, sort, reloadKey]);
+  }, [category, recommendationFocus, search, sort, reloadKey]);
 
   return (
     <main className="min-h-screen min-w-0 bg-[#f7f8fa] text-[#344054]">
@@ -163,6 +168,38 @@ export default function Campaigns() {
             </label>
           </div>
         </div>
+
+        {sort === "recommended" && (
+          <section className="border-b border-[#dfe5eb] py-4">
+            <p className="text-sm font-semibold text-[#344054]">
+              Direkomendasikan berdasarkan fokus
+            </p>
+            <div
+              className="mt-3 flex flex-wrap gap-2"
+              role="group"
+              aria-label="Fokus rekomendasi"
+            >
+              {recommendationFocusOptions.map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={recommendationFocus === value}
+                  onClick={() => setRecommendationFocus(value)}
+                  className={`min-h-9 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                    recommendationFocus === value
+                      ? "border-[#17345B] bg-[#edf4fb] text-[#17345B]"
+                      : "border-[#d5dce4] bg-white text-[#52606d] hover:border-[#17345B] hover:text-[#17345B]"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-[#718096]">
+              Kecocokan tag dan Priority Score berasal dari algoritma rekomendasi backend.
+            </p>
+          </section>
+        )}
 
         <div className="mt-1">
           {loading && (
