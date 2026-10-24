@@ -148,7 +148,7 @@ export default function DonorDashboard() {
             >
               <p className="text-xs font-medium text-[#667085]">{label}</p>
               <p className="mt-2 break-words text-xl font-semibold text-[#17345B]">
-                {available ? value : loading ? "Memuat…" : "Data belum tersedia"}
+                {available ? value : loading ? <LoadingState label={`Memuat ${label.toLocaleLowerCase("id-ID")}`} /> : "Data belum tersedia"}
               </p>
             </article>
           ))}
@@ -174,9 +174,7 @@ export default function DonorDashboard() {
               Pengajuan tidak dapat dimuat: {submissionError}
             </p>
           ) : loading ? (
-            <p role="status" className="px-5 py-6 text-sm text-[#667085]">
-              Memuat pengajuan…
-            </p>
+            <LoadingPanel label="Memuat pengajuan Anda" />
           ) : submissions.length === 0 ? (
             <div className="flex flex-col items-center gap-3 px-4 py-5 text-center sm:flex-row sm:justify-between sm:px-5">
               <p className="text-sm font-medium text-[#344054]">
@@ -275,9 +273,7 @@ export default function DonorDashboard() {
               Riwayat donasi tidak dapat dimuat: {donationError}
             </p>
           ) : loading ? (
-            <p role="status" className="px-5 py-6 text-sm text-[#667085]">
-              Memuat riwayat donasi…
-            </p>
+            <LoadingPanel label="Memuat riwayat donasi" />
           ) : donations.length === 0 ? (
             <p className="px-5 py-7 text-sm text-[#667085]">
               Belum ada donasi yang tercatat dari akun ini.
@@ -329,5 +325,29 @@ export default function DonorDashboard() {
         </section>
       </div>
     </main>
+  );
+}
+
+function LoadingState({ label }) {
+  return (
+    <span className="inline-flex items-center gap-2 text-sm font-medium text-[#667085]" role="status">
+      <span
+        aria-hidden="true"
+        className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-[#d9e2ec] border-t-[#F28C28]"
+      />
+      <span className="sr-only">{label}</span>
+    </span>
+  );
+}
+
+function LoadingPanel({ label }) {
+  return (
+    <div className="flex min-h-24 items-center justify-center gap-3 px-5 py-6 text-sm text-[#667085]" role="status">
+      <span
+        aria-hidden="true"
+        className="inline-block h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-[#d9e2ec] border-t-[#F28C28]"
+      />
+      <span>{label}…</span>
+    </div>
   );
 }

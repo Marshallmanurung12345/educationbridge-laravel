@@ -11,7 +11,11 @@ async function request(path, options = {}) {
     Accept: "application/json",
     ...(options.headers || {}),
   };
-  if (authToken) headers.Authorization = `Bearer ${authToken}`;
+  const token =
+    typeof window !== "undefined"
+      ? window.localStorage.getItem("eb_token")
+      : authToken;
+  if (token) headers.Authorization = `Bearer ${token}`;
 
   const res = await fetch(`${BASE_URL}/api${path}`, { ...options, headers });
 

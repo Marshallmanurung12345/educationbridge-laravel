@@ -461,20 +461,32 @@ export default function Campaigns() {
           <div className="grid grid-cols-3 divide-x divide-[#e4ebf1] rounded-xl border border-[#e2eaf1] bg-white shadow-sm lg:col-start-1">
             <div className="min-w-0 px-2.5 py-2.5 sm:px-4 sm:py-3">
               <p className="text-[10px] leading-4 text-[#64748b] sm:text-xs">Kebutuhan Terverifikasi</p>
-              <p className="mt-0.5 truncate text-sm font-bold text-[#17345B] sm:text-lg">
-                {stats ? Number(stats.verifiedCampaigns || 0).toLocaleString("id-ID") : "—"}
+              <p className="mt-0.5 flex min-h-5 items-center text-sm font-bold text-[#17345B] sm:text-lg">
+                {stats
+                  ? Number(stats.verifiedCampaigns || 0).toLocaleString("id-ID")
+                  : statsError
+                    ? "—"
+                    : <LoadingSpinner label="Memuat statistik" />}
               </p>
             </div>
             <div className="min-w-0 px-2.5 py-2.5 sm:px-4 sm:py-3">
               <p className="text-[10px] leading-4 text-[#64748b] sm:text-xs">Total Donasi Terkumpul</p>
-              <p className="mt-0.5 truncate text-xs font-bold text-[#146b50] sm:text-base">
-                {stats ? formatRupiah(stats.totalRaised) : "—"}
+              <p className="mt-0.5 flex min-h-5 items-center text-xs font-bold text-[#146b50] sm:text-base">
+                {stats
+                  ? formatRupiah(stats.totalRaised)
+                  : statsError
+                    ? "—"
+                    : <LoadingSpinner label="Memuat statistik" />}
               </p>
             </div>
             <div className="min-w-0 px-2.5 py-2.5 sm:px-4 sm:py-3">
               <p className="text-[10px] leading-4 text-[#64748b] sm:text-xs">Siswa Terbantu</p>
-              <p className="mt-0.5 truncate text-sm font-bold text-[#a75a0a] sm:text-lg">
-                {stats ? Number(stats.totalStudents || 0).toLocaleString("id-ID") : "—"}
+              <p className="mt-0.5 flex min-h-5 items-center text-sm font-bold text-[#a75a0a] sm:text-lg">
+                {stats
+                  ? Number(stats.totalStudents || 0).toLocaleString("id-ID")
+                  : statsError
+                    ? "—"
+                    : <LoadingSpinner label="Memuat statistik" />}
               </p>
             </div>
             {statsError && (
@@ -639,9 +651,10 @@ export default function Campaigns() {
           )}
 
           {loading && (
-            <p className="rounded-xl border border-[#e2e8f0] bg-white px-5 py-8 text-sm text-[#64748b]" role="status">
-              Memuat kebutuhan sekolah…
-            </p>
+            <div className="flex min-h-32 items-center justify-center gap-3 rounded-xl border border-[#e2e8f0] bg-white px-5 py-8 text-sm text-[#64748b]" role="status">
+              <LoadingSpinner label="Memuat kebutuhan sekolah" />
+              <span>Memuat kebutuhan sekolah…</span>
+            </div>
           )}
           {!loading && error && (
             <div className="rounded-xl border border-[#e2e8f0] bg-white px-5 py-8" role="alert">
@@ -672,5 +685,15 @@ export default function Campaigns() {
         </section>
       </div>
     </main>
+  );
+}
+
+function LoadingSpinner({ label }) {
+  return (
+    <span
+      aria-label={label}
+      className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-[#d8e0e8] border-t-[#F28C28]"
+      role="img"
+    />
   );
 }
