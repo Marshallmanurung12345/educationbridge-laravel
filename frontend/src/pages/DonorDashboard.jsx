@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
+import LoadingIndicator, { LoadingSpinner } from "../components/LoadingIndicator";
 
 const statusLabels = {
   pending: "Menunggu Verifikasi",
@@ -32,7 +33,7 @@ const paymentMethodLabels = {
 };
 const paymentStatusLabels = {
   pending: "Menunggu Pembayaran",
-  success: "Berhasil",
+  success: "Tercatat",
   failed: "Gagal",
   unverified: "Belum Terverifikasi",
 };
@@ -360,10 +361,7 @@ export default function DonorDashboard() {
 function LoadingState({ label }) {
   return (
     <span className="inline-flex items-center gap-2 text-sm font-medium text-[#667085]" role="status">
-      <span
-        aria-hidden="true"
-        className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-[#d9e2ec] border-t-[#F28C28]"
-      />
+      <LoadingSpinner size="sm" />
       <span className="sr-only">{label}</span>
     </span>
   );
@@ -371,12 +369,6 @@ function LoadingState({ label }) {
 
 function LoadingPanel({ label }) {
   return (
-    <div className="flex min-h-24 items-center justify-center gap-3 px-5 py-6 text-sm text-[#667085]" role="status">
-      <span
-        aria-hidden="true"
-        className="inline-block h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-[#d9e2ec] border-t-[#F28C28]"
-      />
-      <span>{label}…</span>
-    </div>
+    <LoadingIndicator label={`${label}…`} className="min-h-24 px-5 py-6" />
   );
 }

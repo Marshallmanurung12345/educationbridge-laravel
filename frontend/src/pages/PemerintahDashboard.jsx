@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 export default function PemerintahDashboard() {
   const [stats, setStats] = useState(null);
@@ -188,9 +189,7 @@ export default function PemerintahDashboard() {
           </div>
 
           {loading ? (
-            <div className="p-8 text-center text-sm text-slate-500">
-              Memuat data pengawasan pemerintah...
-            </div>
+            <LoadingIndicator label="Memuat data pengawasan pemerintah…" className="min-h-32 p-8" />
           ) : loadError ? (
             <div className="p-8 text-center text-sm text-rose-700" role="alert">
               Data pemantauan gagal dimuat: {loadError}
@@ -220,7 +219,7 @@ export default function PemerintahDashboard() {
                     const progress =
                       c.progress_percent ??
                       (c.target_amount > 0
-                        ? Math.round((c.raised_amount / c.target_amount) * 100)
+                        ? Number(((c.raised_amount / c.target_amount) * 100).toFixed(1))
                         : 0);
 
                     return (
@@ -273,7 +272,7 @@ export default function PemerintahDashboard() {
                             {formatRupiah(c.raised_amount)}
                           </span>
                           <span className="text-[10px] text-slate-500">
-                            {progress}% dari {formatRupiah(c.target_amount)}
+                            {progress.toLocaleString("id-ID", { maximumFractionDigits: 1 })}% dari {formatRupiah(c.target_amount)}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-center">

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { api } from "../api";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 const statusLabels = {
   pending_verification: "Menunggu",
@@ -89,7 +90,7 @@ export default function SchoolAccountReview() {
 
         <section className="mt-5 overflow-hidden rounded-xl border border-[#E6EAF0] bg-white">
           {loading ? (
-            <p className="px-5 py-12 text-center text-sm text-[#667085]">Memuat akun sekolah…</p>
+            <LoadingIndicator label="Memuat akun sekolah…" className="px-5 py-12" />
           ) : accounts.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <p className="font-medium text-[#17345B]">Belum ada akun sekolah.</p>

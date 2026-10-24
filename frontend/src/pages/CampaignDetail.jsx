@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { api, formatRupiah } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { getCategoryImage } from "../categoryImages";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 const donationPresets = [50000, 100000, 250000, 500000];
 const donorRoles = ["individu", "perusahaan", "pemerintah"];
@@ -96,11 +97,13 @@ export default function CampaignDetail() {
     setError("");
     setSubmittingDonation(true);
     try {
-      await api.createDonation(id, {
+      const result = await api.createDonation(id, {
         amount: Number(amount),
         payment_method: paymentMethod,
       });
-      setStatus("Donasi berhasil dicatat. Status pembayaran: Menunggu Pembayaran.");
+      setStatus(
+        `Donasi berhasil dicatat. Total terkumpul sekarang ${formatRupiah(result.campaign_raised_amount)}.`,
+      );
       load();
     } catch (err) {
       setError(err.message);
@@ -138,7 +141,7 @@ export default function CampaignDetail() {
   if (error && !campaign)
     return <div className="mx-auto max-w-4xl px-5 py-16 text-red-600 text-sm">{error}</div>;
   if (!campaign)
-    return <div className="mx-auto max-w-4xl px-5 py-16 text-[#667085] text-sm">Memuat kebutuhan sekolah...</div>;
+    return <LoadingIndicator label="Memuat kebutuhan sekolah…" className="mx-auto min-h-[50vh] max-w-4xl px-5" />;
 
   const school = campaign.school;
   const isOwnerSchool = user?.role === "sekolah" && user.id === campaign.user_id;
@@ -146,7 +149,18 @@ export default function CampaignDetail() {
   const image = (!imageFailed && campaign.image_url) || fallbackImage;
   const tags = Array.isArray(campaign.tags) ? campaign.tags : [];
   const priorityBreakdown = campaign.priority_breakdown || {};
-  const progressPercent = Math.min(100, Math.max(0, Number(campaign.progress_percent) || 0));
+  const progressPercent = Math.min(
+    100,
+    Math.max(
+      0,
+      Number(
+        campaign.progress_percent ??
+          (Number(campaign.target_amount) > 0
+            ? ((Number(campaign.raised_amount) / Number(campaign.target_amount)) * 100).toFixed(1)
+            : 0),
+      ) || 0,
+    ),
+  );
   const targetReached =
     Number(campaign.target_amount) > 0 &&
     Number(campaign.raised_amount) >= Number(campaign.target_amount);
@@ -530,7 +544,9 @@ export default function CampaignDetail() {
                       {formatRupiah(campaign.raised_amount)}
                     </p>
                   </div>
-                  <span className="mb-0.5 text-sm font-bold text-[#344054]">{progressPercent}%</span>
+                  <span className="mb-0.5 text-sm font-bold text-[#344054]">
+                    {progressPercent.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%
+                  </span>
                 </div>
 
                 <div
@@ -664,6 +680,9 @@ export default function CampaignDetail() {
                       <option key={value} value={value}>{label}</option>
                     ))}
                   </select>
+                  <p className="text-[11px] leading-4 text-[#667085]">
+                    Donasi langsung dicatat dan menambah total terkumpul. Pilihan bank hanya mencatat metode donasi; aplikasi tidak melakukan transfer bank.
+                  </p>
                   <label
                     htmlFor="donation-amount"
                     className="block text-xs font-semibold text-[#344054]"

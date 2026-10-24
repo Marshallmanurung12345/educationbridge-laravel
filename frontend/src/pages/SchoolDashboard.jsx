@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
 import { useAuth } from "../context/AuthContext";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 const campaignStatus = {
   pending: ["Menunggu pemeriksaan", "bg-amber-50 text-amber-800"],
@@ -134,7 +135,7 @@ export default function SchoolDashboard() {
           </div>
 
           {loading ? (
-            <p className="px-5 py-12 text-center text-sm text-[#667085]">Memuat pengajuan sekolah…</p>
+            <LoadingIndicator label="Memuat pengajuan sekolah…" className="px-5 py-12" />
           ) : campaigns.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <p className="font-medium text-[#17345B]">Belum ada kebutuhan yang diajukan.</p>

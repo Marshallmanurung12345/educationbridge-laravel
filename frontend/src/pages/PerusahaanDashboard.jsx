@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
 import { useAuth } from "../context/AuthContext";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 export default function PerusahaanDashboard() {
   const { user } = useAuth();
@@ -70,9 +71,7 @@ export default function PerusahaanDashboard() {
           </div>
 
           {loading ? (
-            <p className="py-10 text-sm text-[#64748b]" role="status">
-              Memuat kebutuhan sekolah...
-            </p>
+            <LoadingIndicator label="Memuat kebutuhan sekolah…" className="min-h-24 py-10" />
           ) : error ? (
             <div className="py-10" role="alert">
               <p className="font-semibold text-[#17365d]">Kebutuhan sekolah tidak dapat dimuat.</p>
@@ -99,7 +98,7 @@ export default function PerusahaanDashboard() {
                     0,
                     Number(
                       campaign.progress_percent ??
-                        (target > 0 ? Math.round((raised / target) * 100) : 0),
+                        (target > 0 ? Number(((raised / target) * 100).toFixed(1)) : 0),
                     ),
                   ),
                 );
@@ -142,7 +141,7 @@ export default function PerusahaanDashboard() {
                         <div className="flex items-center justify-between gap-3 text-xs">
                           <span className="text-[#64748b]">Terkumpul</span>
                           <span className="font-semibold text-[#17365d]">
-                            {progress}%
+                            {progress.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%
                           </span>
                         </div>
                         <div

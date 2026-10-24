@@ -78,7 +78,7 @@ class DonationController extends Controller
                 return null;
             }
 
-            return $locked->donations()->create([
+            $donation = $locked->donations()->create([
                 'user_id' => $user->id,
                 'donor_name' => $user->organization_name ?: $user->name,
                 'donor_type' => match ($user->role) {
@@ -89,9 +89,40 @@ class DonationController extends Controller
                 },
                 'amount' => $data['amount'],
                 'payment_method' => $data['payment_method'],
-                'payment_status' => 'pending',
+                'payment_status' => 'success',
                 'order_id' => 'donation-' . Str::uuid(),
             ]);
+
+            $locked->raised_amount = (int) $locked->raised_amount + (int) $donation->amount;
+            if ((int) $locked->raised_amount >= (int) $locked->target_amount) {
+                $locked->status = 'completed';
+            }
+            $locked->save();
+
+            $formattedAmount = 'Rp ' . number_format((int) $donation->amount, 0, ',', '.');
+            Notification::create([
+                'user_id' => $locked->user_id,
+                'type' => 'donation_received',
+                'title' => 'Donasi baru tercatat',
+                'message' => "Donasi sebesar {$formattedAmount} untuk '{$locked->title}' telah dicatat.",
+                'campaign_id' => $locked->id,
+            ]);
+            Notification::create([
+                'target_role' => 'admin',
+                'type' => 'donation_received',
+                'title' => 'Donasi baru tercatat',
+                'message' => "Donasi sebesar {$formattedAmount} untuk '{$locked->title}' telah dicatat.",
+                'campaign_id' => $locked->id,
+            ]);
+            Notification::create([
+                'user_id' => $user->id,
+                'type' => 'donation_sent',
+                'title' => 'Donasi berhasil dicatat',
+                'message' => "Donasi sebesar {$formattedAmount} untuk '{$locked->title}' telah dicatat dan menambah total donasi.",
+                'campaign_id' => $locked->id,
+            ]);
+
+            return $donation;
         });
 
         if (! $donation) {
@@ -102,7 +133,8 @@ class DonationController extends Controller
 
         return response()->json([
             'donation' => $donation,
-            'payment_status' => 'pending',
+            'payment_status' => 'success',
+            'campaign_raised_amount' => $campaign->fresh()->raised_amount,
         ], 201);
     }
 

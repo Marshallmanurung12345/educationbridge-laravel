@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 const pageSize = 15;
 
@@ -60,7 +61,7 @@ export default function AdminSchools() {
         {error && <p role="alert" className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</p>}
         <section className="mt-5 overflow-hidden rounded-xl border border-[#E6EAF0] bg-white">
           {loading ? (
-            <p className="px-5 py-12 text-center text-sm text-[#667085]">Memuat data sekolah…</p>
+            <LoadingIndicator label="Memuat data sekolah…" className="px-5 py-12" />
           ) : visibleSchools.length === 0 ? (
             <p className="px-5 py-12 text-center text-sm text-[#667085]">{query ? "Tidak ada sekolah yang cocok dengan pencarian." : "Data sekolah belum tersedia."}</p>
           ) : (

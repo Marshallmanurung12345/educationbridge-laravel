@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api";
+import LoadingIndicator from "../components/LoadingIndicator";
 import { useAuth } from "../context/AuthContext";
 
 const categories = ["Fasilitas", "Buku", "Teknologi", "Beasiswa", "Laboratorium"];
@@ -297,9 +298,7 @@ export default function CreateCampaign() {
         </div>
 
         {loadingEdit ? (
-          <p role="status" className="rounded-xl border border-[#E6EAF0] bg-white p-6 text-sm text-[#667085]">
-            Memuat pengajuan…
-          </p>
+          <LoadingIndicator label="Memuat pengajuan…" className="min-h-24 rounded-xl border border-[#E6EAF0] bg-white p-6" />
         ) : (
         <form onSubmit={onSubmit} className="space-y-4">
           <Section number="1" title="Informasi Sekolah" description="Pilih sekolah dari data resmi. NPSN dan lokasi akan terisi otomatis.">

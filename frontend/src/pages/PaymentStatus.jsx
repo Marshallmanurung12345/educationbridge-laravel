@@ -9,8 +9,8 @@ const statusCopy = {
     style: "border-amber-200 bg-amber-50 text-amber-900",
   },
   success: {
-    title: "Pembayaran berhasil",
-    description: "Pembayaran telah dikonfirmasi oleh Midtrans. Terima kasih telah mendukung sekolah.",
+    title: "Donasi berhasil dicatat",
+    description: "Donasi sudah masuk ke catatan kebutuhan dan total terkumpul telah diperbarui.",
     style: "border-emerald-200 bg-emerald-50 text-emerald-900",
   },
   failed: {

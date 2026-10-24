@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\School;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -49,33 +50,38 @@ class SchoolAccountController extends Controller
             ], 422);
         }
 
-        $previousStatus = $user->account_status;
-        $previousNote = $user->verification_note;
-        $previousSchoolId = $user->school_id;
-        $user->account_status = $data['status'];
-        $user->verification_note = $data['note'] ?? null;
-        if ($data['status'] === 'verified') {
-            $user->school_id = $officialSchool->id;
-        }
-        $user->save();
+        DB::transaction(function () use ($request, $user, $data, $officialSchool) {
+            $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
+            $previous = [
+                'account_status' => $lockedUser->account_status,
+                'school_id' => $lockedUser->school_id,
+                'verification_note' => $lockedUser->verification_note,
+            ];
+            $lockedUser->account_status = $data['status'];
+            $lockedUser->verification_note = $data['note'] ?? null;
+            if ($data['status'] === 'verified') {
+                $lockedUser->school_id = $officialSchool->id;
+            }
+            $lockedUser->save();
 
-        AuditLog::create([
-            'actor_id' => $request->user()->id,
-            'action' => 'school_account_status_changed',
-            'subject_type' => User::class,
-            'subject_id' => $user->id,
-            'old_values' => [
-                'account_status' => $previousStatus,
-                'verification_note' => $previousNote,
-                'school_id' => $previousSchoolId,
-            ],
-            'new_values' => [
-                'account_status' => $user->account_status,
-                'school_id' => $user->school_id,
-                'verification_note' => $user->verification_note,
-            ],
-            'note' => $user->verification_note,
-        ]);
+            if ($previous['account_status'] !== $lockedUser->account_status ||
+                $previous['school_id'] !== $lockedUser->school_id ||
+                $previous['verification_note'] !== $lockedUser->verification_note) {
+                AuditLog::create([
+                    'actor_id' => $request->user()->id,
+                    'action' => 'school_account_status_changed',
+                    'subject_type' => User::class,
+                    'subject_id' => $lockedUser->id,
+                    'old_values' => $previous,
+                    'new_values' => [
+                        'account_status' => $lockedUser->account_status,
+                        'school_id' => $lockedUser->school_id,
+                        'verification_note' => $lockedUser->verification_note,
+                    ],
+                    'note' => $lockedUser->verification_note,
+                ]);
+            }
+        });
 
         return response()->json($user->fresh()->load('school'));
     }

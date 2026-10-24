@@ -29,10 +29,7 @@ class DonationWorkflowTest extends TestCase
             'raised_amount' => 90000,
         ]);
 
-        $donation = $this->createPendingDonation($donor, $campaign, 50000);
-        $this->assertSame(90000, $campaign->fresh()->raised_amount);
-        $this->notifyMidtrans($donation, 'settlement')->assertOk();
-
+        $donation = $this->createDonation($donor, $campaign, 50000);
         $this->assertDatabaseHas('campaigns', [
             'id' => $campaign->id,
             'raised_amount' => 140000,
@@ -53,10 +50,7 @@ class DonationWorkflowTest extends TestCase
             'raised_amount' => 90000,
         ]);
 
-        $donation = $this->createPendingDonation($donor, $campaign, 10000);
-        $this->assertSame(90000, $campaign->fresh()->raised_amount);
-        $this->notifyMidtrans($donation, 'settlement')->assertOk();
-
+        $donation = $this->createDonation($donor, $campaign, 10000);
         $this->assertDatabaseHas('campaigns', [
             'id' => $campaign->id,
             'raised_amount' => 100000,
@@ -155,7 +149,7 @@ class DonationWorkflowTest extends TestCase
             ->assertJsonCount(0, 'campaigns.data');
     }
 
-    public function test_bank_donation_is_created_without_gateway_configuration_and_remains_pending(): void
+    public function test_bank_donation_is_recorded_as_success_and_updates_campaign_total_immediately(): void
     {
         $donor = $this->createUser('individu', 'donor@example.test');
         $campaign = $this->createCampaign();
@@ -167,19 +161,20 @@ class DonationWorkflowTest extends TestCase
                 'payment_method' => 'bank_bca',
             ])
             ->assertCreated()
-            ->assertJsonPath('payment_status', 'pending')
+            ->assertJsonPath('payment_status', 'success')
             ->assertJsonMissingPath('payment_url')
-            ->assertJsonPath('donation.payment_method', 'bank_bca');
+            ->assertJsonPath('donation.payment_method', 'bank_bca')
+            ->assertJsonPath('campaign_raised_amount', 25000);
 
         $donation = Donation::findOrFail($response->json('donation.id'));
 
         $this->assertDatabaseHas('donations', [
             'id' => $donation->id,
-            'payment_status' => 'pending',
+            'payment_status' => 'success',
             'payment_method' => 'bank_bca',
             'amount' => 25000,
         ]);
-        $this->assertSame(0, $campaign->fresh()->raised_amount);
+        $this->assertSame(25000, $campaign->fresh()->raised_amount);
 
     }
 
@@ -217,7 +212,7 @@ class DonationWorkflowTest extends TestCase
         $owner = $this->createUser('individu', 'owner@example.test');
         $otherDonor = $this->createUser('individu', 'other@example.test');
         $campaign = $this->createCampaign();
-        $donation = $this->createPendingDonation($owner, $campaign, 25000);
+        $donation = $this->createDonation($owner, $campaign, 25000);
 
         $this->actingAs($otherDonor, 'sanctum')
             ->getJson("/api/my-donations/status/{$donation->order_id}")
@@ -225,7 +220,7 @@ class DonationWorkflowTest extends TestCase
 
         $this->assertDatabaseHas('donations', [
             'id' => $donation->id,
-            'payment_status' => 'pending',
+            'payment_status' => 'success',
         ]);
     }
 
@@ -233,13 +228,13 @@ class DonationWorkflowTest extends TestCase
     {
         $donor = $this->createUser('individu', 'donor@example.test');
         $campaign = $this->createCampaign();
-        $donation = $this->createPendingDonation($donor, $campaign, 25000);
+        $donation = $this->createDonation($donor, $campaign, 25000);
         config(['services.midtrans.server_key' => null]);
 
         $this->actingAs($donor, 'sanctum')
             ->getJson("/api/my-donations/status/{$donation->order_id}")
             ->assertOk()
-            ->assertJsonPath('payment_status', 'pending')
+            ->assertJsonPath('payment_status', 'success')
             ->assertJsonPath('payment_method', 'bank_bca');
     }
 
@@ -247,7 +242,7 @@ class DonationWorkflowTest extends TestCase
     {
         $donor = $this->createUser('individu', 'donor@example.test');
         $campaign = $this->createCampaign();
-        $donation = $this->createPendingDonation($donor, $campaign, 25000);
+        $donation = $this->createLegacyPendingDonation($donor, $campaign, 25000);
 
         $this->notifyMidtrans($donation, 'expire')->assertOk();
         $this->notifyMidtrans($donation, 'settlement')->assertOk();
@@ -263,7 +258,7 @@ class DonationWorkflowTest extends TestCase
     {
         $donor = $this->createUser('individu', 'donor@example.test');
         $campaign = $this->createCampaign();
-        $donation = $this->createPendingDonation($donor, $campaign, 25000);
+        $donation = $this->createLegacyPendingDonation($donor, $campaign, 25000);
         $payload = $this->notificationPayload($donation, 'settlement');
 
         $this->postJson('/api/payments/midtrans/notification', array_merge($payload, [
@@ -320,7 +315,7 @@ class DonationWorkflowTest extends TestCase
             ->assertJsonFragment(['payment_status' => 'unverified']);
     }
 
-    private function createPendingDonation(User $donor, Campaign $campaign, int $amount): Donation
+    private function createDonation(User $donor, Campaign $campaign, int $amount): Donation
     {
         $response = $this->actingAs($donor, 'sanctum')
             ->postJson("/api/campaigns/{$campaign->id}/donations", [
@@ -329,10 +324,23 @@ class DonationWorkflowTest extends TestCase
             ]);
         $response
             ->assertCreated()
-            ->assertJsonPath('payment_status', 'pending')
+            ->assertJsonPath('payment_status', 'success')
             ->assertJsonPath('donation.payment_method', 'bank_bca');
 
         return Donation::findOrFail($response->json('donation.id'));
+    }
+
+    private function createLegacyPendingDonation(User $donor, Campaign $campaign, int $amount): Donation
+    {
+        return $campaign->donations()->create([
+            'user_id' => $donor->id,
+            'donor_name' => $donor->name,
+            'donor_type' => 'individu',
+            'amount' => $amount,
+            'payment_method' => 'bank_transfer',
+            'payment_status' => 'pending',
+            'order_id' => 'legacy-pending-' . uniqid(),
+        ]);
     }
 
     private function notifyMidtrans(Donation $donation, string $transactionStatus)

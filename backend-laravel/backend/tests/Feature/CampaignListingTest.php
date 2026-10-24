@@ -35,6 +35,19 @@ class CampaignListingTest extends TestCase
             ->assertJsonPath('0.description', $campaign->description);
     }
 
+    public function test_campaign_progress_preserves_one_decimal_for_small_percentages(): void
+    {
+        $campaign = $this->createCampaign([
+            'target_amount' => 60000000,
+            'raised_amount' => 250000,
+        ]);
+
+        $this->getJson('/api/campaigns')
+            ->assertOk()
+            ->assertJsonPath('0.id', $campaign->id)
+            ->assertJsonPath('0.progress_percent', 0.4);
+    }
+
     public function test_summary_matching_keeps_card_data_without_campaign_details(): void
     {
         $campaign = $this->createCampaign();

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 function dateLabel(value) {
   return value
@@ -91,10 +92,7 @@ export default function AdminReports() {
           </p>
         )}
         {loading ? (
-          <div className="flex min-h-40 items-center justify-center gap-3 rounded-xl border border-[#E3E8EF] bg-white text-sm text-[#667085]" role="status">
-            <span aria-hidden="true" className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-[#d9e2ec] border-t-[#F28C28]" />
-            Memuat laporan…
-          </div>
+          <LoadingIndicator label="Memuat laporan…" className="min-h-40 rounded-xl border border-[#E3E8EF] bg-white" />
         ) : error ? (
           <div className="rounded-xl border border-[#E3E8EF] bg-white p-5" role="alert">
             <p className="text-sm text-rose-700">Laporan tidak dapat dimuat: {error}</p>

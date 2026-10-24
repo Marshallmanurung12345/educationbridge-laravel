@@ -21,10 +21,12 @@ async function request(path, options = {}) {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    const message =
-      body.message ||
-      (body.errors ? Object.values(body.errors).flat().join(" ") : null) ||
-      `Request gagal (${res.status})`;
+    const message = res.status >= 500
+      ? (res.status === 503 && body.message) ||
+        "Terjadi gangguan pada server. Silakan coba lagi beberapa saat."
+      : body.message ||
+        (body.errors ? Object.values(body.errors).flat().join(" ") : null) ||
+        `Request gagal (${res.status})`;
     throw new Error(message);
   }
   if (res.status === 204) return null;
@@ -69,7 +71,12 @@ export const api = {
   refreshDonationStatus: (orderId) =>
     request(`/my-donations/status/${encodeURIComponent(orderId)}`),
   adminStats: () => request(`/admin/stats`),
-  listAuditLogs: () => request(`/admin/audit-logs`),
+  listAuditLogs: (params = {}) => {
+    const query = new URLSearchParams(
+      Object.entries(params).filter(([, value]) => value !== "" && value != null),
+    ).toString();
+    return request(`/admin/audit-logs${query ? `?${query}` : ""}`);
+  },
   listAdminReports: () => request(`/admin/reports`),
   deleteAdminReport: (id) => request(`/admin/reports/${id}`, { method: "DELETE" }),
   updateSchoolAccountStatus: (id, data) =>

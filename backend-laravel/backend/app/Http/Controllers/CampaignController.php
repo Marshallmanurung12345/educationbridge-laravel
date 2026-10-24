@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\Notification;
 use App\Models\School;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CampaignController extends Controller
 {
@@ -280,28 +281,68 @@ class CampaignController extends Controller
             unset($data['status']);
         }
 
-        $oldStatus = $campaign->status;
-        $oldPriorityScore = $campaign->priority_score;
-        $oldValues = $campaign->only(array_keys($data));
-        $campaign->update($data);
+        $oldStatus = DB::transaction(function () use ($campaign, $data, $isAdmin, $user) {
+            $campaign = Campaign::query()->lockForUpdate()->findOrFail($campaign->id);
+            $before = $campaign->only(array_unique([
+                ...array_keys($data),
+                'priority_score',
+            ]));
+            $campaign->update($data);
 
-        if ($isAdmin && $data) {
-            $scoreFields = ['urgency', 'facility_condition', 'remoteness', 'student_count', 'access_score'];
-            if (array_intersect($scoreFields, array_keys($data))) {
-                $oldValues['priority_score'] = $oldPriorityScore;
-                $data['priority_score'] = $campaign->priority_score;
+            if (! $isAdmin) {
+                return $before['status'] ?? null;
             }
+
+            $auditFields = [
+                'status',
+                'verification_note',
+                'title',
+                'category',
+                'target_amount',
+                'student_count',
+                'urgency',
+                'facility_condition',
+                'remoteness',
+                'access_score',
+                'priority_score',
+            ];
+            $changedFields = array_values(array_filter(
+                array_intersect($auditFields, array_unique([...array_keys($data), 'priority_score'])),
+                fn ($field) => ($before[$field] ?? null) != $campaign->getAttribute($field),
+            ));
+
+            if ($changedFields === []) {
+                return $before['status'] ?? null;
+            }
+
+            $oldValues = array_intersect_key($before, array_flip($changedFields));
+            $newValues = array_intersect_key($campaign->getAttributes(), array_flip($changedFields));
+            $status = $campaign->status;
+            $action = match (true) {
+                in_array('status', $changedFields, true) && $status === 'verified' => 'campaign_approved',
+                in_array('status', $changedFields, true) && $status === 'rejected' => 'campaign_rejected',
+                in_array('status', $changedFields, true) && $status === 'needs_revision' => 'campaign_revision_requested',
+                in_array('status', $changedFields, true) && $status === 'suspended' => 'campaign_suspended',
+                in_array('status', $changedFields, true) && $status === 'completed' => 'campaign_completed',
+                in_array('priority_score', $changedFields, true) => 'campaign_priority_updated',
+                default => 'campaign_updated',
+            };
 
             AuditLog::create([
                 'actor_id' => $user->id,
-                'action' => 'campaign_reviewed_or_updated',
+                'action' => $action,
                 'subject_type' => Campaign::class,
                 'subject_id' => $campaign->id,
                 'old_values' => $oldValues,
-                'new_values' => $data,
-                'note' => $data['verification_note'] ?? null,
+                'new_values' => $newValues,
+                'note' => in_array('verification_note', $changedFields, true)
+                    ? $campaign->verification_note
+                    : null,
             ]);
-        }
+
+            return $before['status'] ?? null;
+        });
+        $campaign = $campaign->fresh();
 
         // Notifikasi Perubahan Status dari Admin ke Sekolah
         if ($isAdmin && isset($data['status']) && $data['status'] !== $oldStatus) {
@@ -344,14 +385,18 @@ class CampaignController extends Controller
             ], 422);
         }
 
-        AuditLog::create([
-            'actor_id' => request()->user()->id,
-            'action' => 'campaign_deleted',
-            'subject_type' => Campaign::class,
-            'subject_id' => $campaign->id,
-            'old_values' => ['status' => $campaign->status, 'title' => $campaign->title],
-        ]);
-        $campaign->delete();
+        DB::transaction(function () use ($campaign) {
+            $before = ['status' => $campaign->status, 'title' => $campaign->title];
+            $campaign->delete();
+
+            AuditLog::create([
+                'actor_id' => request()->user()->id,
+                'action' => 'campaign_deleted',
+                'subject_type' => Campaign::class,
+                'subject_id' => $campaign->id,
+                'old_values' => $before,
+            ]);
+        });
 
         return response()->json(null, 204);
     }

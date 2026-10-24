@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
+import LoadingIndicator from "../components/LoadingIndicator";
 import heroImage from "../assets/image.png";
 import { getCategoryImage } from "../categoryImages";
 
@@ -45,8 +46,8 @@ function campaignProgress(campaign) {
       100,
       Math.max(
         0,
-        Math.round(
-          (Number(campaign.raised_amount) / Number(campaign.target_amount)) * 100,
+        Number(
+          ((Number(campaign.raised_amount) / Number(campaign.target_amount)) * 100).toFixed(1),
         ),
       ),
     );
@@ -273,9 +274,7 @@ export default function PublicHome() {
             </div>
 
             {loading ? (
-              <p className="py-10 text-sm text-[#687b90]" role="status">
-                Memuat data kebutuhan...
-              </p>
+              <LoadingIndicator label="Memuat data kebutuhan…" className="min-h-24 py-10" />
             ) : loadFailed ? (
               <div className="py-10 text-sm text-[#687b90]" role="alert">
                 <p>Kebutuhan sekolah tidak dapat dimuat.</p>

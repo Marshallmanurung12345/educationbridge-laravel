@@ -40,7 +40,7 @@ export default function CampaignRow({ campaign }) {
       0,
       Number(
         campaign.progress_percent ??
-          (target > 0 && hasRaised ? Math.round((raised / target) * 100) : 0),
+          (target > 0 && hasRaised ? Number(((raised / target) * 100).toFixed(1)) : 0),
       ),
     ),
   );
@@ -156,7 +156,7 @@ export default function CampaignRow({ campaign }) {
               {" "}terkumpul
             </span>
             <span className="font-semibold text-[#34465d]">
-              {progress}% dari {hasTarget ? formatRupiah(target) : "—"}
+              {progress.toLocaleString("id-ID", { maximumFractionDigits: 1 })}% dari {hasTarget ? formatRupiah(target) : "—"}
             </span>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { LoadingSpinner } from "../components/LoadingIndicator";
 import { defaultRouteForRole } from "./Login";
 import logo from "../assets/logo.jpeg";
 
@@ -212,9 +213,9 @@ export default function Register() {
           )}
           <button
             disabled={loading}
-            className="w-full rounded-md bg-[#F28C28] py-3 text-sm font-semibold text-white transition hover:bg-[#dc7616] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#F28C28] py-3 text-sm font-semibold text-white transition hover:bg-[#dc7616] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? "Memproses..." : "Daftar"}
+            {loading ? <><LoadingSpinner size="sm" /> Memproses...</> : "Daftar"}
           </button>
         </form>
 

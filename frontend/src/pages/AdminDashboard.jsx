@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 const statusLabels = {
   pending: "Menunggu",
@@ -283,7 +284,7 @@ export default function AdminDashboard({ campaignQueue = false }) {
           )}
 
           {loading ? (
-            <p className="px-5 py-12 text-center text-sm text-[#667085]">Memuat data dashboard…</p>
+            <LoadingIndicator label="Memuat data dashboard…" className="px-5 py-12" />
           ) : error && !stats ? (
             <div className="px-5 py-10 text-center">
               <p className="text-sm text-[#667085]">Data dashboard belum dapat dimuat.</p>

@@ -99,13 +99,13 @@ class Campaign extends Model
         };
     }
 
-    public function getProgressPercentAttribute(): int
+    public function getProgressPercentAttribute(): float
     {
         if ($this->target_amount <= 0) {
             return 0;
         }
 
-        return (int) min(100, round(($this->raised_amount / $this->target_amount) * 100));
+        return round(min(100, ($this->raised_amount / $this->target_amount) * 100), 1);
     }
 
     public function school()

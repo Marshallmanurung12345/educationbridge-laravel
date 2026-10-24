@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
 import CampaignRow from "../components/CampaignRow";
+import LoadingIndicator, { LoadingSpinner } from "../components/LoadingIndicator";
 import childrenImage from "../assets/children.jpg";
 import { listRegions } from "../wilayahApi";
 
@@ -83,6 +84,12 @@ function RegionSelect({
           </option>
         ))}
       </select>
+      {loading && (
+        <span className="mt-1.5 inline-flex items-center gap-2 text-[11px] text-[#64748b]" role="status">
+          <LoadingSpinner size="sm" />
+          Memuat wilayah…
+        </span>
+      )}
       {error && <span className="mt-1 block text-xs text-rose-700">{error}</span>}
     </label>
   );
@@ -466,7 +473,7 @@ export default function Campaigns() {
                   ? Number(stats.verifiedCampaigns || 0).toLocaleString("id-ID")
                   : statsError
                     ? "—"
-                    : <LoadingSpinner label="Memuat statistik" />}
+                    : <LoadingSpinner size="sm" />}
               </p>
             </div>
             <div className="min-w-0 px-2.5 py-2.5 sm:px-4 sm:py-3">
@@ -476,7 +483,7 @@ export default function Campaigns() {
                   ? formatRupiah(stats.totalRaised)
                   : statsError
                     ? "—"
-                    : <LoadingSpinner label="Memuat statistik" />}
+                    : <LoadingSpinner size="sm" />}
               </p>
             </div>
             <div className="min-w-0 px-2.5 py-2.5 sm:px-4 sm:py-3">
@@ -486,7 +493,7 @@ export default function Campaigns() {
                   ? Number(stats.totalStudents || 0).toLocaleString("id-ID")
                   : statsError
                     ? "—"
-                    : <LoadingSpinner label="Memuat statistik" />}
+                    : <LoadingSpinner size="sm" />}
               </p>
             </div>
             {statsError && (
@@ -633,7 +640,7 @@ export default function Campaigns() {
           <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs font-medium text-[#64748b]" aria-live="polite">
               {loading
-                ? "Memuat kebutuhan sekolah..."
+                ? <span className="inline-flex items-center gap-2"><LoadingSpinner size="sm" /> Memuat kebutuhan sekolah…</span>
                 : `Menampilkan ${filteredCampaigns.length} dari ${stats?.verifiedCampaigns ?? campaigns.length} kebutuhan sekolah`}
             </p>
             <Link
@@ -651,10 +658,7 @@ export default function Campaigns() {
           )}
 
           {loading && (
-            <div className="flex min-h-32 items-center justify-center gap-3 rounded-xl border border-[#e2e8f0] bg-white px-5 py-8 text-sm text-[#64748b]" role="status">
-              <LoadingSpinner label="Memuat kebutuhan sekolah" />
-              <span>Memuat kebutuhan sekolah…</span>
-            </div>
+            <LoadingIndicator label="Memuat kebutuhan sekolah…" className="min-h-32 rounded-xl border border-[#e2e8f0] bg-white px-5 py-8" />
           )}
           {!loading && error && (
             <div className="rounded-xl border border-[#e2e8f0] bg-white px-5 py-8" role="alert">
@@ -685,15 +689,5 @@ export default function Campaigns() {
         </section>
       </div>
     </main>
-  );
-}
-
-function LoadingSpinner({ label }) {
-  return (
-    <span
-      aria-label={label}
-      className="inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-[#d8e0e8] border-t-[#F28C28]"
-      role="img"
-    />
   );
 }

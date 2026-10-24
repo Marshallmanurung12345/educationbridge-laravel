@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Campaign;
 use App\Models\Donation;
+use App\Models\AuditLog;
 use App\Models\School;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -128,6 +129,14 @@ class AuthWorkflowTest extends TestCase
             'action' => 'school_account_status_changed',
             'subject_id' => $account->id,
         ]);
+        $auditLog = AuditLog::query()
+            ->where('action', 'school_account_status_changed')
+            ->where('subject_id', $account->id)
+            ->firstOrFail();
+        $this->assertSame('pending_verification', $auditLog->old_values['account_status']);
+        $this->assertNull($auditLog->old_values['school_id']);
+        $this->assertSame('verified', $auditLog->new_values['account_status']);
+        $this->assertSame($school->id, $auditLog->new_values['school_id']);
     }
 
     public function test_admin_cannot_verify_school_with_unmatched_npsn(): void
