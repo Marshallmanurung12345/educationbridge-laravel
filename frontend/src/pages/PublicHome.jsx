@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
-import { useLanguage } from "../context/useLanguage";
 import heroImage from "../assets/image.png";
+import { getCategoryImage } from "../categoryImages";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 function resolveImageUrl(value) {
   if (!value) return "";
-
   try {
     return new URL(value, API_BASE_URL).toString();
   } catch {
@@ -27,14 +26,9 @@ function hasNumber(value) {
 
 function campaignLocation(campaign) {
   const school = campaign.school;
-  const officialLocation = [
-    school?.kecamatan,
-    school?.kabupaten_kota,
-    school?.provinsi,
-  ]
+  const officialLocation = [school?.kecamatan, school?.kabupaten_kota, school?.provinsi]
     .filter(Boolean)
     .join(", ");
-
   return officialLocation || campaign.location || "Lokasi belum tersedia";
 }
 
@@ -42,7 +36,6 @@ function campaignProgress(campaign) {
   if (hasNumber(campaign.progress_percent)) {
     return Math.min(100, Math.max(0, Number(campaign.progress_percent)));
   }
-
   if (
     hasNumber(campaign.raised_amount) &&
     hasNumber(campaign.target_amount) &&
@@ -53,25 +46,24 @@ function campaignProgress(campaign) {
       Math.max(
         0,
         Math.round(
-          (Number(campaign.raised_amount) / Number(campaign.target_amount)) *
-            100,
+          (Number(campaign.raised_amount) / Number(campaign.target_amount)) * 100,
         ),
       ),
     );
   }
-
   return null;
 }
 
-function CampaignPhoto({ imageUrl, title, translations }) {
+function CampaignPhoto({ imageUrl, title, category }) {
   const [failed, setFailed] = useState(false);
-  const source = resolveImageUrl(imageUrl);
+  const fallback = getCategoryImage(category, title);
+  const source = (!failed && resolveImageUrl(imageUrl)) || fallback;
 
-  if (!source || failed) {
+  if (!source) {
     return (
       <div
         role="img"
-        aria-label={`${translations.photoAlt} ${title}`}
+        aria-label={`Foto dokumentasi belum tersedia untuk ${title}`}
         className="flex aspect-[2/1] w-full items-center justify-center bg-gradient-to-br from-[#eef3f7] to-[#e5ebf1] px-4 text-center"
       >
         <div className="flex flex-col items-center">
@@ -81,9 +73,7 @@ function CampaignPhoto({ imageUrl, title, translations }) {
           >
             ▧
           </span>
-          <span className="text-xs font-medium text-[#64748b]">
-            {translations.photoUnavailable}
-          </span>
+          <span className="text-xs font-medium text-[#64748b]">Foto belum tersedia</span>
         </div>
       </div>
     );
@@ -100,18 +90,12 @@ function CampaignPhoto({ imageUrl, title, translations }) {
 }
 
 function NeedCard({ campaign }) {
-  const { translations } = useLanguage();
-  const { home } = translations;
   const progress = campaignProgress(campaign);
   const hasAmounts =
     hasNumber(campaign.raised_amount) && hasNumber(campaign.target_amount);
-  const score = hasNumber(campaign.priority_score)
-    ? Number(campaign.priority_score)
-    : null;
+  const score = hasNumber(campaign.priority_score) ? Number(campaign.priority_score) : null;
   const schoolName =
-    campaign.school?.name ||
-    campaign.school_name ||
-    "Nama sekolah belum tersedia";
+    campaign.school?.name || campaign.school_name || "Nama sekolah belum tersedia";
 
   return (
     <article className="group min-w-0 overflow-hidden rounded-xl border border-[#e5eaf0] bg-white shadow-[0_2px_10px_rgba(23,52,91,0.05)] transition-shadow hover:shadow-[0_8px_24px_rgba(23,52,91,0.11)]">
@@ -124,7 +108,7 @@ function NeedCard({ campaign }) {
           key={`${campaign.id}-${campaign.image_url || ""}`}
           imageUrl={campaign.image_url}
           title={campaign.title}
-          translations={home}
+          category={campaign.category}
         />
         {score !== null && (
           <span className="absolute right-3 top-3 rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-semibold text-[#17345b] shadow-sm">
@@ -140,9 +124,7 @@ function NeedCard({ campaign }) {
         <h3 className="mt-2 line-clamp-2 min-h-11 text-[15px] font-semibold leading-[1.4] text-[#17345b] sm:text-base">
           {campaign.title}
         </h3>
-        <p className="mt-2 truncate text-sm font-medium text-[#34465d]">
-          {schoolName}
-        </p>
+        <p className="mt-2 truncate text-sm font-medium text-[#34465d]">{schoolName}</p>
         <p className="mt-1 flex min-h-8 items-start gap-1.5 text-xs leading-[1.4] text-[#718096]">
           <svg
             aria-hidden="true"
@@ -159,7 +141,7 @@ function NeedCard({ campaign }) {
             <div
               className="h-1.5 overflow-hidden rounded-full bg-[#edf0f4]"
               role="progressbar"
-              aria-label={`${home.progress} ${campaign.title}`}
+              aria-label={`Progress dana terkumpul untuk ${campaign.title}`}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={progress}
@@ -172,27 +154,25 @@ function NeedCard({ campaign }) {
             <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] leading-4">
               <span className="font-semibold text-[#17345b]">
                 {hasAmounts
-                  ? `${formatRupiah(campaign.raised_amount)} ${home.raised}`
+                  ? `${formatRupiah(campaign.raised_amount)} terkumpul`
                   : `${progress}%`}
               </span>
               {hasAmounts && (
                 <span className="text-[#718096]">
-                  {home.target} {formatRupiah(campaign.target_amount)}
+                  dari {formatRupiah(campaign.target_amount)}
                 </span>
               )}
             </div>
           </div>
         ) : (
-          <p className="mt-3 text-xs text-[#718096]">
-            {home.progressUnavailable}
-          </p>
+          <p className="mt-3 text-xs text-[#718096]">Progress belum tersedia</p>
         )}
 
         <Link
           to={`/kampanye/${campaign.id}`}
           className="mt-4 inline-flex min-h-10 items-center text-sm font-semibold text-[#17345b] transition-colors group-hover:text-[#c56c13]"
         >
-          {home.seeNeed} <span aria-hidden="true" className="ml-1">→</span>
+          Lihat Kebutuhan <span aria-hidden="true" className="ml-1">→</span>
         </Link>
       </div>
     </article>
@@ -200,8 +180,6 @@ function NeedCard({ campaign }) {
 }
 
 export default function PublicHome() {
-  const { translations } = useLanguage();
-  const { home } = translations;
   const [needs, setNeeds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -243,27 +221,26 @@ export default function PublicHome() {
               id="hero-title"
               className="mx-auto max-w-[800px] text-[1.8rem] font-semibold leading-[1.12] tracking-[-0.025em] sm:text-[2.5rem] lg:text-5xl"
             >
-              {home.heroLead}{" "}
-              <span className="text-[#ffad55]">
-                {home.heroHighlight}
-              </span>{" "}
-              {home.heroTail}
+              Bersama{" "}
+              <span className="text-[#ffad55]">Wujudkan Pendidikan</span>{" "}
+              yang Layak
             </h1>
             <p className="mx-auto mt-4 max-w-[690px] text-sm leading-6 text-white sm:mt-5 sm:text-base sm:leading-7">
-              {home.heroDescription}
+              Platform penghubung sekolah yang membutuhkan dengan donatur dan pemerintah.
+              Bersama kita bisa memberikan akses pendidikan yang lebih baik.
             </p>
             <div className="mt-6 flex flex-col justify-center gap-3 sm:mt-7 sm:flex-row">
               <Link
                 to="/ajukan"
                 className="inline-flex min-h-12 items-center justify-center rounded-lg bg-[#f28c28] px-8 text-sm font-semibold text-white transition-colors hover:bg-[#dc7616] focus-visible:outline-white"
               >
-                {home.fundraise}
+                Ajukan Kebutuhan Sekolah
               </Link>
               <Link
                 to="/kampanye"
                 className="inline-flex min-h-12 items-center justify-center rounded-lg border border-white/80 bg-[#17345b]/55 px-8 text-sm font-semibold text-white transition-colors hover:bg-[#17345b]/85 focus-visible:outline-white"
               >
-                {home.donate}
+                Donasi Sekarang
               </Link>
             </div>
           </div>
@@ -281,27 +258,27 @@ export default function PublicHome() {
                   id="needs-title"
                   className="text-[1.4rem] font-semibold leading-tight text-[#17345b] sm:text-2xl"
                 >
-                  {home.needsTitle}
+                  Kebutuhan Sekolah Terkini
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-[#687b90]">
-                  {home.needsDescription}
+                  Kebutuhan sekolah terverifikasi berdasarkan lokasi dan tingkat prioritas.
                 </p>
               </div>
               <Link
                 to="/kampanye"
                 className="inline-flex min-h-10 shrink-0 items-center text-sm font-semibold text-[#17345b] hover:text-[#c56c13]"
               >
-                {home.allNeeds} <span aria-hidden="true" className="ml-1">→</span>
+                Lihat semua kebutuhan <span aria-hidden="true" className="ml-1">→</span>
               </Link>
             </div>
 
             {loading ? (
               <p className="py-10 text-sm text-[#687b90]" role="status">
-                {home.loading}
+                Memuat data kebutuhan...
               </p>
             ) : loadFailed ? (
               <div className="py-10 text-sm text-[#687b90]" role="alert">
-                <p>{home.loadError}</p>
+                <p>Kebutuhan sekolah tidak dapat dimuat.</p>
                 <button
                   type="button"
                   onClick={() => {
@@ -311,12 +288,12 @@ export default function PublicHome() {
                   }}
                   className="mt-2 font-semibold text-[#17345b] underline underline-offset-2"
                 >
-                  {home.retry}
+                  Coba lagi
                 </button>
               </div>
             ) : needs.length === 0 ? (
               <p className="py-10 text-sm text-[#687b90]" role="status">
-                {home.empty}
+                Belum ada kebutuhan sekolah yang tersedia.
               </p>
             ) : (
               <div className="mt-5 grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-5">
@@ -334,13 +311,13 @@ export default function PublicHome() {
         >
           <div className="mx-auto flex max-w-[1200px] flex-col items-start justify-between gap-4 border-t border-[#e5eaf0] pt-7 sm:flex-row sm:items-center">
             <h2 className="max-w-xl text-xl font-semibold leading-snug text-[#17345b] sm:text-2xl">
-              {home.impact}
+              Bersama kita bisa menciptakan dampak nyata untuk pendidikan Indonesia.
             </h2>
             <Link
               to="/kampanye"
               className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-[#17345b] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#234a78]"
             >
-              {home.support}
+              Dukung Sekolah Sekarang
             </Link>
           </div>
         </section>

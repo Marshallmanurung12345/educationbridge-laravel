@@ -1,116 +1,54 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useLanguage } from "../context/useLanguage";
 import logo from "../assets/logo.jpeg";
 import NotificationMenu from "./NotificationMenu";
 
 const publicLinks = [
-  ["home", "/"],
-  ["needs", "/kampanye"],
-  ["impact", "/#dampak"],
+  ["Beranda", "/"],
+  ["Kebutuhan Sekolah", "/kampanye"],
+  ["Dampak", "/#dampak"],
 ];
 
 const roleLinks = {
   admin: [
-    ["admin", "/admin"],
-    ["schoolAccounts", "/admin/akun-sekolah"],
-    ["auditLogs", "/admin/audit-log"],
+    ["Dashboard Admin", "/admin"],
+    ["Akun Sekolah", "/admin/akun-sekolah"],
+    ["Audit Log", "/admin/audit-log"],
   ],
   sekolah: [
-    ["school", "/ajukan"],
-    ["browse", "/kampanye"],
+    ["Dashboard Sekolah", "/ajukan"],
+    ["Jelajahi Kebutuhan", "/kampanye"],
   ],
   individu: [
-    ["donorDashboard", "/dashboard-donatur"],
-    ["browse", "/kampanye"],
-    ["fundraise", "/ajukan"],
+    ["Dashboard Donatur", "/dashboard-donatur"],
+    ["Jelajahi Kebutuhan", "/kampanye"],
+    ["Ajukan Kebutuhan", "/ajukan"],
   ],
   perusahaan: [
-    ["csr", "/dashboard-perusahaan"],
-    ["browse", "/kampanye"],
-    ["fundraise", "/ajukan"],
+    ["Dashboard CSR", "/dashboard-perusahaan"],
+    ["Jelajahi Kebutuhan", "/kampanye"],
+    ["Ajukan Kebutuhan", "/ajukan"],
   ],
   pemerintah: [
-    ["government", "/dashboard-pemerintah"],
-    ["map", "/kampanye"],
-    ["fundraise", "/ajukan"],
+    ["Dashboard Pemerintah", "/dashboard-pemerintah"],
+    ["Peta Kebutuhan", "/kampanye"],
+    ["Ajukan Kebutuhan", "/ajukan"],
   ],
 };
 
-function LanguageSwitcher({ language, setLanguage, label }) {
-  const [open, setOpen] = useState(false);
-  const options = [
-    { code: "id", flag: "🇮🇩", label: "Bahasa Indonesia" },
-    { code: "en", flag: "🇬🇧", label: "English" },
-  ];
-  const selected = options.find((option) => option.code === language);
-
-  return (
-    <div className="relative shrink-0">
-      <button
-        type="button"
-        aria-label={`${label}: ${selected.label}`}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => setOpen((isOpen) => !isOpen)}
-        className="flex min-h-10 items-center gap-1.5 rounded-lg border border-white/25 bg-white/10 px-2.5 text-base transition-colors hover:bg-white/15"
-      >
-        <span aria-hidden="true">{selected.flag}</span>
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 12 12"
-          className={`h-3 w-3 fill-current text-white transition-transform ${open ? "rotate-180" : ""}`}
-        >
-          <path d="m2 4 4 4 4-4z" />
-        </svg>
-      </button>
-      {open && (
-        <div
-          role="menu"
-          aria-label={label}
-          className="absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-[#e5eaf0] bg-white p-1.5 text-[#17345b] shadow-lg"
-        >
-          {options.map((option) => (
-            <button
-              key={option.code}
-              type="button"
-              role="menuitemradio"
-              aria-checked={language === option.code}
-              lang={option.code}
-              onClick={() => {
-                setLanguage(option.code);
-                setOpen(false);
-              }}
-              className={`flex min-h-10 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-sm transition-colors ${
-                language === option.code
-                  ? "bg-[#f1f5f9] font-semibold text-[#17345b]"
-                  : "text-[#42546b] hover:bg-[#f7f9fb]"
-              }`}
-            >
-              <span aria-hidden="true" className="text-base">
-                {option.flag}
-              </span>
-              {option.label}
-              {language === option.code && (
-                <span aria-hidden="true" className="ml-auto text-[#f28c28]">
-                  ✓
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+const roleLabels = {
+  admin: "Administrator",
+  sekolah: "Akun Sekolah",
+  individu: "Donatur Individu",
+  perusahaan: "Perusahaan / CSR",
+  pemerintah: "Instansi Pemerintah",
+  user: "Pengguna",
+};
 
 function ProfileMenu({
   user,
-  roleLabel,
   links,
-  linkText,
-  logoutLabel,
   onLogout,
   onNavigate,
   mobile = false,
@@ -164,7 +102,7 @@ function ProfileMenu({
               {user.name}
             </span>
             <span className="block truncate text-[11px] text-white/70">
-              {mobile ? roleLabel : "Menu profil"}
+              {mobile ? (roleLabels[user.role] || roleLabels.user) : "Menu profil"}
             </span>
           </span>
         </span>
@@ -185,10 +123,10 @@ function ProfileMenu({
           {!mobile && (
             <div className="border-b border-[#edf0f4] px-3 py-2">
               <p className="truncate text-sm font-semibold text-[#17345b]">{user.name}</p>
-              <p className="text-xs text-[#718096]">{roleLabel}</p>
+              <p className="text-xs text-[#718096]">{roleLabels[user.role] || roleLabels.user}</p>
             </div>
           )}
-          {links.map(([key, to]) => (
+          {links.map(([label, to]) => (
             <Link
               key={to}
               to={to}
@@ -196,7 +134,7 @@ function ProfileMenu({
               onClick={closeMenu}
               className="block min-h-10 rounded-md px-3 py-2.5 text-sm transition hover:bg-[#f5f7fa] hover:text-[#17345b]"
             >
-              {linkText(key)}
+              {label}
             </Link>
           ))}
           <button
@@ -205,7 +143,7 @@ function ProfileMenu({
             onClick={onLogout}
             className="mt-1 block min-h-10 w-full border-t border-[#edf0f4] px-3 py-2.5 text-left text-sm font-medium text-[#a63c32] transition hover:bg-[#fff7f6]"
           >
-            {logoutLabel}
+            Keluar
           </button>
         </div>
       )}
@@ -215,15 +153,15 @@ function ProfileMenu({
 
 export default function Nav() {
   const { user, logout } = useAuth();
-  const { language, setLanguage, translations } = useLanguage();
-  const { nav } = translations;
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isAdmin = user?.role === "admin";
-  const primaryLinks = isAdmin ? roleLinks.admin : publicLinks;
+  const primaryLinks = isAdmin
+    ? roleLinks.admin.map(([label, to]) => [label, to])
+    : publicLinks;
   const userRoleLinks =
     user?.role === "sekolah" && user.account_status !== "verified"
-      ? [["schoolStatus", "/status-verifikasi"], ["browse", "/kampanye"]]
+      ? [["Status Verifikasi", "/status-verifikasi"], ["Jelajahi Kebutuhan", "/kampanye"]]
       : roleLinks[user?.role] || [];
   const profileLinks = isAdmin ? [] : userRoleLinks;
 
@@ -237,10 +175,6 @@ export default function Nav() {
     setMobileMenuOpen(false);
   }
 
-  function linkText(key) {
-    return nav.links[key];
-  }
-
   return (
     <header className="sticky top-0 z-30 border-b border-[#29496f] bg-[#17345b]">
       <div className="mx-auto flex min-h-[68px] w-full max-w-[1280px] items-center justify-between gap-3 px-4 sm:gap-4 sm:px-8 lg:px-10">
@@ -249,10 +183,7 @@ export default function Nav() {
           onClick={closeMobileMenu}
           className="flex shrink-0 items-center gap-2.5"
         >
-          <span
-            aria-hidden="true"
-            className="relative h-9 w-10 shrink-0 overflow-hidden"
-          >
+          <span aria-hidden="true" className="relative h-9 w-10 shrink-0 overflow-hidden">
             <img
               src={logo}
               alt=""
@@ -264,24 +195,21 @@ export default function Nav() {
           </span>
         </Link>
 
-        <nav
-          aria-label={nav.primaryNavigation}
-          className="hidden items-center gap-1 lg:flex"
-        >
-          {primaryLinks.map(([key, to]) =>
-            key === "impact" ? (
+        <nav aria-label="Navigasi utama" className="hidden items-center gap-1 lg:flex">
+          {primaryLinks.map(([label, to]) =>
+            label === "Dampak" ? (
               <a
-                key={key}
+                key={to}
                 href={to}
                 className="border-b-2 border-transparent px-2.5 py-2 text-[13px] font-medium text-white/90 transition-colors hover:border-[#f28c28] hover:text-white"
               >
-                {isAdmin ? linkText(key) : nav[key]}
+                {label}
               </a>
             ) : (
               <NavLink
-                key={key}
+                key={to}
                 to={to}
-                end={key === "home"}
+                end={to === "/"}
                 className={({ isActive }) =>
                   `border-b-2 px-2.5 py-2 text-[13px] font-medium transition-colors ${
                     isActive
@@ -290,27 +218,19 @@ export default function Nav() {
                   }`
                 }
               >
-                {isAdmin ? linkText(key) : nav[key]}
+                {label}
               </NavLink>
             ),
           )}
         </nav>
 
         <div className="hidden shrink-0 items-center gap-2 lg:flex">
-          <LanguageSwitcher
-            language={language}
-            setLanguage={setLanguage}
-            label={nav.language}
-          />
           {user ? (
             <>
               <NotificationMenu user={user} />
               <ProfileMenu
                 user={user}
-                roleLabel={nav.roles[user.role] || nav.roles.user}
                 links={profileLinks}
-                linkText={linkText}
-                logoutLabel={nav.links.logout}
                 onLogout={onLogout}
                 onNavigate={closeMobileMenu}
               />
@@ -321,28 +241,23 @@ export default function Nav() {
                 to="/masuk"
                 className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/45 px-4 text-sm font-medium text-white transition-colors hover:bg-white/10"
               >
-                {nav.login}
+                Masuk
               </NavLink>
               <NavLink
                 to="/daftar"
                 className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[#f28c28] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#dc7616]"
               >
-                {nav.register}
+                Daftar
               </NavLink>
             </>
           )}
         </div>
 
         <div className="flex shrink-0 items-center gap-2 lg:hidden">
-          <LanguageSwitcher
-            language={language}
-            setLanguage={setLanguage}
-            label={nav.language}
-          />
           <button
             type="button"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-2xl text-white hover:bg-white/10"
-            aria-label={mobileMenuOpen ? nav.closeMenu : nav.openMenu}
+            aria-label={mobileMenuOpen ? "Tutup menu" : "Buka menu"}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation"
             onClick={() => setMobileMenuOpen((open) => !open)}
@@ -357,25 +272,22 @@ export default function Nav() {
           id="mobile-navigation"
           className="border-t border-white/15 bg-[#17345b] px-4 pb-4 lg:hidden"
         >
-          <nav
-            aria-label={nav.mobileNavigation}
-            className="mx-auto max-w-[1280px]"
-          >
-            {primaryLinks.map(([key, to]) =>
-              key === "impact" ? (
+          <nav aria-label="Navigasi mobile" className="mx-auto max-w-[1280px]">
+            {primaryLinks.map(([label, to]) =>
+              label === "Dampak" ? (
                 <a
-                  key={key}
+                  key={to}
                   href={to}
                   className="block border-b border-white/10 py-3 text-sm font-medium text-white/90 hover:text-[#ffad55]"
                   onClick={closeMobileMenu}
                 >
-                  {nav[key]}
+                  {label}
                 </a>
               ) : (
                 <NavLink
-                  key={key}
+                  key={to}
                   to={to}
-                  end={key === "home"}
+                  end={to === "/"}
                   className={({ isActive }) =>
                     `block border-b border-white/10 py-3 text-sm font-medium ${
                       isActive ? "text-[#ffad55]" : "text-white/90"
@@ -383,7 +295,7 @@ export default function Nav() {
                   }
                   onClick={closeMobileMenu}
                 >
-                  {nav[key]}
+                  {label}
                 </NavLink>
               ),
             )}
@@ -393,10 +305,7 @@ export default function Nav() {
                 <div className="flex items-center justify-between gap-3 border-b border-white/10 py-3">
                   <ProfileMenu
                     user={user}
-                    roleLabel={nav.roles[user.role] || nav.roles.user}
                     links={profileLinks}
-                    linkText={linkText}
-                    logoutLabel={nav.links.logout}
                     onLogout={onLogout}
                     onNavigate={closeMobileMenu}
                     mobile
@@ -411,14 +320,14 @@ export default function Nav() {
                   onClick={closeMobileMenu}
                   className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg border border-white/45 px-4 text-sm font-medium text-white"
                 >
-                  {nav.login}
+                  Masuk
                 </NavLink>
                 <NavLink
                   to="/daftar"
                   onClick={closeMobileMenu}
                   className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg bg-[#f28c28] px-4 text-sm font-semibold text-white"
                 >
-                  {nav.register}
+                  Daftar
                 </NavLink>
               </div>
             )}
