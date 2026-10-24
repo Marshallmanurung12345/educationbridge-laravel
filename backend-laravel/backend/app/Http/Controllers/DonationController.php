@@ -11,7 +11,7 @@ class DonationController extends Controller
 {
     public function index(Campaign $campaign)
     {
-        abort_unless($campaign->status === 'verified', 404);
+        abort_unless(in_array($campaign->status, ['verified', 'completed'], true), 404);
         return response()->json(
             $campaign->donations()
                 ->select(['id', 'amount', 'created_at'])
@@ -42,38 +42,34 @@ class DonationController extends Controller
     // Hanya role individu/perusahaan/pemerintah (middleware role:individu,perusahaan,pemerintah)
     public function store(Request $request, Campaign $campaign)
     {
-        if ($campaign->status !== 'verified') {
-            return response()->json(['message' => 'Kebutuhan ini belum tersedia untuk donasi.'], 422);
-        }
-
-        if ($campaign->end_date && now()->startOfDay()->greaterThan($campaign->end_date)) {
-            return response()->json(['message' => 'Batas waktu donasi untuk kebutuhan ini sudah berakhir.'], 422);
-        }
-
-        $remaining = (int) $campaign->target_amount - (int) $campaign->raised_amount;
-
-        if ($remaining <= 0) {
-            return response()->json(['message' => 'Kebutuhan ini sudah terpenuhi penuh. Terima kasih atas dukungannya.'], 422);
-        }
-
         $data = $request->validate([
-            'amount' => 'required|integer|min:10000|max:' . max($remaining, 10000),
+            'amount' => 'required|integer|min:10000',
             'payment_method' => 'required|in:transfer_bank,e_wallet',
             'message' => 'nullable|string|max:500',
-        ], [
-            'amount.max' => 'Nominal donasi melebihi sisa kebutuhan. Sisa yang dibutuhkan: Rp ' . number_format($remaining, 0, ',', '.') . '.',
         ]);
 
         $user = $request->user();
 
-        // Transaksi + lock supaya dua donasi bersamaan tidak menghilangkan data
-        // dan raised_amount tidak pernah melebihi target_amount.
-        $donation = DB::transaction(function () use ($campaign, $user, $data, $remaining) {
+        // Lock the campaign so the donation that reaches the target closes it
+        // before another concurrent request can be accepted.
+        $result = DB::transaction(function () use ($campaign, $user, $data) {
             $locked = Campaign::query()->lockForUpdate()->findOrFail($campaign->id);
 
-            $sisaTerkini = (int) $locked->target_amount - (int) $locked->raised_amount;
-            if ($data['amount'] > $sisaTerkini) {
-                return null;
+            if ($locked->status !== 'verified') {
+                return ['error' => 'Kebutuhan ini sudah ditutup untuk donasi.'];
+            }
+
+            if ($locked->end_date && now()->startOfDay()->greaterThan($locked->end_date)) {
+                return ['error' => 'Batas waktu donasi untuk kebutuhan ini sudah berakhir.'];
+            }
+
+            $raisedAmount = (int) $locked->raised_amount;
+            $targetAmount = (int) $locked->target_amount;
+            if ($raisedAmount >= $targetAmount) {
+                $locked->status = 'completed';
+                $locked->save();
+
+                return ['error' => 'Kebutuhan ini sudah terpenuhi dan ditutup untuk donasi. Terima kasih atas dukungannya.'];
             }
 
             $donation = $locked->donations()->create([
@@ -90,17 +86,22 @@ class DonationController extends Controller
                 'message' => $data['message'] ?? '',
             ]);
 
-            $locked->increment('raised_amount', $data['amount']);
+            $locked->raised_amount = $raisedAmount + (int) $data['amount'];
+            if ($locked->raised_amount >= $targetAmount) {
+                $locked->status = 'completed';
+            }
+            $locked->save();
 
-            return $donation;
+            return ['donation' => $donation];
         });
 
-        if (!$donation) {
+        if (isset($result['error'])) {
             return response()->json([
-                'message' => 'Nominal donasi melebihi sisa kebutuhan terkini. Mohon muat ulang halaman.',
+                'message' => $result['error'],
             ], 422);
         }
 
+        $donation = $result['donation'];
         $formattedAmount = 'Rp ' . number_format($data['amount'], 0, ',', '.');
 
         // Notifikasi untuk Sekolah Penerima Donasi

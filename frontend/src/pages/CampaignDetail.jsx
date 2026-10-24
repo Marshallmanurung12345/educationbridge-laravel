@@ -60,6 +60,7 @@ export default function CampaignDetail() {
   const [status, setStatus] = useState("");
   const [amount, setAmount] = useState(50000);
   const [paymentMethod, setPaymentMethod] = useState("transfer_bank");
+  const [submittingDonation, setSubmittingDonation] = useState(false);
   const [message, setMessage] = useState("");
   const [reportTitle, setReportTitle] = useState("");
   const [reportNarrative, setReportNarrative] = useState("");
@@ -87,6 +88,7 @@ export default function CampaignDetail() {
   async function submitDonation(event) {
     event.preventDefault();
     setError("");
+    setSubmittingDonation(true);
     try {
       await api.createDonation(id, { amount: Number(amount), payment_method: paymentMethod, message });
       setStatus("Terima kasih. Donasi Anda sudah tercatat.");
@@ -94,6 +96,8 @@ export default function CampaignDetail() {
       load();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setSubmittingDonation(false);
     }
   }
 
@@ -135,6 +139,10 @@ export default function CampaignDetail() {
   const tags = Array.isArray(campaign.tags) ? campaign.tags : [];
   const priorityBreakdown = campaign.priority_breakdown || {};
   const progressPercent = Math.min(100, Math.max(0, Number(campaign.progress_percent) || 0));
+  const targetReached =
+    Number(campaign.target_amount) > 0 &&
+    Number(campaign.raised_amount) >= Number(campaign.target_amount);
+  const donationClosed = campaign.status !== "verified" || targetReached;
   const location = school
     ? [school.kecamatan, school.kabupaten_kota, school.provinsi].filter(Boolean).join(", ") || "Lokasi belum tersedia"
     : campaign.location || "Lokasi belum tersedia";
@@ -490,9 +498,14 @@ export default function CampaignDetail() {
                     <span className="truncate">{location}</span>
                   </p>
                 </div>
-                {campaign.status === "verified" && (
+                {campaign.status === "verified" && !targetReached && (
                   <span className="shrink-0 rounded-md bg-[#ecfdf3] px-2 py-0.5 text-[11px] font-medium text-[#027a48]">
                     Terverifikasi
+                  </span>
+                )}
+                {donationClosed && (
+                  <span className="shrink-0 rounded-md bg-[#f2f4f7] px-2 py-0.5 text-[11px] font-medium text-[#475467]">
+                    Donasi Ditutup
                   </span>
                 )}
               </div>
@@ -578,7 +591,25 @@ export default function CampaignDetail() {
 
             {/* CTA card */}
             <div className="rounded-xl border border-[#eaecf0] bg-white p-5">
-              {!user && (
+              {donationClosed && (
+                <div
+                  className="rounded-lg border border-[#d1fadf] bg-[#f0fdf4] p-3"
+                  role="status"
+                >
+                  <p className="text-sm font-semibold text-[#166534]">
+                    {targetReached || campaign.status === "completed"
+                      ? "Kebutuhan sudah terpenuhi"
+                      : "Donasi untuk kebutuhan ini sudah ditutup"}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-[#4b6352]">
+                    {targetReached
+                      ? "Terima kasih. Kebutuhan ini tidak menerima donasi lagi. Donasi terakhir dapat membuat total terkumpul melebihi target."
+                      : "Terima kasih atas perhatian dan dukungan Anda untuk sekolah ini."}
+                  </p>
+                </div>
+              )}
+
+              {!donationClosed && !user && (
                 <div className="space-y-2">
                   <p className="text-xs text-[#667085] leading-5">
                     Masuk untuk berdonasi dan bantu wujudkan kebutuhan sekolah ini.
@@ -600,13 +631,13 @@ export default function CampaignDetail() {
                 </div>
               )}
 
-              {user && !donorRoles.includes(user.role) && (
+              {!donationClosed && user && !donorRoles.includes(user.role) && (
                 <p className="rounded-lg bg-[#f9fafb] p-3 text-xs leading-5 text-[#667085]">
                   Akun {user.role} belum dapat menyalurkan donasi.
                 </p>
               )}
 
-              {user && donorRoles.includes(user.role) && (
+              {!donationClosed && user && donorRoles.includes(user.role) && (
                 <form onSubmit={submitDonation} className="space-y-2.5">
                   <p className="text-xs font-semibold text-[#344054]">Pilih nominal donasi</p>
                   <div className="grid grid-cols-2 gap-2">
@@ -652,8 +683,11 @@ export default function CampaignDetail() {
                     className="w-full resize-y rounded-lg border border-[#eaecf0] px-3 py-2 text-sm text-[#101828] focus:border-[#f28c28] focus:outline-none"
                     placeholder="Pesan untuk sekolah (opsional)"
                   />
-                  <button className="min-h-10 w-full rounded-lg bg-[#f28c28] text-sm font-semibold text-white hover:bg-[#dc7616] transition">
-                    ♥ Donasi Sekarang
+                  <button
+                    disabled={submittingDonation}
+                    className="min-h-10 w-full rounded-lg bg-[#f28c28] text-sm font-semibold text-white transition hover:bg-[#dc7616] disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {submittingDonation ? "Mencatat donasi..." : "♥ Donasi Sekarang"}
                   </button>
                   {status && <p role="status" className="text-xs text-green-700">{status}</p>}
                   {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
