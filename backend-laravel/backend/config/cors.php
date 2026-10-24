@@ -5,12 +5,13 @@ return [
 
     'allowed_methods' => ['*'],
 
-    // Tambahkan domain frontend production kalian di sini setelah deploy, contoh:
-    // 'https://educationbridge-fe.vercel.app'
-    'allowed_origins' => [
+    'allowed_origins' => array_values(array_unique(array_merge([
         'http://localhost:5173',
         'http://127.0.0.1:5173',
-    ],
+    ], array_filter(array_map(
+        'trim',
+        explode(',', (string) env('CORS_ALLOWED_ORIGINS', '')),
+    ))))),
 
     'allowed_origins_patterns' => [
         '#^http://(localhost|127\.0\.0\.1)(:\d+)?$#',

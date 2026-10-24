@@ -4,8 +4,40 @@ Aplikasi penghubung sekolah, donatur, perusahaan, dan pemerintah untuk mendukung
 
 ## Teknologi
 
-- Backend: Laravel, Sanctum, SQLite
+- Backend: Laravel, Sanctum (SQLite lokal; PostgreSQL saat deploy)
 - Frontend: React, Vite, Tailwind CSS
+
+## Deploy gratis untuk demo lomba
+
+Konfigurasi deploy yang disiapkan menggunakan **Vercel** untuk frontend, **Render Free** untuk API, dan **Neon Free** untuk PostgreSQL. Render Free dapat tidur setelah 15 menit tanpa trafik; kunjungan berikutnya bisa menunggu sekitar satu menit. Ini cocok untuk demo, bukan layanan dengan jaminan selalu aktif. Neon Free juga dapat scale-to-zero saat tidak digunakan.
+
+### 1. Siapkan PostgreSQL di Neon
+
+Buat project PostgreSQL di Neon, lalu catat host, nama database, username, dan password dari connection details. Jangan menaruh kredensial ini di Git atau membagikannya di chat.
+
+### 2. Deploy API di Render
+
+1. Push repository ini ke GitHub, lalu pilih **New > Blueprint** di Render dan hubungkan repository. Render akan membaca [render.yaml](./render.yaml) dan membangun backend dari [Dockerfile](./backend-laravel/backend/Dockerfile).
+2. Isi environment variables yang diminta Render:
+   - `APP_KEY`: jalankan `php artisan key:generate --show` dari folder backend lokal, lalu salin hasilnya ke Render.
+   - `APP_URL`: URL service API Render setelah dibuat.
+   - `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`: nilai dari Neon. Port dan TLS sudah disetel untuk PostgreSQL.
+   - `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`: akun admin produksi. Password wajib minimal 16 karakter dan jangan gunakan password akun demo.
+   - `CORS_ALLOWED_ORIGINS`: domain frontend Vercel, tanpa slash di akhir. Isi setelah URL Vercel tersedia.
+   - `MIDTRANS_SERVER_KEY`: Server Key **Sandbox** dari akun Midtrans. Jangan gunakan Server Key produksi untuk demo.
+   - `MIDTRANS_NOTIFICATION_URL`: `https://<domain-api-render>/api/payments/midtrans/notification`.
+3. Buat service. Saat container berjalan, aplikasi menjalankan migrasi, mengimpor file sekolah yang ada di repository, dan membuat admin produksi dari environment variables. Akun demo lokal tidak dibuat.
+
+### 3. Deploy frontend di Vercel
+
+1. Import repository di Vercel dan atur **Root Directory** menjadi `frontend`.
+2. Tambahkan environment variable `VITE_API_URL` dengan URL API Render, misalnya `https://educationbridge-api.onrender.com` (tanpa `/api`).
+3. Deploy, lalu salin domain Vercel ke `CORS_ALLOWED_ORIGINS` pada service Render dan deploy ulang API.
+4. Uji halaman utama dan login admin. Untuk pembayaran demo, gunakan akun Midtrans Sandbox; pembayaran ini bukan uang sungguhan.
+
+Tidak ada kredensial production di file konfigurasi. Simpan semua nilai rahasia hanya pada environment variable provider. Jangan menjalankan `php artisan migrate --seed` di production karena seeder lokal membuat akun demo dengan password yang diketahui.
+
+**Cakupan data sekolah:** file dataset yang saat ini ada di repository hanya memuat 9 sekolah. Verifikasi sekolah di deploy hanya akan cocok dengan sekolah yang tersedia di database. Ganti dataset tersebut dengan sumber resmi yang lengkap dan telah diperiksa sebelum menjanjikan dukungan nasional.
 
 ## Menjalankan Backend
 
