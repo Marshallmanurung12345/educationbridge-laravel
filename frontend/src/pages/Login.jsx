@@ -46,6 +46,14 @@ export default function Login() {
           <p className="mt-1.5 text-sm text-[#667085]">
             Selamat datang kembali.
           </p>
+          {location.state?.registered && (
+            <p
+              role="status"
+              className="mt-4 w-full rounded-md bg-green-50 px-4 py-3 text-sm text-green-800"
+            >
+              Pendaftaran berhasil. Silakan masuk dengan akun yang baru dibuat.
+            </p>
+          )}
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">

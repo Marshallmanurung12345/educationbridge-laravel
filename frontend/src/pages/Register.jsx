@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { LoadingSpinner } from "../components/LoadingIndicator";
-import { defaultRouteForRole } from "./Login";
 import logo from "../assets/logo.jpeg";
 
 export default function Register() {
@@ -48,9 +47,10 @@ export default function Register() {
     setError("");
     setLoading(true);
     try {
-      const user = await register(form);
-      navigate(defaultRouteForRole(user.role, user.account_status), {
+      await register(form);
+      navigate("/masuk", {
         replace: true,
+        state: { registered: true },
       });
     } catch (err) {
       setError(err.message);

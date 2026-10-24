@@ -33,10 +33,7 @@ export function AuthProvider({ children }) {
   }
 
   async function register(payload) {
-    const { user, token } = await authApi.register(payload);
-    localStorage.setItem("eb_token", token);
-    setAuthToken(token);
-    setUser(user);
+    const { user } = await authApi.register(payload);
     return user;
   }
 
