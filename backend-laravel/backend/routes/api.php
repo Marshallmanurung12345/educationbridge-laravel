@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\AdminReportController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\MatchController;
@@ -40,6 +41,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/stats', [StatsController::class, 'adminDashboard'])->middleware('role:admin');
     Route::put('/admin/school-accounts/{user}/status', [SchoolAccountController::class, 'updateStatus'])->middleware('role:admin');
     Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->middleware('role:admin');
+    Route::get('/admin/reports', [AdminReportController::class, 'index'])->middleware('role:admin');
+    Route::delete('/admin/reports/{report}', [AdminReportController::class, 'destroy'])->middleware('role:admin');
 
     // Schools and donors may submit campaigns for admin review.
     Route::post('/campaigns', [CampaignController::class, 'store'])->middleware('role:sekolah,individu,perusahaan,pemerintah');

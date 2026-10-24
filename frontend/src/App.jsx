@@ -23,6 +23,7 @@ import AdminSchools from "./pages/AdminSchools";
 import SchoolDashboard from "./pages/SchoolDashboard";
 import DonorDashboard from "./pages/DonorDashboard";
 import PaymentStatus from "./pages/PaymentStatus";
+import AdminReports from "./pages/AdminReports";
 
 export default function App() {
   return (
@@ -131,6 +132,14 @@ function AppRoutes({ publicPage = (page) => page }) {
         element={
           <ProtectedRoute roles={["admin"]}>
             <AuditLogPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/laporan"
+        element={
+          <ProtectedRoute roles={["admin"]}>
+            <AdminReports />
           </ProtectedRoute>
         }
       />

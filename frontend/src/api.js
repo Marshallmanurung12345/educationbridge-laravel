@@ -70,6 +70,8 @@ export const api = {
     request(`/my-donations/status/${encodeURIComponent(orderId)}`),
   adminStats: () => request(`/admin/stats`),
   listAuditLogs: () => request(`/admin/audit-logs`),
+  listAdminReports: () => request(`/admin/reports`),
+  deleteAdminReport: (id) => request(`/admin/reports/${id}`, { method: "DELETE" }),
   updateSchoolAccountStatus: (id, data) =>
     request(`/admin/school-accounts/${id}/status`, {
       method: "PUT",

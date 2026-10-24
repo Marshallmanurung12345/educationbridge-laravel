@@ -177,6 +177,73 @@ class DonationWorkflowTest extends TestCase
 
     }
 
+    public function test_invalid_donation_amount_is_rejected_before_creating_a_transaction(): void
+    {
+        $donor = $this->createUser('individu', 'donor@example.test');
+        $campaign = $this->createCampaign();
+
+        $this->actingAs($donor, 'sanctum')
+            ->postJson("/api/campaigns/{$campaign->id}/donations", ['amount' => 9999])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('amount');
+
+        $this->assertDatabaseCount('donations', 0);
+    }
+
+    public function test_uncertain_snap_creation_does_not_mark_payment_as_failed(): void
+    {
+        $donor = $this->createUser('individu', 'donor@example.test');
+        $campaign = $this->createCampaign();
+        Http::fake([
+            'https://app.sandbox.midtrans.com/snap/v1/transactions' => Http::response([
+                'message' => 'Temporary provider error',
+            ], 500),
+        ]);
+
+        $response = $this->actingAs($donor, 'sanctum')
+            ->postJson("/api/campaigns/{$campaign->id}/donations", ['amount' => 25000]);
+
+        $response->assertStatus(503)->assertJsonStructure(['order_id', 'message']);
+        $this->assertDatabaseHas('donations', [
+            'order_id' => $response->json('order_id'),
+            'payment_status' => 'pending',
+        ]);
+        $this->assertSame(0, $campaign->fresh()->raised_amount);
+    }
+
+    public function test_donor_cannot_refresh_another_users_payment_status(): void
+    {
+        $owner = $this->createUser('individu', 'owner@example.test');
+        $otherDonor = $this->createUser('individu', 'other@example.test');
+        $campaign = $this->createCampaign();
+        $donation = $this->createPendingDonation($owner, $campaign, 25000);
+
+        $this->actingAs($otherDonor, 'sanctum')
+            ->getJson("/api/my-donations/status/{$donation->order_id}")
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('donations', [
+            'id' => $donation->id,
+            'payment_status' => 'pending',
+        ]);
+    }
+
+    public function test_failed_midtrans_payment_cannot_become_success_from_a_later_notification(): void
+    {
+        $donor = $this->createUser('individu', 'donor@example.test');
+        $campaign = $this->createCampaign();
+        $donation = $this->createPendingDonation($donor, $campaign, 25000);
+
+        $this->notifyMidtrans($donation, 'expire')->assertOk();
+        $this->notifyMidtrans($donation, 'settlement')->assertOk();
+
+        $this->assertDatabaseHas('donations', [
+            'id' => $donation->id,
+            'payment_status' => 'failed',
+        ]);
+        $this->assertSame(0, $campaign->fresh()->raised_amount);
+    }
+
     public function test_midtrans_notification_must_be_signed_and_confirmed_by_status_api(): void
     {
         $donor = $this->createUser('individu', 'donor@example.test');

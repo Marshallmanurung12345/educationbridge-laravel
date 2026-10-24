@@ -14,7 +14,8 @@ class StatsController extends Controller
             'verifiedCampaigns' => Campaign::where('status', 'verified')->count(),
             'pendingCampaigns' => Campaign::where('status', 'pending')->count(),
             'totalRaised' => (int) Campaign::sum('raised_amount'),
-            'totalStudents' => (int) Campaign::where('status', 'verified')->sum('student_count'),
+            'totalStudents' => (int) Campaign::whereIn('status', ['verified', 'completed'])
+                ->sum('student_count'),
         ]);
     }
 

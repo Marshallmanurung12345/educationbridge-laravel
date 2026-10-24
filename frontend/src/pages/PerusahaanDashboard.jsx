@@ -3,83 +3,19 @@ import { Link } from "react-router-dom";
 import { api, formatRupiah } from "../api";
 import { useAuth } from "../context/AuthContext";
 
-const fallbackCampaigns = [
-  {
-    id: 1,
-    title: "Perbaikan Atap dan Lantai Kelas yang Bocor",
-    school_name: "SD NEGERI 1 WAMENA",
-    location: "Wamena, Kab. Jayawijaya, Papua Pegunungan",
-    category: "Fasilitas",
-    priority_score: 87,
-    status: "verified",
-    raised_amount: 12500000,
-    target_amount: 45000000,
-    student_count: 342,
-    school: {
-      npsn: "60301416",
-      name: "SD NEGERI 1 WAMENA",
-      kecamatan: "Wamena",
-      kabupaten_kota: "Kab. Jayawijaya",
-      provinsi: "Papua Pegunungan",
-      is_3t: true,
-    },
-  },
-  {
-    id: 2,
-    title: "Pengadaan Laptop dan Akses Internet untuk Ujian Online (ANBK)",
-    school_name: "SMP NEGERI 1 KEPULAUAN SULA",
-    location: "Sanana, Kab. Kepulauan Sula, Maluku Utara",
-    category: "Teknologi",
-    priority_score: 82,
-    status: "verified",
-    raised_amount: 22000000,
-    target_amount: 60000000,
-    student_count: 285,
-    school: {
-      npsn: "60200843",
-      name: "SMP NEGERI 1 KEPULAUAN SULA",
-      kecamatan: "Sanana",
-      kabupaten_kota: "Kab. Kepulauan Sula",
-      provinsi: "Maluku Utara",
-      is_3t: true,
-    },
-  },
-  {
-    id: 3,
-    title: "Pengadaan Buku Bacaan Perpustakaan Anak",
-    school_name: "SD NEGERI CIKONENG 2",
-    location: "Cikoneng, Kab. Ciamis, Jawa Barat",
-    category: "Buku & Literasi",
-    priority_score: 64,
-    status: "verified",
-    raised_amount: 15000000,
-    target_amount: 15000000,
-    student_count: 174,
-    school: {
-      npsn: "20211543",
-      name: "SD NEGERI CIKONENG 2",
-      kecamatan: "Cikoneng",
-      kabupaten_kota: "Kab. Ciamis",
-      provinsi: "Jawa Barat",
-      is_3t: false,
-    },
-  },
-];
-
 export default function PerusahaanDashboard() {
   const { user } = useAuth();
-  const [campaigns, setCampaigns] = useState(fallbackCampaigns);
+  const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     api
       .listCampaigns({ sort: "priority" })
       .then((campaignsData) => {
-        if (Array.isArray(campaignsData) && campaignsData.length > 0) {
-          setCampaigns(campaignsData);
-        }
+        setCampaigns(Array.isArray(campaignsData) ? campaignsData : []);
       })
-      .catch(() => {})
+      .catch((loadError) => setError(loadError.message))
       .finally(() => setLoading(false));
   }, []);
 
@@ -137,6 +73,11 @@ export default function PerusahaanDashboard() {
             <p className="py-10 text-sm text-[#64748b]" role="status">
               Memuat kebutuhan sekolah...
             </p>
+          ) : error ? (
+            <div className="py-10" role="alert">
+              <p className="font-semibold text-[#17365d]">Kebutuhan sekolah tidak dapat dimuat.</p>
+              <p className="mt-1 text-sm text-[#64748b]">{error}</p>
+            </div>
           ) : verifiedCampaigns.length === 0 ? (
             <div className="py-10">
               <p className="font-semibold text-[#17365d]">

@@ -117,6 +117,12 @@ export default function PaymentStatus() {
                 <dt className="text-[#667085]">ID transaksi</dt>
                 <dd className="break-all text-right font-mono text-xs">{donation.order_id}</dd>
               </div>
+              {donation.campaign?.title && (
+                <div className="flex justify-between gap-4">
+                  <dt className="text-[#667085]">Kebutuhan</dt>
+                  <dd className="text-right font-medium">{donation.campaign.title}</dd>
+                </div>
+              )}
             </dl>
             {donation.payment_status === "pending" && (
               <button

@@ -9,6 +9,7 @@ const links = [
   { label: "Verifikasi Sekolah", to: "/admin/akun-sekolah", icon: "M9 12l2 2 4-4 M5 3h10l4 4v14H5z M15 3v5h5" },
   { label: "Tinjau Kebutuhan Sekolah", to: "/admin/pengajuan-kampanye", icon: "M7 4h10 M7 8h10 M7 12h6 M5 3h14v18H5z" },
   { label: "Data Sekolah", to: "/admin/data-sekolah", icon: "M3 21h18 M5 21V7l7-4 7 4v14 M9 10h1 M14 10h1 M9 14h1 M14 14h1" },
+  { label: "Laporan Penggunaan Dana", to: "/admin/laporan", icon: "M5 3h14v18H5z M8 8h8 M8 12h8 M8 16h5" },
   { label: "Audit Aktivitas", to: "/admin/audit-log", icon: "M12 8v4l3 2 M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" },
 ];
 

@@ -39,10 +39,6 @@ class MidtransPaymentService
             ],
         ];
 
-        if (filled(config('services.midtrans.finish_url'))) {
-            $payload['callbacks'] = ['finish' => config('services.midtrans.finish_url')];
-        }
-
         $client = $this->client();
         $notificationUrl = config('services.midtrans.notification_url');
         if (filled($notificationUrl)) {

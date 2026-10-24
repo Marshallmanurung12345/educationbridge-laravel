@@ -5,12 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Campaign;
 use App\Models\Donation;
 use App\Models\Notification;
+use App\Services\MidtransPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Services\MidtransPaymentService;
 use RuntimeException;
 
 class DonationController extends Controller
@@ -119,9 +119,15 @@ class DonationController extends Controller
                 'order_id' => $donation->order_id,
             ], 503);
         } catch (RuntimeException $exception) {
-            $donation->update(['payment_status' => 'failed']);
+            Log::warning('Midtrans could not confirm Snap transaction creation.', [
+                'order_id' => $donation->order_id,
+                'exception' => $exception->getMessage(),
+            ]);
 
-            return response()->json(['message' => $exception->getMessage()], 502);
+            return response()->json([
+                'message' => 'Status pembuatan pembayaran belum diketahui. Periksa riwayat donasi sebelum mencoba lagi.',
+                'order_id' => $donation->order_id,
+            ], 503);
         }
 
         return response()->json([
@@ -167,7 +173,10 @@ class DonationController extends Controller
 
     public function refreshMine(string $orderId, Request $request, MidtransPaymentService $midtrans)
     {
-        $donation = $request->user()->donations()->where('order_id', $orderId)->firstOrFail();
+        $donation = $request->user()->donations()
+            ->with('campaign:id,title')
+            ->where('order_id', $orderId)
+            ->firstOrFail();
 
         if ($donation->payment_status === 'unverified') {
             return response()->json($donation);
@@ -214,7 +223,7 @@ class DonationController extends Controller
 
         return DB::transaction(function () use ($donation, $providerStatus, $nextStatus) {
             $lockedDonation = Donation::query()->lockForUpdate()->findOrFail($donation->id);
-            if ($lockedDonation->payment_status === 'success') {
+            if (in_array($lockedDonation->payment_status, ['success', 'failed'], true)) {
                 return $lockedDonation->fresh();
             }
 
@@ -258,9 +267,7 @@ class DonationController extends Controller
                     ]);
                 }
             } else {
-                if ($nextStatus === 'failed' || $lockedDonation->payment_status !== 'failed') {
-                    $lockedDonation->payment_status = $nextStatus;
-                }
+                $lockedDonation->payment_status = $nextStatus;
                 $lockedDonation->save();
             }
 
