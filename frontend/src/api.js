@@ -39,6 +39,10 @@ export const authApi = {
 };
 
 export const api = {
+  listRegions: (level, parentCode = "") =>
+    request(
+      `/regions/${level}${parentCode ? `/${encodeURIComponent(parentCode)}` : ""}`,
+    ),
   listSchools: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
     return request(`/schools${qs ? `?${qs}` : ""}`);

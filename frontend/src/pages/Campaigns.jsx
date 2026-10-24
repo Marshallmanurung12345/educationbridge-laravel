@@ -120,8 +120,6 @@ export default function Campaigns() {
 
   useEffect(() => {
     let active = true;
-    setRegionLoading((current) => ({ ...current, provinces: true }));
-    setRegionErrors((current) => ({ ...current, provinces: "" }));
     listRegions("provinces")
       .then((result) => {
         if (active) setRegions((current) => ({ ...current, provinces: result }));
@@ -143,16 +141,11 @@ export default function Campaigns() {
   useEffect(() => {
     let active = true;
     if (!regionCodes.provinces) {
-      setRegions((current) => ({ ...current, regencies: [] }));
-      setRegionLoading((current) => ({ ...current, regencies: false }));
-      setRegionErrors((current) => ({ ...current, regencies: "" }));
       return () => {
         active = false;
       };
     }
 
-    setRegionLoading((current) => ({ ...current, regencies: true }));
-    setRegionErrors((current) => ({ ...current, regencies: "" }));
     listRegions("regencies", regionCodes.provinces)
       .then((result) => {
         if (active) setRegions((current) => ({ ...current, regencies: result }));
@@ -174,16 +167,11 @@ export default function Campaigns() {
   useEffect(() => {
     let active = true;
     if (!regionCodes.regencies) {
-      setRegions((current) => ({ ...current, districts: [] }));
-      setRegionLoading((current) => ({ ...current, districts: false }));
-      setRegionErrors((current) => ({ ...current, districts: "" }));
       return () => {
         active = false;
       };
     }
 
-    setRegionLoading((current) => ({ ...current, districts: true }));
-    setRegionErrors((current) => ({ ...current, districts: "" }));
     listRegions("districts", regionCodes.regencies)
       .then((result) => {
         if (active) setRegions((current) => ({ ...current, districts: result }));
@@ -205,16 +193,11 @@ export default function Campaigns() {
   useEffect(() => {
     let active = true;
     if (!regionCodes.districts) {
-      setRegions((current) => ({ ...current, villages: [] }));
-      setRegionLoading((current) => ({ ...current, villages: false }));
-      setRegionErrors((current) => ({ ...current, villages: "" }));
       return () => {
         active = false;
       };
     }
 
-    setRegionLoading((current) => ({ ...current, villages: true }));
-    setRegionErrors((current) => ({ ...current, villages: "" }));
     listRegions("villages", regionCodes.districts)
       .then((result) => {
         if (active) setRegions((current) => ({ ...current, villages: result }));
@@ -254,8 +237,6 @@ export default function Campaigns() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError("");
     const query = search.trim();
     const request =
       sort === "recommended"
@@ -305,16 +286,19 @@ export default function Campaigns() {
     };
   }, [search, sort, reloadKey]);
 
-  const selectedRegionNames = {
-    provinces:
-      regions.provinces.find((region) => region.code === regionCodes.provinces)?.name || "",
-    regencies:
-      regions.regencies.find((region) => region.code === regionCodes.regencies)?.name || "",
-    districts:
-      regions.districts.find((region) => region.code === regionCodes.districts)?.name || "",
-    villages:
-      regions.villages.find((region) => region.code === regionCodes.villages)?.name || "",
-  };
+  const selectedRegionNames = useMemo(
+    () => ({
+      provinces:
+        regions.provinces.find((region) => region.code === regionCodes.provinces)?.name || "",
+      regencies:
+        regions.regencies.find((region) => region.code === regionCodes.regencies)?.name || "",
+      districts:
+        regions.districts.find((region) => region.code === regionCodes.districts)?.name || "",
+      villages:
+        regions.villages.find((region) => region.code === regionCodes.villages)?.name || "",
+    }),
+    [regionCodes, regions],
+  );
 
   const filteredCampaigns = useMemo(
     () =>
@@ -364,10 +348,23 @@ export default function Campaigns() {
   function updateRegion(level, value) {
     const levelIndex = regionLevels.findIndex((item) => item.key === level);
     const nextCodes = { ...regionCodes, [level]: value };
-    regionLevels.slice(levelIndex + 1).forEach(({ key }) => {
+    const descendants = regionLevels.slice(levelIndex + 1).map(({ key }) => key);
+    descendants.forEach((key) => {
       nextCodes[key] = "";
     });
     setRegionCodes(nextCodes);
+    setRegions((current) => ({
+      ...current,
+      ...Object.fromEntries(descendants.map((key) => [key, []])),
+    }));
+    setRegionErrors((current) => ({
+      ...current,
+      ...Object.fromEntries(descendants.map((key) => [key, ""])),
+    }));
+    setRegionLoading((current) => ({
+      ...current,
+      ...Object.fromEntries(descendants.map((key, index) => [key, index === 0 && Boolean(value)])),
+    }));
   }
 
   function toggleCategory(value) {
@@ -381,9 +378,39 @@ export default function Campaigns() {
   function resetFilters() {
     setSelectedCategories([]);
     setRegionCodes(emptyRegionCodes);
+    setRegions((current) => ({
+      ...current,
+      regencies: [],
+      districts: [],
+      villages: [],
+    }));
+    setRegionLoading((current) => ({
+      ...current,
+      regencies: false,
+      districts: false,
+      villages: false,
+    }));
     setOnlyThreeT(false);
     setSearch("");
     setSort("priority");
+    setError("");
+  }
+
+  function retryRegionData() {
+    setRegionErrors({});
+    setRegionLoading({
+      provinces: true,
+      regencies: Boolean(regionCodes.provinces),
+      districts: Boolean(regionCodes.regencies),
+      villages: Boolean(regionCodes.districts),
+    });
+    setRegionReloadKey((key) => key + 1);
+  }
+
+  function reloadCampaigns() {
+    setError("");
+    setLoading(true);
+    setReloadKey((key) => key + 1);
   }
 
   return (
@@ -415,7 +442,11 @@ export default function Campaigns() {
               <input
                 type="search"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setError("");
+                  setLoading(true);
+                }}
                 placeholder="Cari kebutuhan, sekolah, atau lokasi..."
                 className="min-w-0 flex-1 bg-transparent text-sm text-[#344054] placeholder:text-[#98a2b3] focus:outline-none"
               />
@@ -504,7 +535,11 @@ export default function Campaigns() {
             </span>
             <select
               value={sort}
-              onChange={(event) => setSort(event.target.value)}
+              onChange={(event) => {
+                setSort(event.target.value);
+                setError("");
+                setLoading(true);
+              }}
               className="min-h-10 w-full rounded-lg border border-[#d8e0e8] bg-white px-3 text-sm text-[#34465d] focus:border-[#17345B] focus:outline-none"
             >
               <option value="priority">Priority Score (Tertinggi)</option>
@@ -540,7 +575,7 @@ export default function Campaigns() {
             {Object.values(regionErrors).some(Boolean) && (
               <button
                 type="button"
-                onClick={() => setRegionReloadKey((key) => key + 1)}
+                onClick={retryRegionData}
                 className="mt-2 text-xs font-semibold text-[#1b6a93] underline underline-offset-2"
               >
                 Muat ulang data wilayah
@@ -556,7 +591,19 @@ export default function Campaigns() {
               >
                 Wilayah.id
               </a>
-              {" "}berdasarkan data Kemendagri, diperbarui 4 Juli 2025.
+              {" "}berdasarkan data Kemendagri, diperbarui 4 Juli 2025.{" "}
+              <a
+                href="https://peraturan.bpk.go.id/Details/322912/keputusan-mendagri-no-30022-2430-tahun-2025"
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-[#1b6a93] underline underline-offset-2"
+              >
+                Rujukan JDIH BPK
+              </a>
+            </p>
+            <p className="mt-2 text-[11px] leading-5 text-[#718096]">
+              Filter Desa/Kelurahan hanya menampilkan kebutuhan sekolah yang sudah
+              memiliki data wilayah tingkat tersebut.
             </p>
           </section>
 
@@ -637,7 +684,7 @@ export default function Campaigns() {
               </p>
               <button
                 type="button"
-                onClick={() => setReloadKey((key) => key + 1)}
+                onClick={reloadCampaigns}
                 className="mt-3 rounded-lg border border-[#cbd3dc] bg-white px-3 py-2 text-sm font-semibold text-[#17365d]"
               >
                 Coba lagi

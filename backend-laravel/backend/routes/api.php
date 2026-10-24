@@ -6,6 +6,7 @@ use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\MatchController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\RegionController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\SchoolAccountController;
@@ -20,6 +21,7 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:au
 // ---------- PUBLIC READS ----------
 Route::get('/schools', [SchoolController::class, 'index']);
 Route::get('/schools/{npsn}', [SchoolController::class, 'show']);
+Route::get('/regions/{level}/{parentCode?}', [RegionController::class, 'index']);
 Route::get('/campaigns', [CampaignController::class, 'index']);
 Route::get('/campaigns/{campaign}', [CampaignController::class, 'show']);
 Route::get('/campaigns/{campaign}/donations', [DonationController::class, 'index']);
