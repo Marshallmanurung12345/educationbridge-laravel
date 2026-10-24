@@ -415,28 +415,20 @@ export default function Campaigns() {
 
   return (
     <main className="min-h-screen min-w-0 bg-[#f5f7fa] text-[#344054]">
-      <section
-        className="relative overflow-hidden bg-[#eaf2f8]"
-        style={{
-          backgroundImage: `linear-gradient(90deg, rgba(245,249,252,0.98) 0%, rgba(245,249,252,0.94) 42%, rgba(245,249,252,0.45) 72%, rgba(245,249,252,0.2) 100%), url(${childrenImage})`,
-          backgroundPosition: "center, right 35%",
-          backgroundSize: "cover, auto 150%",
-          backgroundRepeat: "no-repeat",
-        }}
-      >
-        <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-11">
-          <div className="max-w-[680px]">
+      <section className="bg-[#eaf2f8]">
+        <div className="mx-auto grid max-w-[1280px] gap-4 px-4 py-5 sm:px-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)] lg:grid-rows-[auto_1fr] lg:gap-x-8 lg:gap-y-4 lg:px-8 lg:py-6">
+          <div className="max-w-[690px] self-end">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#9a6b1c]">
               Pendidikan untuk semua
             </p>
-            <h1 className="mt-2 font-display text-3xl leading-tight text-[#17345B] sm:text-4xl">
+            <h1 className="mt-1.5 font-display text-3xl leading-tight text-[#17345B] sm:text-4xl">
               Jelajahi Kebutuhan Sekolah
             </h1>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-[#64748b] sm:text-base">
+            <p className="mt-1.5 max-w-xl text-sm leading-5 text-[#64748b]">
               Temukan kebutuhan sekolah terverifikasi berdasarkan lokasi, kategori,
               dan tingkat prioritas.
             </p>
-            <label className="mt-5 flex min-h-12 w-full items-center gap-3 rounded-xl border border-[#d5dce4] bg-white p-1.5 pl-4 shadow-sm sm:max-w-[610px]">
+            <label className="mt-4 flex min-h-11 w-full items-center gap-3 rounded-xl border border-[#d5dce4] bg-white p-1.5 pl-4 shadow-sm sm:max-w-[610px]">
               <span aria-hidden="true" className="text-lg text-[#64748b]">⌕</span>
               <span className="sr-only">Cari kebutuhan, nama sekolah, atau lokasi</span>
               <input
@@ -450,73 +442,46 @@ export default function Campaigns() {
                 placeholder="Cari kebutuhan, sekolah, atau lokasi..."
                 className="min-w-0 flex-1 bg-transparent text-sm text-[#344054] placeholder:text-[#98a2b3] focus:outline-none"
               />
-              <Link
-                to="/ajukan"
-                className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-lg bg-[#F28C28] px-4 text-xs font-semibold text-white hover:bg-[#DB7415]"
-              >
-                Ajukan
-              </Link>
             </label>
-            <div
-              className="mt-3 flex flex-wrap gap-2"
-              role="group"
-              aria-label="Filter kategori kebutuhan"
-            >
-              <button
-                type="button"
-                onClick={() => setSelectedCategories([])}
-                aria-pressed={selectedCategories.length === 0}
-                className={`min-h-9 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                  selectedCategories.length === 0
-                    ? "border-[#0e4e75] bg-[#0e4e75] text-white"
-                    : "border-white bg-white/90 text-[#52606d] hover:border-[#17345B]"
-                }`}
-              >
-                Semua
-              </button>
-              {categories.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => toggleCategory(item)}
-                  aria-pressed={selectedCategories.includes(item)}
-                  className={`min-h-9 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
-                    selectedCategories.includes(item)
-                      ? "border-[#0e4e75] bg-[#edf4fb] text-[#17345B]"
-                      : "border-white bg-white/90 text-[#52606d] hover:border-[#17345B]"
-                  }`}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
           </div>
 
-          <div className="mt-6 grid max-w-[690px] grid-cols-1 gap-2 rounded-xl border border-white/80 bg-white/90 p-3 shadow-sm backdrop-blur sm:grid-cols-3">
-            <div className="rounded-lg bg-[#f1f6fa] px-4 py-3">
-              <p className="text-xs text-[#64748b]">Kebutuhan Terverifikasi</p>
-              <p className="mt-1 text-lg font-bold text-[#17345B]">
+          <div className="relative min-h-[150px] overflow-hidden rounded-xl bg-[#d6e5ee] sm:min-h-[180px] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:min-h-[235px]">
+            <img
+              src={childrenImage}
+              alt="Siswa Indonesia berjalan menuju sekolah"
+              className="absolute inset-0 h-full w-full object-cover object-[center_36%]"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#102947]/45 via-transparent to-transparent" />
+            <p className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold text-[#17345B] shadow-sm">
+              Pendidikan untuk semua
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 divide-x divide-[#e4ebf1] rounded-xl border border-[#e2eaf1] bg-white shadow-sm lg:col-start-1">
+            <div className="min-w-0 px-2.5 py-2.5 sm:px-4 sm:py-3">
+              <p className="text-[10px] leading-4 text-[#64748b] sm:text-xs">Kebutuhan Terverifikasi</p>
+              <p className="mt-0.5 truncate text-sm font-bold text-[#17345B] sm:text-lg">
                 {stats ? Number(stats.verifiedCampaigns || 0).toLocaleString("id-ID") : "—"}
               </p>
             </div>
-            <div className="rounded-lg bg-[#eff8f3] px-4 py-3">
-              <p className="text-xs text-[#64748b]">Total Donasi Terkumpul</p>
-              <p className="mt-1 text-lg font-bold text-[#146b50]">
+            <div className="min-w-0 px-2.5 py-2.5 sm:px-4 sm:py-3">
+              <p className="text-[10px] leading-4 text-[#64748b] sm:text-xs">Total Donasi Terkumpul</p>
+              <p className="mt-0.5 truncate text-xs font-bold text-[#146b50] sm:text-base">
                 {stats ? formatRupiah(stats.totalRaised) : "—"}
               </p>
             </div>
-            <div className="rounded-lg bg-[#fff5e9] px-4 py-3">
-              <p className="text-xs text-[#64748b]">Siswa Terbantu</p>
-              <p className="mt-1 text-lg font-bold text-[#a75a0a]">
+            <div className="min-w-0 px-2.5 py-2.5 sm:px-4 sm:py-3">
+              <p className="text-[10px] leading-4 text-[#64748b] sm:text-xs">Siswa Terbantu</p>
+              <p className="mt-0.5 truncate text-sm font-bold text-[#a75a0a] sm:text-lg">
                 {stats ? Number(stats.totalStudents || 0).toLocaleString("id-ID") : "—"}
               </p>
             </div>
+            {statsError && (
+              <p className="col-span-3 border-t border-[#e4ebf1] px-3 py-2 text-[11px] text-rose-700" role="status">
+                Statistik belum dapat dimuat: {statsError}
+              </p>
+            )}
           </div>
-          {statsError && (
-            <p className="mt-2 text-xs text-rose-700" role="status">
-              Statistik belum dapat dimuat: {statsError}
-            </p>
-          )}
         </div>
       </section>
 
