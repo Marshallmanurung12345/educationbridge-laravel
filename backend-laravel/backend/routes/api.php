@@ -25,6 +25,7 @@ Route::get('/schools/{npsn}', [SchoolController::class, 'show']);
 Route::get('/regions/{level}/{parentCode?}', [RegionController::class, 'index']);
 Route::get('/campaigns', [CampaignController::class, 'index']);
 Route::get('/campaigns/{campaign}', [CampaignController::class, 'show']);
+Route::get('/campaigns/{campaign}/photo', [CampaignController::class, 'photo']);
 Route::get('/campaigns/{campaign}/donations', [DonationController::class, 'index']);
 Route::get('/campaigns/{campaign}/reports', [ReportController::class, 'index']);
 Route::get('/match', [MatchController::class, 'index']);
@@ -39,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/school-account', [SchoolAccountController::class, 'updateOwnProfile']);
     Route::get('/admin/school-accounts', [SchoolAccountController::class, 'index'])->middleware('role:admin');
     Route::get('/admin/stats', [StatsController::class, 'adminDashboard'])->middleware('role:admin');
+    Route::get('/admin/campaigns/{campaign}/proof', [CampaignController::class, 'proof'])->middleware('role:admin');
     Route::put('/admin/school-accounts/{user}/status', [SchoolAccountController::class, 'updateStatus'])->middleware('role:admin');
     Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->middleware('role:admin');
     Route::get('/admin/reports', [AdminReportController::class, 'index'])->middleware('role:admin');

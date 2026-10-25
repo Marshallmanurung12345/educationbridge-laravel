@@ -8,6 +8,8 @@ use App\Models\Notification;
 use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 
 class CampaignController extends Controller
 {
@@ -69,7 +71,7 @@ class CampaignController extends Controller
 
         $campaigns = $query->get();
         if (! $isAdmin) {
-            $campaigns->each(fn (Campaign $campaign) => $campaign->makeHidden('user_id'));
+            $campaigns->each(fn (Campaign $campaign) => $campaign->makeHidden(['user_id', 'supporting_document']));
         }
         if ($request->boolean('summary') && ! $isAdmin) {
             $campaigns->each(fn (Campaign $campaign) => $campaign->makeHidden('priority_breakdown'));
@@ -103,7 +105,15 @@ class CampaignController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'rab_description' => $isSchool ? 'nullable|string' : 'required|string',
-            'supporting_document' => $isSchool ? 'nullable|string|max:2048' : 'required|string|max:2048',
+            'supporting_document' => $isSchool
+                ? 'nullable|string|max:2048'
+                : 'required_without:supporting_document_file|nullable|string|max:2048',
+            'supporting_document_file' => [
+                $isSchool ? 'nullable' : 'required_without:supporting_document',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120',
+            ],
             'applicant_relationship' => $isSchool ? 'nullable|string|max:255' : 'required|string|max:255',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
@@ -113,7 +123,8 @@ class CampaignController extends Controller
             'facility_condition' => 'required|integer|min:1|max:5',
             'remoteness' => 'nullable|integer|min:1|max:5',
             'access_score' => 'required|integer|min:1|max:5',
-            'image_url' => 'nullable|string',
+            'image_url' => 'nullable|string|max:2048',
+            'image_file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
         if ($isSchool) {
@@ -145,8 +156,42 @@ class CampaignController extends Controller
         $data['remoteness'] = $officialSchool?->is_3t
             ? 5
             : ($data['remoteness'] ?? 3);
+        $imageFile = $data['image_file'] ?? null;
+        $proofFile = $data['supporting_document_file'] ?? null;
+        unset($data['image_file'], $data['supporting_document_file']);
         $data['status'] = 'pending';
-        $campaign = $user->campaigns()->create($data);
+
+        $campaign = DB::transaction(function () use ($user, $data, $imageFile, $proofFile) {
+            $campaign = $user->campaigns()->create($data);
+            $storedPaths = [];
+
+            try {
+                if ($imageFile) {
+                    $path = $imageFile->store('campaign-uploads', 'local');
+                    if (! $path) {
+                        throw new RuntimeException('Foto kebutuhan gagal disimpan.');
+                    }
+                    $storedPaths[] = $path;
+                    $campaign->image_url = $path;
+                }
+
+                if ($proofFile) {
+                    $path = $proofFile->store('campaign-uploads', 'local');
+                    if (! $path) {
+                        throw new RuntimeException('Foto bukti pendukung gagal disimpan.');
+                    }
+                    $storedPaths[] = $path;
+                    $campaign->supporting_document = $path;
+                }
+
+                $campaign->save();
+            } catch (\Throwable $exception) {
+                Storage::disk('local')->delete($storedPaths);
+                throw $exception;
+            }
+
+            return $campaign;
+        });
 
         Notification::create([
             'target_role' => 'admin',
@@ -164,6 +209,8 @@ class CampaignController extends Controller
             'campaign_id' => $campaign->id,
         ]);
 
+        $campaign->makeHidden('supporting_document');
+
         return response()->json($campaign->load(['school', 'user:id,name,organization_name']), 201);
     }
 
@@ -178,6 +225,7 @@ class CampaignController extends Controller
             ->withCount(['donations', 'reports'])
             ->orderByDesc('created_at')
             ->get();
+        $campaigns->each(fn (Campaign $campaign) => $campaign->makeHidden('supporting_document'));
 
         $totalRaised = (int) $campaigns->sum('raised_amount');
         $totalTarget = (int) $campaigns->sum('target_amount');
@@ -196,6 +244,40 @@ class CampaignController extends Controller
         ]);
     }
 
+    public function photo(Request $request, Campaign $campaign)
+    {
+        $user = $request->user();
+        abort_unless(
+            in_array($campaign->status, ['verified', 'completed'], true) ||
+                $user?->role === 'admin' ||
+                $user?->id === $campaign->user_id,
+            404,
+        );
+
+        return $this->serveCampaignImage($campaign->getRawOriginal('image_url'));
+    }
+
+    public function proof(Request $request, Campaign $campaign)
+    {
+        abort_unless($request->user()?->role === 'admin', 404);
+
+        return $this->serveCampaignImage($campaign->getRawOriginal('supporting_document'));
+    }
+
+    private function serveCampaignImage(?string $path)
+    {
+        abort_unless(
+            Campaign::isUploadedImagePath($path) &&
+                Storage::disk('local')->exists($path),
+            404,
+        );
+
+        return response()->file(Storage::disk('local')->path($path), [
+            'Cache-Control' => 'private, max-age=300',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     // Donors can only see their own submissions; admin decisions remain server-controlled.
     public function mySubmissions(Request $request)
     {
@@ -204,6 +286,7 @@ class CampaignController extends Controller
             ->withCount(['donations', 'reports'])
             ->orderByDesc('created_at')
             ->paginate(10);
+        $campaigns->getCollection()->each(fn (Campaign $campaign) => $campaign->makeHidden('supporting_document'));
 
         $ownedCampaigns = $request->user()->campaigns();
 
@@ -232,8 +315,9 @@ class CampaignController extends Controller
         $campaign->load('school');
         if ($user?->role === 'admin' || $user?->id === $campaign->user_id) {
             $campaign->load('user:id,name,email,role,organization_name,phone');
-        } else {
-            $campaign->makeHidden('user_id');
+        }
+        if ($user?->role !== 'admin') {
+            $campaign->makeHidden(['user_id', 'supporting_document']);
         }
 
         return response()->json($campaign);
@@ -269,6 +353,7 @@ class CampaignController extends Controller
             'description' => 'sometimes|string',
             'rab_description' => 'sometimes|nullable|string',
             'supporting_document' => 'sometimes|nullable|string',
+            'supporting_document_file' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'applicant_relationship' => 'sometimes|nullable|string|max:255',
             'start_date' => 'sometimes|date',
             'end_date' => 'sometimes|date|after_or_equal:start_date',
@@ -278,7 +363,8 @@ class CampaignController extends Controller
             'facility_condition' => 'sometimes|integer|min:1|max:5',
             'remoteness' => 'sometimes|integer|min:1|max:5',
             'access_score' => 'sometimes|integer|min:1|max:5',
-            'image_url' => 'nullable|string',
+            'image_url' => 'nullable|string|max:2048',
+            'image_file' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];
 
         if ($isAdmin) {
@@ -287,76 +373,117 @@ class CampaignController extends Controller
         }
 
         $data = $request->validate($rules);
+        $imageFile = $data['image_file'] ?? null;
+        $proofFile = $data['supporting_document_file'] ?? null;
+        unset($data['image_file'], $data['supporting_document_file']);
 
         if (! $isAdmin) {
             unset($data['status']);
         }
 
-        $oldStatus = DB::transaction(function () use ($campaign, $data, $isAdmin, $user) {
-            $campaign = Campaign::query()->lockForUpdate()->findOrFail($campaign->id);
-            $before = $campaign->only(array_unique([
-                ...array_keys($data),
-                'priority_score',
-            ]));
-            $campaign->update($data);
+        $previousImage = $campaign->getRawOriginal('image_url');
+        $previousProof = $campaign->getRawOriginal('supporting_document');
+        $newPaths = [];
 
-            if (! $isAdmin) {
-                return $before['status'] ?? null;
+        try {
+            if ($imageFile) {
+                $path = $imageFile->store('campaign-uploads', 'local');
+                if (! $path) {
+                    throw new RuntimeException('Foto kebutuhan gagal disimpan.');
+                }
+                $newPaths[] = $path;
+                $data['image_url'] = $path;
             }
 
-            $auditFields = [
-                'status',
-                'verification_note',
-                'school_npsn',
-                'school_jenjang',
-                'school_name',
-                'location',
-                'title',
-                'category',
-                'target_amount',
-                'student_count',
-                'urgency',
-                'facility_condition',
-                'remoteness',
-                'access_score',
-                'priority_score',
-            ];
-            $changedFields = array_values(array_filter(
-                array_intersect($auditFields, array_unique([...array_keys($data), 'priority_score'])),
-                fn ($field) => ($before[$field] ?? null) != $campaign->getAttribute($field),
-            ));
-
-            if ($changedFields === []) {
-                return $before['status'] ?? null;
+            if ($proofFile) {
+                $path = $proofFile->store('campaign-uploads', 'local');
+                if (! $path) {
+                    throw new RuntimeException('Foto bukti pendukung gagal disimpan.');
+                }
+                $newPaths[] = $path;
+                $data['supporting_document'] = $path;
             }
 
-            $oldValues = array_intersect_key($before, array_flip($changedFields));
-            $newValues = array_intersect_key($campaign->getAttributes(), array_flip($changedFields));
-            $status = $campaign->status;
-            $action = match (true) {
-                in_array('status', $changedFields, true) && $status === 'verified' => 'campaign_approved',
-                in_array('status', $changedFields, true) && $status === 'rejected' => 'campaign_rejected',
-                in_array('status', $changedFields, true) && $status === 'needs_revision' => 'campaign_revision_requested',
-                in_array('status', $changedFields, true) && $status === 'suspended' => 'campaign_suspended',
-                in_array('status', $changedFields, true) && $status === 'completed' => 'campaign_completed',
-                in_array('priority_score', $changedFields, true) => 'campaign_priority_updated',
-                default => 'campaign_updated',
-            };
+            $oldStatus = DB::transaction(function () use ($campaign, $data, $isAdmin, $user) {
+                $campaign = Campaign::query()->lockForUpdate()->findOrFail($campaign->id);
+                $before = $campaign->only(array_unique([
+                    ...array_keys($data),
+                    'priority_score',
+                ]));
+                $campaign->update($data);
 
-            AuditLog::create([
-                'actor_id' => $user->id,
-                'action' => $action,
-                'subject_type' => Campaign::class,
-                'subject_id' => $campaign->id,
-                'old_values' => $oldValues,
-                'new_values' => $newValues,
-                'note' => in_array('verification_note', $changedFields, true)
-                    ? $campaign->verification_note
-                    : null,
-            ]);
+                if (! $isAdmin) {
+                    return $before['status'] ?? null;
+                }
 
-            return $before['status'] ?? null;
-        });
+                $auditFields = [
+                    'status',
+                    'verification_note',
+                    'school_npsn',
+                    'school_jenjang',
+                    'school_name',
+                    'location',
+                    'title',
+                    'category',
+                    'target_amount',
+                    'student_count',
+                    'urgency',
+                    'facility_condition',
+                    'remoteness',
+                    'access_score',
+                    'priority_score',
+                ];
+                $changedFields = array_values(array_filter(
+                    array_intersect($auditFields, array_unique([...array_keys($data), 'priority_score'])),
+                    fn ($field) => ($before[$field] ?? null) != $campaign->getAttribute($field),
+                ));
+
+                if ($changedFields === []) {
+                    return $before['status'] ?? null;
+                }
+
+                $oldValues = array_intersect_key($before, array_flip($changedFields));
+                $newValues = array_intersect_key($campaign->getAttributes(), array_flip($changedFields));
+                $status = $campaign->status;
+                $action = match (true) {
+                    in_array('status', $changedFields, true) && $status === 'verified' => 'campaign_approved',
+                    in_array('status', $changedFields, true) && $status === 'rejected' => 'campaign_rejected',
+                    in_array('status', $changedFields, true) && $status === 'needs_revision' => 'campaign_revision_requested',
+                    in_array('status', $changedFields, true) && $status === 'suspended' => 'campaign_suspended',
+                    in_array('status', $changedFields, true) && $status === 'completed' => 'campaign_completed',
+                    in_array('priority_score', $changedFields, true) => 'campaign_priority_updated',
+                    default => 'campaign_updated',
+                };
+
+                AuditLog::create([
+                    'actor_id' => $user->id,
+                    'action' => $action,
+                    'subject_type' => Campaign::class,
+                    'subject_id' => $campaign->id,
+                    'old_values' => $oldValues,
+                    'new_values' => $newValues,
+                    'note' => in_array('verification_note', $changedFields, true)
+                        ? $campaign->verification_note
+                        : null,
+                ]);
+
+                return $before['status'] ?? null;
+            });
+        } catch (\Throwable $exception) {
+            Storage::disk('local')->delete($newPaths);
+            throw $exception;
+        }
+
+        $replacedPaths = [];
+        if ($imageFile && Campaign::isUploadedImagePath($previousImage)) {
+            $replacedPaths[] = $previousImage;
+        }
+        if ($proofFile && Campaign::isUploadedImagePath($previousProof)) {
+            $replacedPaths[] = $previousProof;
+        }
+        if ($replacedPaths !== []) {
+            Storage::disk('local')->delete($replacedPaths);
+        }
         $campaign = $campaign->fresh();
 
         // Notifikasi Perubahan Status dari Admin ke Sekolah
@@ -388,7 +515,12 @@ class CampaignController extends Controller
             }
         }
 
-        return response()->json($campaign->fresh()->load(['school', 'user:id,name,organization_name']));
+        $campaign = $campaign->fresh()->load(['school', 'user:id,name,organization_name']);
+        if (! $isAdmin) {
+            $campaign->makeHidden('supporting_document');
+        }
+
+        return response()->json($campaign);
     }
 
     // Hanya admin (dibatasi lewat middleware role:admin di routes/api.php)
@@ -399,6 +531,11 @@ class CampaignController extends Controller
                 'message' => 'Campaign dengan transaksi donasi tidak dapat dihapus.',
             ], 422);
         }
+
+        $uploadedPaths = array_filter([
+            $campaign->getRawOriginal('image_url'),
+            $campaign->getRawOriginal('supporting_document'),
+        ], fn ($path) => Campaign::isUploadedImagePath($path));
 
         DB::transaction(function () use ($campaign) {
             $before = ['status' => $campaign->status, 'title' => $campaign->title];
@@ -412,6 +549,10 @@ class CampaignController extends Controller
                 'old_values' => $before,
             ]);
         });
+
+        if ($uploadedPaths !== []) {
+            Storage::disk('local')->delete($uploadedPaths);
+        }
 
         return response()->json(null, 204);
     }

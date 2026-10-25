@@ -46,6 +46,34 @@ class Campaign extends Model
 
     protected $appends = ['priority_label', 'progress_percent', 'priority_breakdown'];
 
+    public static function isUploadedImagePath(?string $path): bool
+    {
+        return is_string($path) &&
+            preg_match('/\Acampaign-uploads\/[A-Za-z0-9]{40}\.(?:jpg|jpeg|png|webp)\z/i', $path) === 1;
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        $value = $this->getRawOriginal('image_url');
+
+        if (static::isUploadedImagePath($value)) {
+            return url("/api/campaigns/{$this->id}/photo");
+        }
+
+        return $value;
+    }
+
+    public function getSupportingDocumentAttribute(): ?string
+    {
+        $value = $this->getRawOriginal('supporting_document');
+
+        if (static::isUploadedImagePath($value)) {
+            return url("/api/admin/campaigns/{$this->id}/proof");
+        }
+
+        return $value;
+    }
+
     protected static function booted(): void
     {
         // Priority Score dihitung ulang otomatis setiap kali campaign disimpan,

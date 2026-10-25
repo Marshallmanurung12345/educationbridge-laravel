@@ -34,6 +34,10 @@ function externalHttpUrl(value) {
   }
 }
 
+function isPrivateCampaignProof(value) {
+  return value?.includes("/api/admin/campaigns/") && value.endsWith("/proof");
+}
+
 function Status({ value }) {
   const label = statusLabels[value] || value || "—";
   const style =
@@ -112,6 +116,8 @@ export default function AdminDashboard({ campaignQueue = false }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const [proofPreview, setProofPreview] = useState(null);
+  const [proofError, setProofError] = useState(null);
   const [verificationNote, setVerificationNote] = useState("");
   const [updating, setUpdating] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
@@ -142,6 +148,35 @@ export default function AdminDashboard({ campaignQueue = false }) {
       active = false;
     };
   }, [retryKey]);
+
+  useEffect(() => {
+    const proofUrl = selectedCampaign?.supporting_document;
+    if (!proofUrl || !proofUrl.includes("/api/admin/campaigns/") || !proofUrl.endsWith("/proof")) {
+      return undefined;
+    }
+
+    let active = true;
+    let previewUrl = "";
+    api.getAdminCampaignProof(selectedCampaign.id)
+      .then((blob) => {
+        if (!active) return;
+        previewUrl = URL.createObjectURL(blob);
+        setProofPreview({ source: proofUrl, url: previewUrl });
+      })
+      .catch((loadError) => {
+        if (active) setProofError({ source: proofUrl, message: loadError.message });
+      });
+
+    return () => {
+      active = false;
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [selectedCampaign?.id, selectedCampaign?.supporting_document]);
+
+  const activeProofPreview =
+    proofPreview?.source === selectedCampaign?.supporting_document ? proofPreview.url : "";
+  const activeProofError =
+    proofError?.source === selectedCampaign?.supporting_document ? proofError.message : "";
 
   const pendingAccounts = useMemo(
     () => accounts.filter((account) => account.account_status === "pending_verification"),
@@ -410,8 +445,12 @@ export default function AdminDashboard({ campaignQueue = false }) {
                   <p className="mt-1 whitespace-pre-wrap text-[#475467]">{selectedCampaign.rab_description || "Belum tersedia."}</p>
                   <p className="mt-1 font-medium text-[#17345B]">Target: {formatRupiah(selectedCampaign.target_amount)}</p>
                   <p className="mt-1 text-[#667085]">Hubungan dengan sekolah: {selectedCampaign.applicant_relationship || "Belum tersedia."}</p>
-                  <p className="mt-1 text-[#667085]">Bukti/izin: {selectedCampaign.supporting_document || "Belum tersedia."}</p>
-                  {externalHttpUrl(selectedCampaign.supporting_document) && (
+                  <p className="mt-1 text-[#667085]">Bukti/izin: {selectedCampaign.supporting_document ? "Foto tersedia." : "Belum tersedia."}</p>
+                  {activeProofPreview && (
+                    <img src={activeProofPreview} alt={`Foto bukti izin ${selectedCampaign.title}`} className="mt-2 max-h-64 rounded-lg border border-[#E6EAF0] object-contain" />
+                  )}
+                  {activeProofError && <p role="alert" className="mt-2 text-sm text-rose-700">{activeProofError}</p>}
+                  {externalHttpUrl(selectedCampaign.supporting_document) && !isPrivateCampaignProof(selectedCampaign.supporting_document) && (
                     <a
                       href={externalHttpUrl(selectedCampaign.supporting_document)}
                       target="_blank"

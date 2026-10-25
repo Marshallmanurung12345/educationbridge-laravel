@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Models\Campaign;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CampaignListingTest extends TestCase
@@ -83,6 +85,120 @@ class CampaignListingTest extends TestCase
             ->assertJsonPath('0.priority_score', 100)
             ->assertJsonPath('1.id', $lowerPriority->id)
             ->assertJsonPath('1.priority_score', 16);
+    }
+
+    public function test_uploaded_campaign_images_are_private_and_proof_is_admin_only(): void
+    {
+        Storage::fake('local');
+        $imagePath = 'campaign-uploads/'.str_repeat('a', 40).'.jpg';
+        $proofPath = 'campaign-uploads/'.str_repeat('b', 40).'.png';
+        Storage::disk('local')->put($imagePath, 'photo');
+        Storage::disk('local')->put($proofPath, 'proof');
+        $campaign = $this->createCampaign([
+            'image_url' => $imagePath,
+            'supporting_document' => $proofPath,
+        ]);
+
+        $this->getJson('/api/campaigns')
+            ->assertOk()
+            ->assertJsonMissingPath('0.supporting_document');
+        $this->get("/api/campaigns/{$campaign->id}/photo")->assertOk();
+        $this->getJson("/api/admin/campaigns/{$campaign->id}/proof")->assertUnauthorized();
+        $this->actingAs($campaign->user, 'sanctum')
+            ->getJson("/api/admin/campaigns/{$campaign->id}/proof")
+            ->assertForbidden();
+
+        $admin = User::create([
+            'name' => 'Admin',
+            'email' => 'campaign-admin@example.test',
+            'password' => Hash::make('strong-password'),
+            'role' => 'admin',
+        ]);
+
+        $this->actingAs($admin, 'sanctum')
+            ->get("/api/admin/campaigns/{$campaign->id}/proof")
+            ->assertOk();
+    }
+
+    public function test_campaign_submission_accepts_only_supported_image_uploads(): void
+    {
+        Storage::fake('local');
+        $owner = User::create([
+            'name' => 'Donatur',
+            'email' => 'upload-donor@example.test',
+            'password' => Hash::make('strong-password'),
+            'role' => 'individu',
+        ]);
+        $payload = [
+            'school_npsn' => '12345678',
+            'school_jenjang' => 'SD',
+            'school_name' => 'SD Contoh',
+            'location' => 'Bandung, Jawa Barat',
+            'category' => 'Fasilitas',
+            'title' => 'Perbaikan ruang kelas',
+            'description' => 'Atap kelas perlu diperbaiki.',
+            'rab_description' => 'Bahan bangunan dan upah.',
+            'applicant_relationship' => 'Alumni',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-12-31',
+            'target_amount' => 100000,
+            'student_count' => 20,
+            'urgency' => 3,
+            'facility_condition' => 3,
+            'remoteness' => 3,
+            'access_score' => 3,
+            'image_file' => UploadedFile::fake()->image('condition.webp'),
+            'supporting_document_file' => UploadedFile::fake()->image('proof.jpg'),
+        ];
+
+        $response = $this->actingAs($owner, 'sanctum')
+            ->post('/api/campaigns', $payload)
+            ->assertCreated();
+        $campaign = Campaign::findOrFail($response->json('id'));
+
+        $this->assertStringStartsWith('campaign-uploads/', $campaign->getRawOriginal('image_url'));
+        $this->assertStringStartsWith('campaign-uploads/', $campaign->getRawOriginal('supporting_document'));
+        Storage::disk('local')->assertExists($campaign->getRawOriginal('image_url'));
+        Storage::disk('local')->assertExists($campaign->getRawOriginal('supporting_document'));
+
+        $payload['title'] = 'Unggahan dengan format yang ditolak';
+        $payload['image_file'] = UploadedFile::fake()->create('condition.gif', 50, 'image/gif');
+        $payload['supporting_document_file'] = UploadedFile::fake()->create('proof.pdf', 50, 'application/pdf');
+
+        $this->actingAs($owner, 'sanctum')
+            ->post('/api/campaigns', $payload)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['image_file', 'supporting_document_file']);
+    }
+
+    public function test_editing_campaign_replaces_uploaded_photo_without_removing_the_existing_proof(): void
+    {
+        Storage::fake('local');
+        $oldImage = 'campaign-uploads/'.str_repeat('c', 40).'.jpg';
+        $proof = 'campaign-uploads/'.str_repeat('d', 40).'.png';
+        Storage::disk('local')->put($oldImage, 'old photo');
+        Storage::disk('local')->put($proof, 'proof');
+        $campaign = $this->createCampaign([
+            'status' => 'needs_revision',
+            'image_url' => $oldImage,
+            'supporting_document' => $proof,
+        ]);
+
+        $this->actingAs($campaign->user, 'sanctum')
+            ->post("/api/campaigns/{$campaign->id}", [
+                '_method' => 'PUT',
+                'title' => 'Judul diperbarui',
+                'image_file' => UploadedFile::fake()->image('replacement.jpg'),
+            ])
+            ->assertOk()
+            ->assertJsonPath('title', 'Judul diperbarui');
+
+        $campaign->refresh();
+        $this->assertNotSame($oldImage, $campaign->getRawOriginal('image_url'));
+        $this->assertSame($proof, $campaign->getRawOriginal('supporting_document'));
+        Storage::disk('local')->assertMissing($oldImage);
+        Storage::disk('local')->assertExists($campaign->getRawOriginal('image_url'));
+        Storage::disk('local')->assertExists($proof);
     }
 
     public function test_editing_priority_inputs_recalculates_score_and_rejects_invalid_values(): void

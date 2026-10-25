@@ -40,6 +40,22 @@ const initialForm = {
 
 const today = new Date().toISOString().slice(0, 10);
 
+function useImagePreview(file) {
+  const [preview, setPreview] = useState("");
+
+  useEffect(() => {
+    if (!file) return undefined;
+    const reader = new FileReader();
+    reader.onload = () => setPreview(typeof reader.result === "string" ? reader.result : "");
+    reader.readAsDataURL(file);
+    return () => {
+      if (reader.readyState === FileReader.LOADING) reader.abort();
+    };
+  }, [file]);
+
+  return file ? preview : "";
+}
+
 function schoolLocation(school) {
   return [school.kecamatan, school.kabupaten_kota, school.provinsi]
     .filter(Boolean)
@@ -93,6 +109,10 @@ export default function CreateCampaign() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(null);
   const [loadingEdit, setLoadingEdit] = useState(isEditing);
+  const [imageFile, setImageFile] = useState(null);
+  const [proofFile, setProofFile] = useState(null);
+  const imagePreview = useImagePreview(imageFile);
+  const proofPreview = useImagePreview(proofFile);
 
   useEffect(() => {
     if (!needsManualSchoolLocation) return undefined;
@@ -209,9 +229,26 @@ export default function CreateCampaign() {
         remoteness: Number(form.remoteness),
         access_score: Number(form.access_score),
       };
+      delete payload.supporting_document;
+      if (
+        isEditing &&
+        form.image_url.includes(`/api/campaigns/${editId}/photo`)
+      ) {
+        delete payload.image_url;
+      }
+      const formData = new FormData();
+      Object.entries(payload).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach((item) => formData.append(`${key}[]`, item));
+        } else if (value != null) {
+          formData.append(key, value);
+        }
+      });
+      if (imageFile) formData.append("image_file", imageFile);
+      if (proofFile) formData.append("supporting_document_file", proofFile);
       const result = isEditing
-        ? await api.updateCampaign(editId, payload)
-        : await api.createCampaign(payload);
+        ? await api.updateCampaign(editId, formData)
+        : await api.createCampaign(formData);
       setSubmitted(result);
     } catch (submitError) {
       setError(submitError.message);
@@ -393,28 +430,33 @@ export default function CreateCampaign() {
                   <input required value={form.applicant_relationship} onChange={(event) => update("applicant_relationship", event.target.value)} className="form-control" placeholder="Contoh: alumni, orang tua siswa, relawan" />
                 </Field>
               )}
-              <Field label={isSchoolAccount ? "Tautan dokumen/foto kondisi (opsional)" : "Tautan bukti izin atau foto (wajib)"}>
+              <Field label={isSchoolAccount ? "Foto bukti/kondisi (opsional)" : "Foto bukti izin (wajib untuk pengajuan baru)"}>
                 <input
-                  required={!isSchoolAccount}
-                  type="url"
-                  maxLength={2048}
-                  value={form.supporting_document}
-                  onChange={(event) => update("supporting_document", event.target.value)}
+                  required={!isSchoolAccount && !isEditing}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                  onChange={(event) => setProofFile(event.target.files?.[0] || null)}
                   className="form-control"
-                  placeholder="https://…"
                 />
-                <span className="mt-1 block text-xs text-[#8893A3]">Masukkan tautan yang dapat diperiksa admin. Unggah berkas langsung belum tersedia.</span>
+                <span className="mt-1 block text-xs text-[#8893A3]">
+                  JPG, PNG, atau WEBP, maksimal 5 MB. Foto ini hanya dapat dilihat admin.
+                  {isEditing ? " Kosongkan jika tidak ingin mengganti foto lama." : ""}
+                </span>
+                {proofPreview && <img src={proofPreview} alt="Pratinjau foto bukti izin" className="mt-3 max-h-48 rounded-lg border border-[#E6EAF0] object-contain" />}
               </Field>
-              <Field label="Tautan foto kondisi atau kebutuhan (opsional)">
+              <Field label="Foto kondisi atau kebutuhan (opsional)">
                 <input
-                  type="url"
-                  maxLength={2048}
-                  value={form.image_url}
-                  onChange={(event) => update("image_url", event.target.value)}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                  onChange={(event) => setImageFile(event.target.files?.[0] || null)}
                   className="form-control"
-                  placeholder="https://…"
                 />
-                <span className="mt-1 block text-xs text-[#8893A3]">Gunakan tautan foto dokumentasi yang dapat diakses admin. Unggah berkas langsung belum tersedia.</span>
+                <span className="mt-1 block text-xs text-[#8893A3]">
+                  JPG, PNG, atau WEBP, maksimal 5 MB. Foto akan ditampilkan pada halaman kebutuhan.
+                </span>
+                {(imagePreview || form.image_url) && (
+                  <img src={imagePreview || form.image_url} alt="Pratinjau foto kondisi kebutuhan" className="mt-3 max-h-48 rounded-lg border border-[#E6EAF0] object-contain" />
+                )}
               </Field>
               <Field label="Tanggal mulai penggalangan">
                 <input required type="date" min={isEditing ? undefined : today} value={form.start_date} onChange={(event) => update("start_date", event.target.value)} className="form-control" />

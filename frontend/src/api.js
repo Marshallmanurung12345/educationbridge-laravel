@@ -7,10 +7,15 @@ export function setAuthToken(token) {
 
 async function request(path, options = {}) {
   const headers = {
-    "Content-Type": "application/json",
     Accept: "application/json",
     ...(options.headers || {}),
   };
+  if (
+    options.body != null &&
+    !(typeof FormData !== "undefined" && options.body instanceof FormData)
+  ) {
+    headers["Content-Type"] ||= "application/json";
+  }
   const token =
     typeof window !== "undefined"
       ? window.localStorage.getItem("eb_token")
@@ -31,6 +36,36 @@ async function request(path, options = {}) {
   }
   if (res.status === 204) return null;
   return res.json();
+}
+
+function campaignFormData(data) {
+  if (data instanceof FormData) return data;
+
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => formData.append(`${key}[]`, item));
+    } else if (value != null) {
+      formData.append(key, value);
+    }
+  });
+  return formData;
+}
+
+async function requestBlob(path) {
+  const headers = { Accept: "application/json" };
+  const token =
+    typeof window !== "undefined"
+      ? window.localStorage.getItem("eb_token")
+      : authToken;
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${BASE_URL}/api${path}`, { headers });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || `Request gagal (${res.status})`);
+  }
+  return res.blob();
 }
 
 export const authApi = {
@@ -60,9 +95,13 @@ export const api = {
   },
   getCampaign: (id) => request(`/campaigns/${id}`),
   createCampaign: (data) =>
-    request(`/campaigns`, { method: "POST", body: JSON.stringify(data) }),
-  updateCampaign: (id, data) =>
-    request(`/campaigns/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    request(`/campaigns`, { method: "POST", body: campaignFormData(data) }),
+  updateCampaign: (id, data) => {
+    const body = campaignFormData(data);
+    body.append("_method", "PUT");
+    return request(`/campaigns/${id}`, { method: "POST", body });
+  },
+  getAdminCampaignProof: (id) => requestBlob(`/admin/campaigns/${id}/proof`),
   deleteCampaign: (id) => request(`/campaigns/${id}`, { method: "DELETE" }),
   listSchoolAccounts: () => request(`/admin/school-accounts`),
   myCampaigns: () => request(`/my-campaigns`),
