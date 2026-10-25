@@ -12,6 +12,8 @@ class Campaign extends Model
     protected $fillable = [
         'user_id',
         'school_id',
+        'school_npsn',
+        'school_jenjang',
         'school_name',
         'location',
         'category',

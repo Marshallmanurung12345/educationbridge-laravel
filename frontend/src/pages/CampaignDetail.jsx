@@ -212,6 +212,11 @@ export default function CampaignDetail() {
               <p className="mt-1 text-sm font-medium text-[#344054]">
                 {school?.name || campaign.school_name || "Nama sekolah belum tersedia"}
               </p>
+              {(school?.npsn || campaign.school_npsn) && (
+                <p className="mt-0.5 text-xs text-[#667085]">
+                  {school?.jenjang || campaign.school_jenjang || "Jenjang belum tersedia"} · NPSN {school?.npsn || campaign.school_npsn}
+                </p>
+              )}
               <p className="mt-0.5 flex items-center gap-1 text-xs text-[#667085]">
                 <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 fill-current shrink-0" aria-hidden="true">
                   <path d="M10 1.8a6.2 6.2 0 0 0-6.2 6.2c0 4.3 6.2 10.2 6.2 10.2s6.2-5.9 6.2-10.2A6.2 6.2 0 0 0 10 1.8Zm0 8.7a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"/>

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Campaign;
 use App\Models\AuditLog;
+use App\Models\Campaign;
 use App\Models\Notification;
 use App\Models\School;
 use Illuminate\Http\Request;
@@ -85,10 +85,11 @@ class CampaignController extends Controller
         $isSchool = $user->role === 'sekolah';
 
         $data = $request->validate([
-            'school_id' => $isSchool ? 'nullable|exists:schools,id' : 'required|exists:schools,id',
-            'npsn' => 'nullable|string|exists:schools,npsn',
-            'school_name' => 'nullable|string|max:255',
-            'location' => 'nullable|string|max:255',
+            'school_id' => 'nullable|integer|exists:schools,id',
+            'school_npsn' => $isSchool ? 'nullable|digits:8' : 'required_without:school_id|digits:8',
+            'school_jenjang' => $isSchool ? 'nullable|string|max:100' : 'required_without:school_id|string|max:100',
+            'school_name' => $isSchool ? 'nullable|string|max:255' : 'required_without:school_id|string|max:255',
+            'location' => $isSchool ? 'nullable|string|max:255' : 'required_without:school_id|string|max:255',
             'category' => 'required|string|max:100',
             'tags' => 'nullable|array',
             'title' => 'required|string|max:255',
@@ -115,26 +116,35 @@ class CampaignController extends Controller
 
         if ($isSchool) {
             $officialSchool = $user->school;
-            if (!$officialSchool || $officialSchool->npsn !== $user->npsn) {
+            if (! $officialSchool || $officialSchool->npsn !== $user->npsn) {
                 return response()->json([
                     'message' => 'Data sekolah terverifikasi belum terhubung dengan akun ini.',
                 ], 422);
             }
         } else {
-            $officialSchool = School::find($data['school_id']);
+            $officialSchool = ! empty($data['school_id'])
+                ? School::find($data['school_id'])
+                : School::where('npsn', $data['school_npsn'])->first();
         }
 
-        if (!$officialSchool) {
+        if (! $officialSchool && $isSchool) {
             return response()->json(['message' => 'Sekolah yang dipilih tidak ditemukan.'], 422);
         }
 
-        $data['school_id'] = $officialSchool->id;
-        $data['school_name'] = $officialSchool->name;
-        $data['location'] = "{$officialSchool->kecamatan}, {$officialSchool->kabupaten_kota}, {$officialSchool->provinsi}";
-        $data['student_count'] = $data['student_count'] ?? $officialSchool->jumlah_siswa ?? 0;
-        $data['remoteness'] = $officialSchool->is_3t ? 5 : ($data['remoteness'] ?? 3);
+        if ($officialSchool) {
+            $data['school_id'] = $officialSchool->id;
+            $data['school_npsn'] = $officialSchool->npsn;
+            $data['school_jenjang'] = $officialSchool->jenjang;
+            $data['school_name'] = $officialSchool->name;
+            $data['location'] = "{$officialSchool->kecamatan}, {$officialSchool->kabupaten_kota}, {$officialSchool->provinsi}";
+        } else {
+            $data['school_id'] = null;
+        }
+        $data['student_count'] = $data['student_count'] ?? $officialSchool?->jumlah_siswa ?? 0;
+        $data['remoteness'] = $officialSchool?->is_3t
+            ? 5
+            : ($data['remoteness'] ?? 3);
         $data['status'] = 'pending';
-        unset($data['npsn']);
         $campaign = $user->campaigns()->create($data);
 
         Notification::create([
@@ -235,19 +245,21 @@ class CampaignController extends Controller
         $isOwner = $user->id === $campaign->user_id;
         $isAdmin = $user->role === 'admin';
 
-        if (!$isOwner && !$isAdmin) {
+        if (! $isOwner && ! $isAdmin) {
             return response()->json(['message' => 'Anda tidak berhak mengubah campaign ini.'], 403);
         }
         if ($user->role === 'sekolah' && $user->account_status !== 'verified') {
             return response()->json(['message' => 'Akun sekolah tidak aktif.'], 403);
         }
-        if ($isOwner && !$isAdmin && !in_array($campaign->status, ['pending', 'needs_revision'], true)) {
+        if ($isOwner && ! $isAdmin && ! in_array($campaign->status, ['pending', 'needs_revision'], true)) {
             return response()->json([
                 'message' => 'Pengajuan hanya dapat diubah saat menunggu pemeriksaan atau memerlukan perbaikan.',
             ], 403);
         }
 
         $rules = [
+            'school_npsn' => 'sometimes|digits:8',
+            'school_jenjang' => 'sometimes|string|max:100',
             'school_name' => 'sometimes|string|max:255',
             'location' => 'sometimes|string|max:255',
             'category' => 'sometimes|string|max:100',
@@ -271,13 +283,11 @@ class CampaignController extends Controller
         if ($isAdmin) {
             $rules['status'] = 'sometimes|in:pending,needs_revision,verified,rejected,completed,suspended';
             $rules['verification_note'] = 'sometimes|nullable|string';
-        } else {
-            unset($rules['school_name'], $rules['location']);
         }
 
         $data = $request->validate($rules);
 
-        if (!$isAdmin) {
+        if (! $isAdmin) {
             unset($data['status']);
         }
 
@@ -296,6 +306,10 @@ class CampaignController extends Controller
             $auditFields = [
                 'status',
                 'verification_note',
+                'school_npsn',
+                'school_jenjang',
+                'school_name',
+                'location',
                 'title',
                 'category',
                 'target_amount',
@@ -359,7 +373,7 @@ class CampaignController extends Controller
                     'user_id' => $campaign->user_id,
                     'type' => 'campaign_needs_revision',
                     'title' => '📝 Campaign Membutuhkan Perbaikan',
-                    'message' => "Admin meminta perbaikan pada '{$campaign->title}'. Catatan: " . ($campaign->verification_note ?: 'Mohon periksa dokumen.'),
+                    'message' => "Admin meminta perbaikan pada '{$campaign->title}'. Catatan: ".($campaign->verification_note ?: 'Mohon periksa dokumen.'),
                     'campaign_id' => $campaign->id,
                 ]);
             } elseif ($data['status'] === 'rejected') {
@@ -367,7 +381,7 @@ class CampaignController extends Controller
                     'user_id' => $campaign->user_id,
                     'type' => 'campaign_rejected',
                     'title' => '❌ Pengajuan Campaign Ditolak',
-                    'message' => "Pengajuan '{$campaign->title}' ditolak oleh Admin. Catatan: " . ($campaign->verification_note ?: 'Persyaratan belum terpenuhi.'),
+                    'message' => "Pengajuan '{$campaign->title}' ditolak oleh Admin. Catatan: ".($campaign->verification_note ?: 'Persyaratan belum terpenuhi.'),
                     'campaign_id' => $campaign->id,
                 ]);
             }

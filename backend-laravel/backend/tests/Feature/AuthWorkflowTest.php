@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditLog;
 use App\Models\Campaign;
 use App\Models\Donation;
-use App\Models\AuditLog;
 use App\Models\School;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -439,6 +439,99 @@ class AuthWorkflowTest extends TestCase
         $this->getJson('/api/campaigns?status=pending')->assertJsonCount(0);
     }
 
+    public function test_donor_can_submit_a_campaign_with_manually_entered_school_identity(): void
+    {
+        $donor = $this->createUser('individu', 'manual-school-donor@example.test');
+
+        $this->actingAs($donor, 'sanctum')
+            ->postJson('/api/campaigns', [
+                'school_npsn' => '87654321',
+                'school_name' => 'SD Contoh di Wilayah Terpencil',
+                'school_jenjang' => 'SD',
+                'location' => 'Kabupaten Contoh, Papua Pegunungan',
+                'category' => 'Fasilitas',
+                'title' => 'Perbaikan ruang kelas',
+                'description' => 'Ruang kelas memerlukan perbaikan.',
+                'rab_description' => 'Perkiraan biaya perbaikan.',
+                'supporting_document' => 'https://example.test/surat-izin',
+                'applicant_relationship' => 'Relawan sekolah',
+                'start_date' => now()->toDateString(),
+                'end_date' => now()->addMonth()->toDateString(),
+                'target_amount' => 10000000,
+                'urgency' => 3,
+                'facility_condition' => 3,
+                'remoteness' => 3,
+                'access_score' => 3,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('school_id', null)
+            ->assertJsonPath('school_npsn', '87654321')
+            ->assertJsonPath('school_name', 'SD Contoh di Wilayah Terpencil')
+            ->assertJsonPath('school_jenjang', 'SD')
+            ->assertJsonPath('location', 'Kabupaten Contoh, Papua Pegunungan')
+            ->assertJsonPath('status', 'pending');
+    }
+
+    public function test_manual_npsn_is_linked_to_an_imported_school_when_it_matches(): void
+    {
+        $school = $this->createSchool();
+        $donor = $this->createUser('individu', 'matched-school-donor@example.test');
+
+        $this->actingAs($donor, 'sanctum')
+            ->postJson('/api/campaigns', [
+                'school_npsn' => $school->npsn,
+                'school_name' => 'Nama tidak sesuai',
+                'school_jenjang' => 'SMP',
+                'location' => 'Lokasi tidak sesuai',
+                'category' => 'Fasilitas',
+                'title' => 'Perbaikan ruang kelas',
+                'description' => 'Ruang kelas memerlukan perbaikan.',
+                'rab_description' => 'Perkiraan biaya perbaikan.',
+                'supporting_document' => 'https://example.test/surat-izin',
+                'applicant_relationship' => 'Relawan sekolah',
+                'start_date' => now()->toDateString(),
+                'end_date' => now()->addMonth()->toDateString(),
+                'target_amount' => 10000000,
+                'urgency' => 3,
+                'facility_condition' => 3,
+                'remoteness' => 3,
+                'access_score' => 3,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('school_id', $school->id)
+            ->assertJsonPath('school_npsn', $school->npsn)
+            ->assertJsonPath('school_name', $school->name)
+            ->assertJsonPath('school_jenjang', $school->jenjang);
+    }
+
+    public function test_manual_school_submission_requires_an_eight_digit_npsn(): void
+    {
+        $donor = $this->createUser('individu', 'invalid-manual-school-donor@example.test');
+
+        $this->actingAs($donor, 'sanctum')
+            ->postJson('/api/campaigns', [
+                'school_npsn' => '1234',
+                'school_name' => 'SD Contoh',
+                'school_jenjang' => 'SD',
+                'location' => 'Kabupaten Contoh, Papua',
+                'category' => 'Fasilitas',
+                'title' => 'Perbaikan ruang kelas',
+                'description' => 'Ruang kelas memerlukan perbaikan.',
+                'rab_description' => 'Perkiraan biaya perbaikan.',
+                'supporting_document' => 'https://example.test/surat-izin',
+                'applicant_relationship' => 'Relawan sekolah',
+                'start_date' => now()->toDateString(),
+                'end_date' => now()->addMonth()->toDateString(),
+                'target_amount' => 10000000,
+                'urgency' => 3,
+                'facility_condition' => 3,
+                'remoteness' => 3,
+                'access_score' => 3,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('school_npsn');
+    }
+
     public function test_school_submission_uses_the_reported_number_of_affected_students(): void
     {
         $school = $this->createSchool();
@@ -570,7 +663,7 @@ class AuthWorkflowTest extends TestCase
     {
         return User::create([
             'name' => 'Kepala Sekolah',
-            'email' => 'school-' . $npsn . '@example.test',
+            'email' => 'school-'.$npsn.'@example.test',
             'password' => Hash::make('strong-password'),
             'role' => 'sekolah',
             'organization_name' => 'SD Contoh',

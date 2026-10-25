@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api";
 import LoadingIndicator from "../components/LoadingIndicator";
 import { useAuth } from "../context/AuthContext";
+import { listRegions } from "../wilayahApi";
 
 const categories = ["Fasilitas", "Buku", "Teknologi", "Beasiswa", "Laboratorium"];
+const schoolLevels = ["PAUD", "SD", "SMP", "SMA", "SMK", "SLB", "MI", "MTs", "MA", "Paket A", "Paket B", "Paket C"];
 const categoryTags = {
   Fasilitas: ["renovasi", "infrastruktur"],
   Buku: ["buku", "literasi"],
@@ -15,6 +17,10 @@ const categoryTags = {
 
 const initialForm = {
   school_id: "",
+  school_name: "",
+  school_npsn: "",
+  school_jenjang: "",
+  location: "",
   category: "Fasilitas",
   title: "",
   description: "",
@@ -55,18 +61,68 @@ export default function CreateCampaign() {
         : user?.role === "perusahaan"
           ? "/dashboard-perusahaan"
           : "/dashboard-pemerintah";
-  const [form, setForm] = useState(initialForm);
-  const [schoolSearch, setSchoolSearch] = useState("");
-  const [schoolLevel, setSchoolLevel] = useState("");
-  const [schoolProvince, setSchoolProvince] = useState("");
-  const [schoolResults, setSchoolResults] = useState([]);
+  const [form, setForm] = useState(() => {
+    if (!user?.school) return initialForm;
+    const school = user.school;
+    return {
+      ...initialForm,
+      school_id: school.id,
+      school_name: school.name,
+      school_npsn: school.npsn,
+      school_jenjang: school.jenjang,
+      location: schoolLocation(school),
+      remoteness: school.is_3t ? 5 : 3,
+    };
+  });
+  const [regions, setRegions] = useState({ provinces: [], regencies: [] });
+  const [regionCodes, setRegionCodes] = useState({ province: "", regency: "" });
+  const [regionLoading, setRegionLoading] = useState({ provinces: true, regencies: false });
+  const [regionError, setRegionError] = useState("");
   const [selectedSchool, setSelectedSchool] = useState(user?.school || null);
-  const [searchingSchools, setSearchingSchools] = useState(false);
-  const [schoolLoadError, setSchoolLoadError] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(null);
   const [loadingEdit, setLoadingEdit] = useState(isEditing);
+
+  useEffect(() => {
+    if (isSchoolAccount || isEditing) return undefined;
+
+    let active = true;
+    listRegions("provinces")
+      .then((provinces) => {
+        if (active) setRegions((current) => ({ ...current, provinces }));
+      })
+      .catch((loadError) => {
+        if (active) setRegionError(loadError.message);
+      })
+      .finally(() => {
+        if (active) setRegionLoading((current) => ({ ...current, provinces: false }));
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isSchoolAccount, isEditing]);
+
+  useEffect(() => {
+    if (isSchoolAccount || isEditing || !regionCodes.province) return undefined;
+
+    let active = true;
+    listRegions("regencies", regionCodes.province)
+      .then((regencies) => {
+        if (active) setRegions((current) => ({ ...current, regencies }));
+      })
+      .catch((loadError) => {
+        if (active) setRegionError(loadError.message);
+      })
+      .finally(() => {
+        if (active) setRegionLoading((current) => ({ ...current, regencies: false }));
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isSchoolAccount, isEditing, regionCodes.province]);
 
   useEffect(() => {
     if (!editId) return undefined;
@@ -77,12 +133,13 @@ export default function CreateCampaign() {
         if (!active) return;
         const school = campaign.school || null;
         setSelectedSchool(school);
-        setSchoolSearch(
-          school ? `${school.name} · ${school.npsn}` : campaign.school_name || "",
-        );
         setForm((current) => ({
           ...current,
           school_id: campaign.school_id || "",
+          school_name: campaign.school_name || school?.name || "",
+          school_npsn: campaign.school_npsn || school?.npsn || "",
+          school_jenjang: campaign.school_jenjang || school?.jenjang || "",
+          location: campaign.location || (school ? schoolLocation(school) : ""),
           category: campaign.category || current.category,
           title: campaign.title || "",
           description: campaign.description || "",
@@ -112,104 +169,6 @@ export default function CreateCampaign() {
     };
   }, [editId]);
 
-  useEffect(() => {
-    if (!isSchoolAccount || !user?.school) return;
-    const school = user.school;
-    setSelectedSchool(school);
-    setSchoolSearch(`${school.name} · ${school.npsn}`);
-    setForm((current) => ({
-      ...current,
-      school_id: school.id,
-      remoteness: school.is_3t ? 5 : 3,
-    }));
-  }, [isSchoolAccount, user?.school]);
-
-  useEffect(() => {
-    if (isSchoolAccount && selectedSchool) return undefined;
-    if (selectedSchool && schoolSearch === `${selectedSchool.name} · ${selectedSchool.npsn}`) {
-      return undefined;
-    }
-
-    const query = schoolSearch.trim() || (isSchoolAccount ? user?.npsn || "" : "");
-    if (!isSchoolAccount && query.length < 2 && !schoolLevel && !schoolProvince) {
-      setSchoolResults([]);
-      setSchoolLoadError("");
-      return undefined;
-    }
-    if (isSchoolAccount && !query) {
-      setSchoolResults([]);
-      return undefined;
-    }
-
-    let active = true;
-    const timer = setTimeout(async () => {
-      setSearchingSchools(true);
-      setSchoolLoadError("");
-      try {
-        const params = {
-          ...(query.length >= 2 ? { q: query } : {}),
-          ...(schoolLevel ? { jenjang: schoolLevel } : {}),
-          ...(schoolProvince ? { provinsi: schoolProvince } : {}),
-          limit: 20,
-        };
-        const results = await api.listSchools(params);
-        if (!active) return;
-
-        const matches = Array.isArray(results) ? results : [];
-        const schoolMatches =
-          isSchoolAccount && user?.npsn
-            ? matches.filter((school) => school.npsn === user.npsn)
-            : matches;
-        setSchoolResults(schoolMatches);
-
-        if (isSchoolAccount && !selectedSchool) {
-          const linkedSchool = schoolMatches.find(
-            (school) => String(school.id) === String(user?.school_id),
-          );
-          if (linkedSchool) selectSchool(linkedSchool);
-          else if (schoolMatches.length === 0) {
-            setSchoolLoadError(
-              "Data sekolah resmi belum cocok dengan NPSN akun ini. Hubungi admin untuk pemeriksaan.",
-            );
-          }
-        }
-      } catch (loadError) {
-        if (active) setSchoolLoadError(loadError.message);
-      } finally {
-        if (active) setSearchingSchools(false);
-      }
-    }, 250);
-
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [
-    isSchoolAccount,
-    schoolLevel,
-    schoolProvince,
-    schoolSearch,
-    selectedSchool,
-    user?.npsn,
-    user?.school_id,
-  ]);
-
-  const provinces = useMemo(
-    () => [...new Set(schoolResults.map((school) => school.provinsi).filter(Boolean))].sort(),
-    [schoolResults],
-  );
-
-  function selectSchool(school) {
-    setSelectedSchool(school);
-    setSchoolSearch(`${school.name} · ${school.npsn}`);
-    setSchoolResults([]);
-    setForm((current) => ({
-      ...current,
-      school_id: school.id,
-      remoteness: school.is_3t ? 5 : 3,
-    }));
-  }
-
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
   }
@@ -217,8 +176,14 @@ export default function CreateCampaign() {
   async function onSubmit(event) {
     event.preventDefault();
     setError("");
-    if (!selectedSchool) {
-      setError("Pilih sekolah dari hasil pencarian data resmi.");
+    const province = regions.provinces.find((region) => region.code === regionCodes.province);
+    const regency = regions.regencies.find((region) => region.code === regionCodes.regency);
+    if (isSchoolAccount && !form.school_id) {
+      setError("Akun sekolah belum terhubung dengan data sekolah. Hubungi admin.");
+      return;
+    }
+    if (!isSchoolAccount && !isEditing && (!province || !regency)) {
+      setError("Pilih provinsi dan kabupaten/kota dari daftar.");
       return;
     }
 
@@ -226,7 +191,10 @@ export default function CreateCampaign() {
     try {
       const payload = {
         ...form,
-        school_id: selectedSchool.id,
+        school_id: isSchoolAccount || isEditing ? form.school_id || null : null,
+        location: !isSchoolAccount && !isEditing
+          ? `${regency.name}, ${province.name}`
+          : form.location,
         tags: [form.category.toLowerCase(), ...(categoryTags[form.category] || [])],
         target_amount: Number(form.target_amount),
         student_count: Number(form.student_count),
@@ -301,79 +269,96 @@ export default function CreateCampaign() {
           <LoadingIndicator label="Memuat pengajuan…" className="min-h-24 rounded-xl border border-[#E6EAF0] bg-white p-6" />
         ) : (
         <form onSubmit={onSubmit} className="space-y-4">
-          <Section number="1" title="Informasi Sekolah" description="Pilih sekolah dari data resmi. NPSN dan lokasi akan terisi otomatis.">
+          <Section
+            number="1"
+            title="Informasi Sekolah"
+            description={isSchoolAccount || isEditing
+              ? "Periksa kembali identitas dan lokasi sekolah pada pengajuan."
+              : "Isi identitas sekolah; pilih provinsi dan kabupaten/kota dari daftar."}
+          >
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Pilih Sekolah" className="sm:col-span-2">
-                {isSchoolAccount || isEditing ? (
-                  <input
-                    value={selectedSchool ? `${selectedSchool.name} · ${selectedSchool.npsn}` : schoolSearch}
-                    readOnly
-                    required
-                    aria-label="Sekolah terdaftar"
-                    className="w-full rounded-lg border border-[#DCE2EA] bg-[#F3F5F8] px-3 py-2.5 text-sm text-[#475467]"
-                  />
-                ) : (
-                  <div className="relative">
-                    <input
-                      value={schoolSearch}
-                      onChange={(event) => {
-                        setSchoolSearch(event.target.value);
-                        setSelectedSchool(null);
-                        setForm((current) => ({ ...current, school_id: "" }));
-                      }}
-                      autoComplete="off"
-                      placeholder="Ketik nama sekolah atau NPSN (minimal 2 karakter)"
-                      className="w-full rounded-lg border border-[#DCE2EA] bg-white px-3 py-2.5 text-sm text-[#17345B] outline-none focus:border-[#17345B] focus:ring-2 focus:ring-[#17345B]/10"
-                    />
-                    {(schoolSearch.trim().length >= 2 || schoolLevel || schoolProvince) && !selectedSchool && (
-                      <div className="absolute inset-x-0 top-full z-20 mt-1 max-h-64 overflow-y-auto rounded-lg border border-[#E2E7EE] bg-white py-1 shadow-lg">
-                        {searchingSchools ? (
-                          <p className="px-3 py-3 text-sm text-[#667085]">Mencari data sekolah…</p>
-                        ) : schoolResults.length === 0 ? (
-                          <p className="px-3 py-3 text-sm text-[#667085]">Tidak ada sekolah yang cocok pada data tersedia.</p>
-                        ) : (
-                          schoolResults.map((school) => (
-                            <button key={school.id} type="button" onClick={() => selectSchool(school)} className="block w-full px-3 py-2.5 text-left hover:bg-[#F7F8FA]">
-                              <span className="block text-sm font-medium text-[#17345B]">{school.name}</span>
-                              <span className="mt-0.5 block text-xs text-[#667085]">NPSN {school.npsn} · {schoolLocation(school)}{school.is_3t ? " · 3T (data resmi)" : ""}</span>
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+              <Field label="Nama sekolah" className="sm:col-span-2">
+                <input
+                  required
+                  maxLength={255}
+                  readOnly={isSchoolAccount || isEditing}
+                  value={form.school_name}
+                  onChange={(event) => update("school_name", event.target.value)}
+                  className={`form-control ${(isSchoolAccount || isEditing) ? "bg-[#F3F5F8]" : ""}`}
+                  placeholder="Masukkan nama resmi sekolah"
+                />
+              </Field>
+              <Field label="NPSN">
+                <input
+                  required
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]{8}"
+                  minLength={8}
+                  maxLength={8}
+                  readOnly={isSchoolAccount || isEditing}
+                  value={form.school_npsn}
+                  onChange={(event) => update("school_npsn", event.target.value.replace(/\D/g, "").slice(0, 8))}
+                  className={`form-control ${(isSchoolAccount || isEditing) ? "bg-[#F3F5F8]" : ""}`}
+                  placeholder="8 digit NPSN"
+                  title="NPSN terdiri dari 8 angka."
+                />
+                <span className="mt-1 block text-xs text-[#8893A3]">Masukkan NPSN sekolah yang sebenarnya. Admin akan memeriksanya.</span>
+              </Field>
+              <Field label="Jenjang pendidikan">
+                <select
+                  required
+                  value={form.school_jenjang}
+                  disabled={isSchoolAccount || isEditing}
+                  onChange={(event) => update("school_jenjang", event.target.value)}
+                  className="form-control disabled:bg-[#F3F5F8]"
+                >
+                  <option value="">Pilih jenjang</option>
+                  {schoolLevels.map((level) => <option key={level} value={level}>{level}</option>)}
+                </select>
               </Field>
 
-              {!isSchoolAccount && !isEditing && (
+              {isSchoolAccount || isEditing ? (
+                <Field label="Lokasi administratif" className="sm:col-span-2">
+                  <input readOnly value={form.location} className="form-control bg-[#F3F5F8]" />
+                </Field>
+              ) : (
                 <>
-                  <Field label="Filter jenjang">
-                    <select value={schoolLevel} onChange={(event) => setSchoolLevel(event.target.value)} className="w-full rounded-lg border border-[#DCE2EA] bg-white px-3 py-2.5 text-sm text-[#17345B]">
-                      <option value="">Semua jenjang</option>
-                      {["SD", "SMP", "SMA", "SMK", "SLB", "MI", "MTs", "MA"].map((level) => <option key={level} value={level}>{level}</option>)}
+                  <Field label="Provinsi">
+                    <select
+                      required
+                      value={regionCodes.province}
+                      onChange={(event) => {
+                        const provinceCode = event.target.value;
+                        setRegionCodes({ province: provinceCode, regency: "" });
+                        setRegions((current) => ({ ...current, regencies: [] }));
+                        setRegionLoading((current) => ({ ...current, regencies: Boolean(provinceCode) }));
+                        setRegionError("");
+                      }}
+                      className="form-control"
+                    >
+                      <option value="">{regionLoading.provinces ? "Memuat provinsi..." : "Pilih provinsi"}</option>
+                      {regions.provinces.map((region) => <option key={region.code} value={region.code}>{region.name}</option>)}
                     </select>
                   </Field>
-                  <Field label="Filter provinsi">
-                    <select value={schoolProvince} onChange={(event) => setSchoolProvince(event.target.value)} className="w-full rounded-lg border border-[#DCE2EA] bg-white px-3 py-2.5 text-sm text-[#17345B]">
-                      <option value="">Semua provinsi</option>
-                      {provinces.map((province) => <option key={province} value={province}>{province}</option>)}
+                  <Field label="Kabupaten/kota">
+                    <select
+                      required
+                      value={regionCodes.regency}
+                      disabled={!regionCodes.province || regionLoading.regencies}
+                      onChange={(event) => setRegionCodes((current) => ({ ...current, regency: event.target.value }))}
+                      className="form-control disabled:bg-[#F3F5F8]"
+                    >
+                      <option value="">{regionLoading.regencies ? "Memuat kabupaten/kota..." : "Pilih kabupaten/kota"}</option>
+                      {regions.regencies.map((region) => <option key={region.code} value={region.code}>{region.name}</option>)}
                     </select>
                   </Field>
                 </>
               )}
-
-              <Field label="NPSN resmi">
-                <input readOnly value={selectedSchool?.npsn || ""} placeholder="Terisi setelah sekolah dipilih" className="w-full rounded-lg border border-[#DCE2EA] bg-[#F3F5F8] px-3 py-2.5 text-sm text-[#475467]" />
-              </Field>
-              <Field label="Lokasi administratif">
-                <input readOnly value={selectedSchool ? schoolLocation(selectedSchool) : ""} placeholder="Terisi setelah sekolah dipilih" className="w-full rounded-lg border border-[#DCE2EA] bg-[#F3F5F8] px-3 py-2.5 text-sm text-[#475467]" />
-              </Field>
             </div>
-            {schoolLoadError && <p role="alert" className="mt-3 text-sm text-rose-700">{schoolLoadError}</p>}
+            {regionError && <p role="alert" className="mt-3 text-sm text-rose-700">{regionError}</p>}
             <p className="mt-3 rounded-lg bg-[#EFF6FF] px-3 py-2.5 text-xs leading-5 text-[#345B83]">
-              Data sekolah memakai dataset lokal dari{" "}
-              <a href="https://data.kemendikdasmen.go.id/data-induk" target="_blank" rel="noreferrer" className="font-semibold underline">Data Induk Kemendikdasmen</a>.
-              {" "}Data ini bukan sinkronisasi real-time; tanggal pembaruan sumber belum tercatat. Admin tetap memeriksa pengajuan sebelum kebutuhan ditampilkan kepada publik.
+              Nama sekolah dan NPSN diisi oleh pengaju. Pilihan wilayah berasal dari layanan data wilayah, sedangkan admin memeriksa identitas dan bukti kewenangan sebelum kampanye dipublikasikan.
             </p>
           </Section>
 

@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1000" viewBox="0 0 1440 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Mockup konseptual halaman utama EducationBridge</title>
+  <desc id="desc">Rancangan halaman web untuk menemukan dan mendukung kebutuhan pendidikan sekolah.</desc>
+  <defs>
+    <linearGradient id="hero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#102744"/>
+      <stop offset="1" stop-color="#1e4965"/>
+    </linearGradient>
+    <linearGradient id="photo1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c8e6dc"/>
+      <stop offset="1" stop-color="#86b7a4"/>
+    </linearGradient>
+    <linearGradient id="photo2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d7e8f5"/>
+      <stop offset="1" stop-color="#96b8d1"/>
+    </linearGradient>
+    <linearGradient id="photo3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8e2be"/>
+      <stop offset="1" stop-color="#e3ae70"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#102744" flood-opacity=".09"/>
+    </filter>
+  </defs>
+
+  <rect width="1440" height="1000" fill="#f6f8fb"/>
+  <rect x="0" y="0" width="1440" height="35" fill="#fff4e8"/>
+  <text x="720" y="23" fill="#975314" font-family="Arial, sans-serif" font-size="13" font-weight="700" text-anchor="middle" letter-spacing="1.4">MOCKUP KONSEPTUAL — BUKAN SCREENSHOT APLIKASI PRODUKSI</text>
+
+  <rect x="0" y="35" width="1440" height="92" fill="#ffffff"/>
+  <text x="95" y="92" fill="#102744" font-family="Arial, sans-serif" font-size="28" font-weight="700">Education<tspan fill="#eb8732">Bridge</tspan></text>
+  <circle cx="77" cy="80" r="19" fill="#fff1e1"/>
+  <path d="M67 83h20M69 78l8-7 8 7M71 83v8h12v-8" fill="none" stroke="#eb8732" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="790" y="87" fill="#526174" font-family="Arial, sans-serif" font-size="16">Beranda</text>
+  <text x="895" y="87" fill="#526174" font-family="Arial, sans-serif" font-size="16">Kebutuhan Sekolah</text>
+  <text x="1080" y="87" fill="#526174" font-family="Arial, sans-serif" font-size="16">Tentang</text>
+  <rect x="1190" y="58" width="155" height="48" rx="12" fill="#102744"/>
+  <text x="1267" y="88" fill="#ffffff" font-family="Arial, sans-serif" font-size="15" font-weight="700" text-anchor="middle">Masuk / Daftar</text>
+
+  <rect x="64" y="158" width="1312" height="366" rx="28" fill="url(#hero)"/>
+  <circle cx="1203" cy="239" r="132" fill="#ffffff" opacity=".045"/>
+  <circle cx="1288" cy="425" r="190" fill="#f0a45d" opacity=".12"/>
+  <rect x="105" y="199" width="249" height="34" rx="17" fill="#ffffff" opacity=".13"/>
+  <circle cx="126" cy="216" r="5" fill="#ffb46f"/>
+  <text x="143" y="221" fill="#ffffff" font-family="Arial, sans-serif" font-size="13" font-weight="700" letter-spacing=".7">DUKUNG PENDIDIKAN YANG LEBIH MERATA</text>
+  <text x="105" y="293" fill="#ffffff" font-family="Arial, sans-serif" font-size="43" font-weight="700">Bersama membuka</text>
+  <text x="105" y="344" fill="#ffffff" font-family="Arial, sans-serif" font-size="43" font-weight="700">lebih banyak kesempatan.</text>
+  <text x="105" y="385" fill="#dbe6f0" font-family="Arial, sans-serif" font-size="17">Temukan kebutuhan sekolah dan berikan dukungan yang berarti.</text>
+  <text x="105" y="412" fill="#dbe6f0" font-family="Arial, sans-serif" font-size="17">Informasi kebutuhan ditinjau sebelum ditampilkan kepada publik.</text>
+  <rect x="105" y="444" width="218" height="52" rx="13" fill="#f08b3e"/>
+  <text x="214" y="477" fill="#ffffff" font-family="Arial, sans-serif" font-size="16" font-weight="700" text-anchor="middle">Jelajahi Kebutuhan</text>
+  <rect x="345" y="444" width="176" height="52" rx="13" fill="none" stroke="#ffffff" stroke-opacity=".65" stroke-width="1.5"/>
+  <text x="433" y="477" fill="#ffffff" font-family="Arial, sans-serif" font-size="16" font-weight="700" text-anchor="middle">Ajukan Kebutuhan</text>
+
+  <g filter="url(#shadow)">
+    <rect x="925" y="211" width="360" height="261" rx="20" fill="#ffffff"/>
+    <rect x="947" y="233" width="316" height="139" rx="14" fill="#e7f1ec"/>
+    <path d="M947 328l78-58 60 43 53-28 125 87H947z" fill="#8cb59e"/>
+    <path d="M947 345l78-58 60 43 53-28 125 87H947z" fill="#638f77"/>
+    <rect x="1078" y="292" width="59" height="58" rx="3" fill="#f4e5cb"/>
+    <path d="M1069 295l38-31 39 31z" fill="#b96c43"/>
+    <rect x="1091" y="312" width="13" height="19" fill="#7694a2"/>
+    <rect x="1112" y="312" width="13" height="19" fill="#7694a2"/>
+    <rect x="949" y="386" width="117" height="25" rx="12" fill="#e7f5ee"/>
+    <text x="1007" y="403" fill="#307456" font-family="Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle">PRIORITAS TINGGI</text>
+    <text x="949" y="439" fill="#102744" font-family="Arial, sans-serif" font-size="17" font-weight="700">Ruang belajar yang lebih layak</text>
+    <text x="949" y="461" fill="#718096" font-family="Arial, sans-serif" font-size="12">Contoh ilustrasi kebutuhan sekolah</text>
+    <rect x="1172" y="393" width="89" height="31" rx="15" fill="#fff2e5"/>
+    <text x="1216" y="413" fill="#b96821" font-family="Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle">BUTUH DUKUNGAN</text>
+  </g>
+
+  <text x="80" y="587" fill="#102744" font-family="Arial, sans-serif" font-size="27" font-weight="700">Kebutuhan yang dapat Anda dukung</text>
+  <text x="80" y="615" fill="#718096" font-family="Arial, sans-serif" font-size="15">Telusuri kampanye dan pelajari informasi sekolah sebelum berdonasi.</text>
+  <rect x="1170" y="571" width="190" height="44" rx="11" fill="#ffffff" stroke="#d8e0e9"/>
+  <text x="1190" y="598" fill="#526174" font-family="Arial, sans-serif" font-size="13">Urutkan: Prioritas</text>
+  <path d="M1337 590l6 7 6-7" fill="none" stroke="#718096" stroke-width="1.8" stroke-linecap="round"/>
+
+  <g filter="url(#shadow)">
+    <rect x="80" y="647" width="405" height="280" rx="18" fill="#ffffff"/>
+    <rect x="517" y="647" width="405" height="280" rx="18" fill="#ffffff"/>
+    <rect x="954" y="647" width="405" height="280" rx="18" fill="#ffffff"/>
+  </g>
+  <rect x="96" y="663" width="373" height="118" rx="12" fill="url(#photo1)"/>
+  <path d="M96 745l91-62 62 40 66-47 154 105H96z" fill="#75a68d"/>
+  <rect x="205" y="703" width="86" height="56" rx="3" fill="#f5e5c9"/>
+  <path d="M196 705l52-37 53 37z" fill="#b96c43"/>
+  <rect x="220" y="721" width="16" height="17" fill="#7194a1"/>
+  <rect x="259" y="721" width="16" height="17" fill="#7194a1"/>
+  <rect x="533" y="663" width="373" height="118" rx="12" fill="url(#photo2)"/>
+  <circle cx="835" cy="694" r="28" fill="#ffe1a5"/>
+  <path d="M533 747l81-52 76 49 73-39 143 76H533z" fill="#7298b3"/>
+  <rect x="664" y="698" width="87" height="61" rx="3" fill="#f4e5cb"/>
+  <path d="M654 700l53-36 54 36z" fill="#bb7553"/>
+  <rect x="681" y="718" width="15" height="17" fill="#7999aa"/>
+  <rect x="718" y="718" width="15" height="17" fill="#7999aa"/>
+  <rect x="970" y="663" width="373" height="118" rx="12" fill="url(#photo3)"/>
+  <path d="M970 747l88-54 72 44 88-51 125 90H970z" fill="#be966b"/>
+  <rect x="1092" y="697" width="91" height="61" rx="3" fill="#f7ead5"/>
+  <path d="M1082 700l55-39 56 39z" fill="#b96c43"/>
+  <rect x="1110" y="719" width="17" height="17" fill="#839eac"/>
+  <rect x="1148" y="719" width="17" height="17" fill="#839eac"/>
+
+  <rect x="100" y="795" width="110" height="23" rx="11" fill="#e8f4ed"/>
+  <text x="155" y="811" fill="#307456" font-family="Arial, sans-serif" font-size="10" font-weight="700" text-anchor="middle">PRIORITAS TINGGI</text>
+  <text x="100" y="846" fill="#102744" font-family="Arial, sans-serif" font-size="17" font-weight="700">Perbaikan ruang kelas</text>
+  <text x="100" y="869" fill="#718096" font-family="Arial, sans-serif" font-size="12">SD Harapan · Contoh lokasi</text>
+  <rect x="100" y="890" width="360" height="7" rx="3" fill="#e8edf2"/>
+  <rect x="100" y="890" width="153" height="7" rx="3" fill="#ed8b42"/>
+  <text x="100" y="917" fill="#526174" font-family="Arial, sans-serif" font-size="11">Rp 7.500.000 terkumpul</text>
+  <text x="460" y="917" fill="#526174" font-family="Arial, sans-serif" font-size="11" text-anchor="end">42%</text>
+
+  <rect x="537" y="795" width="110" height="23" rx="11" fill="#e8f4ed"/>
+  <text x="592" y="811" fill="#307456" font-family="Arial, sans-serif" font-size="10" font-weight="700" text-anchor="middle">PRIORITAS TINGGI</text>
+  <text x="537" y="846" fill="#102744" font-family="Arial, sans-serif" font-size="17" font-weight="700">Buku untuk perpustakaan</text>
+  <text x="537" y="869" fill="#718096" font-family="Arial, sans-serif" font-size="12">SMP Cendekia · Contoh lokasi</text>
+  <rect x="537" y="890" width="360" height="7" rx="3" fill="#e8edf2"/>
+  <rect x="537" y="890" width="218" height="7" rx="3" fill="#ed8b42"/>
+  <text x="537" y="917" fill="#526174" font-family="Arial, sans-serif" font-size="11">Rp 10.000.000 terkumpul</text>
+  <text x="897" y="917" fill="#526174" font-family="Arial, sans-serif" font-size="11" text-anchor="end">61%</text>
+
+  <rect x="974" y="795" width="110" height="23" rx="11" fill="#fff2e5"/>
+  <text x="1029" y="811" fill="#b96821" font-family="Arial, sans-serif" font-size="10" font-weight="700" text-anchor="middle">PERLU DUKUNGAN</text>
+  <text x="974" y="846" fill="#102744" font-family="Arial, sans-serif" font-size="17" font-weight="700">Fasilitas sanitasi sekolah</text>
+  <text x="974" y="869" fill="#718096" font-family="Arial, sans-serif" font-size="12">SD Tunas Bangsa · Contoh lokasi</text>
+  <rect x="974" y="890" width="360" height="7" rx="3" fill="#e8edf2"/>
+  <rect x="974" y="890" width="86" height="7" rx="3" fill="#ed8b42"/>
+  <text x="974" y="917" fill="#526174" font-family="Arial, sans-serif" font-size="11">Rp 3.200.000 terkumpul</text>
+  <text x="1334" y="917" fill="#526174" font-family="Arial, sans-serif" font-size="11" text-anchor="end">24%</text>
+
+  <text x="720" y="975" fill="#8a95a3" font-family="Arial, sans-serif" font-size="12" text-anchor="middle">Semua nama sekolah, angka donasi, lokasi, dan visual kartu pada gambar ini hanya contoh mockup.</text>
+</svg>

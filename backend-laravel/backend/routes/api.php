@@ -1,16 +1,16 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AdminReportController;
+use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\MatchController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RegionController;
 use App\Http\Controllers\ReportController;
-use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\SchoolAccountController;
+use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\StatsController;
 use Illuminate\Support\Facades\Route;
 

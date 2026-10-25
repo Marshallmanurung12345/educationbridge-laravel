@@ -446,7 +446,13 @@ export default function AdminDashboard({ campaignQueue = false }) {
                 ) : (
                   <div className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-[#D9E0E8] bg-[#F8F9FB] text-center text-xs text-[#8893A3]">Belum ada foto kebutuhan</div>
                 )}
-                <p className="mt-2 text-xs text-[#667085]">NPSN: {selectedCampaign.school?.npsn || "—"}</p>
+                <p className="mt-2 text-xs text-[#667085]">Jenjang: {selectedCampaign.school?.jenjang || selectedCampaign.school_jenjang || "—"}</p>
+                <p className="mt-1 text-xs text-[#667085]">NPSN: {selectedCampaign.school?.npsn || selectedCampaign.school_npsn || "—"}</p>
+                {!selectedCampaign.school_id && (
+                  <p className="mt-2 rounded-md bg-amber-50 p-2 text-xs leading-5 text-amber-800">
+                    Identitas sekolah dan NPSN diisi manual. Periksa NPSN, lokasi, serta bukti kewenangan sebelum menyetujui pengajuan.
+                  </p>
+                )}
                 <p className="mt-1 text-xs text-[#667085]">Wilayah: {[selectedCampaign.school?.kecamatan, selectedCampaign.school?.kabupaten_kota, selectedCampaign.school?.provinsi].filter(Boolean).join(", ") || selectedCampaign.location || "Data belum tersedia"}</p>
                 <p className="mt-1 text-xs text-[#667085]">Status 3T: {selectedCampaign.school?.is_3t === true ? "Terverifikasi 3T" : selectedCampaign.school?.is_3t === false ? "Bukan wilayah 3T" : "Data belum tersedia"}</p>
                 <p className="mt-1 text-xs text-[#667085]">Status: <Status value={selectedCampaign.status} /></p>
