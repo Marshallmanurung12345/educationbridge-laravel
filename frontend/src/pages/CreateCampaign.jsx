@@ -4,6 +4,7 @@ import { api } from "../api";
 import LoadingIndicator from "../components/LoadingIndicator";
 import { useAuth } from "../context/AuthContext";
 import { listRegions } from "../wilayahApi";
+import { digitsOnly, formatThousands } from "../utils/amount";
 
 const categories = ["Fasilitas", "Buku", "Teknologi", "Beasiswa", "Laboratorium"];
 const schoolLevels = ["PAUD", "SD", "SMP", "SMA", "SMK", "SLB", "MI", "MTs", "MA", "Paket A", "Paket B", "Paket C"];
@@ -111,6 +112,7 @@ export default function CreateCampaign() {
   const [loadingEdit, setLoadingEdit] = useState(isEditing);
   const [imageFile, setImageFile] = useState(null);
   const [proofFile, setProofFile] = useState(null);
+  const [targetAmountFocused, setTargetAmountFocused] = useState(false);
   const imagePreview = useImagePreview(imageFile);
   const proofPreview = useImagePreview(proofFile);
 
@@ -213,6 +215,12 @@ export default function CreateCampaign() {
       return;
     }
 
+    const targetAmount = Number(digitsOnly(form.target_amount));
+    if (!Number.isSafeInteger(targetAmount) || targetAmount < 1) {
+      setError("Masukkan target dana yang valid dan lebih besar dari Rp0.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const payload = {
@@ -222,7 +230,7 @@ export default function CreateCampaign() {
           ? `${regency.name}, ${province.name}`
           : form.location,
         tags: [form.category.toLowerCase(), ...(categoryTags[form.category] || [])],
-        target_amount: Number(form.target_amount),
+        target_amount: targetAmount,
         student_count: Number(form.student_count),
         urgency: Number(form.urgency),
         facility_condition: Number(form.facility_condition),
@@ -465,7 +473,22 @@ export default function CreateCampaign() {
                 <input required type="date" min={form.start_date || (isEditing ? undefined : today)} value={form.end_date} onChange={(event) => update("end_date", event.target.value)} className="form-control" />
               </Field>
               <Field label="Target dana (Rp)">
-                <input required type="number" min="1" step="1000" value={form.target_amount} onChange={(event) => update("target_amount", event.target.value)} className="form-control" placeholder="Contoh: 50000000" />
+                <input
+                  required
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9.]+"
+                  value={targetAmountFocused ? digitsOnly(form.target_amount) : formatThousands(form.target_amount)}
+                  onFocus={() => setTargetAmountFocused(true)}
+                  onBlur={() => setTargetAmountFocused(false)}
+                  onChange={(event) => update("target_amount", digitsOnly(event.target.value))}
+                  className="form-control"
+                  placeholder="Contoh: 45.000.000"
+                  aria-describedby="target-amount-help"
+                />
+                <span id="target-amount-help" className="mt-1 block text-xs text-[#8893A3]">
+                  Masukkan angka rupiah, contoh 45.000.000.
+                </span>
               </Field>
               <Field label="Jumlah siswa terdampak">
                 <input required type="number" min="0" step="1" value={form.student_count} onChange={(event) => update("student_count", event.target.value)} className="form-control" placeholder="Contoh: 120" />

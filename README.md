@@ -37,6 +37,15 @@ Buat project PostgreSQL di Neon, lalu catat host, nama database, username, dan p
 
 Tidak ada kredensial production di file konfigurasi. Simpan semua nilai rahasia hanya pada environment variable provider. Jangan menjalankan `php artisan migrate --seed` di production karena seeder lokal membuat akun demo dengan password yang diketahui.
 
+### Hosting bersama (cPanel)
+
+Untuk deployment manual pada hosting yang sudah memiliki Laravel:
+
+1. Ekstrak ZIP frontend ke `public_html`, tanpa menimpa `api/index.php`.
+2. Ekstrak ZIP backend ke direktori aplikasi Laravel, tanpa menimpa `.env`.
+3. Dari Terminal cPanel, jalankan `php artisan migrate --force` di direktori aplikasi Laravel. Migrasi ini menambahkan kolom yang dipakai pengajuan kebutuhan; jangan menghapus atau mengubah tabel secara manual.
+4. Pastikan proses PHP hosting dapat menulis ke `storage` dan `bootstrap/cache`. Untuk unggahan foto privat, pastikan `storage/app/private/campaign-uploads` tersedia dan dapat ditulis oleh proses PHP.
+
 **Data sekolah:** dataset contoh dalam repository hanya memuat 9 sekolah. Pengaju kebutuhan dapat memasukkan nama sekolah dan NPSN secara manual serta memilih wilayah administratif dari daftar. Jika NPSN cocok dengan data yang sudah diimpor, pengajuan akan ditautkan ke data sekolah tersebut; jika tidak, admin perlu memeriksa identitas dan bukti sebelum menyetujui kampanye. Pendaftaran akun sekolah tetap memerlukan verifikasi admin.
 
 Impor snapshot CSV sekolah nasional bersifat opsional untuk memperkaya direktori dan mencocokkan NPSN secara otomatis. Lihat [panduan data sekolah](./docs/sinkronisasi-data-sekolah.md). Impor dijalankan manual; data tidak disinkronkan otomatis atau real-time.
