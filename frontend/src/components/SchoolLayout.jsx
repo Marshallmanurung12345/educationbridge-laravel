@@ -33,7 +33,7 @@ function Sidebar({ onNavigate }) {
         <span className="font-display text-lg font-semibold text-white">EducationBridge</span>
       </Link>
 
-      <nav aria-label="Navigasi sekolah" className="flex-1 space-y-1 px-3 py-5">
+      <nav aria-label="Navigasi sekolah" className="flex flex-1 flex-col gap-2 px-3 py-5">
         {links.map(({ label, to, icon }) => {
           const isActive =
             to === "/dashboard-sekolah#pengajuan-saya"
@@ -49,7 +49,7 @@ function Sidebar({ onNavigate }) {
               to={to}
               onClick={onNavigate}
               aria-current={isActive ? "page" : undefined}
-              className={`relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm transition ${
+              className={`relative flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
                 isActive
                   ? "bg-white/15 font-semibold text-white before:absolute before:bottom-2 before:left-0 before:top-2 before:w-[3px] before:rounded-r before:bg-[#F28C28]"
                   : "text-white/80 hover:bg-white/10 hover:text-white"
@@ -58,7 +58,7 @@ function Sidebar({ onNavigate }) {
               <svg viewBox="0 0 24 24" aria-hidden="true" className="h-[18px] w-[18px] shrink-0 fill-none stroke-current stroke-[1.7]">
                 <path d={icon} strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              {label}
+              <span className="leading-5">{label}</span>
             </Link>
           );
         })}
