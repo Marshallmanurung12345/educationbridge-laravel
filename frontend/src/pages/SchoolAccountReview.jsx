@@ -57,13 +57,18 @@ export default function SchoolAccountReview() {
   async function updateStatus(account, status) {
     const note =
       status === "verified"
-        ? ""
+        ? account.school
+          ? ""
+          : window.prompt(
+              "NPSN ini tidak ada di direktori lokal. Periksa melalui sumber resmi, lalu catat hasil pemeriksaan dan bukti kewenangan:",
+            )?.trim()
         : window.prompt(
             status === "revision_required"
               ? "Catatan perbaikan untuk sekolah:"
               : "Alasan penolakan:",
           )?.trim();
     if (status !== "verified" && !note) return;
+    if (status === "verified" && !account.school && !note) return;
 
     setError("");
     setUpdatingId(account.id);
@@ -83,7 +88,7 @@ export default function SchoolAccountReview() {
       <div className="mx-auto max-w-[1500px]">
         <div>
           <h1 className="page-title text-[#17345B]">Verifikasi Sekolah</h1>
-          <p className="mt-1 text-sm text-[#667085]">Periksa data pendaftar dan kecocokan NPSN pada data sekolah resmi.</p>
+          <p className="mt-1 text-sm text-[#667085]">Periksa identitas pendaftar. NPSN yang tidak ada di direktori lokal dapat diverifikasi melalui sumber resmi.</p>
         </div>
 
         {error && <p role="alert" className="mt-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</p>}
@@ -119,7 +124,7 @@ export default function SchoolAccountReview() {
                         </td>
                         <td className="px-5 py-3.5 font-mono text-[#475467]">{account.npsn || "—"}</td>
                         <td className="px-5 py-3.5 text-[#667085]">
-                          {[account.school?.kabupaten_kota, account.school?.provinsi].filter(Boolean).join(", ") || "Belum cocok dengan data resmi"}
+                          {[account.school?.kabupaten_kota, account.school?.provinsi].filter(Boolean).join(", ") || "Tidak ada di direktori lokal"}
                         </td>
                         <td className="whitespace-nowrap px-5 py-3.5 text-[#667085]">{dateLabel(account.created_at)}</td>
                         <td className="px-5 py-3.5">
@@ -163,14 +168,14 @@ export default function SchoolAccountReview() {
               <div><dt className="text-[#8893A3]">Nama perwakilan</dt><dd className="mt-0.5 font-medium text-[#17345B]">{selectedAccount.name}</dd></div>
               <div><dt className="text-[#8893A3]">Email</dt><dd className="mt-0.5 font-medium text-[#17345B]">{selectedAccount.email}</dd></div>
               <div><dt className="text-[#8893A3]">Nomor telepon</dt><dd className="mt-0.5 font-medium text-[#17345B]">{selectedAccount.phone || "—"}</dd></div>
-              <div className="sm:col-span-2"><dt className="text-[#8893A3]">Kecocokan data sekolah resmi</dt><dd className="mt-0.5 font-medium text-[#17345B]">{selectedAccount.school ? `${selectedAccount.school.name} · ${selectedAccount.school.npsn} · ${selectedAccount.school.kabupaten_kota}, ${selectedAccount.school.provinsi}` : "Belum cocok. Minta pendaftar memperbaiki data sebelum menyetujui akun."}</dd></div>
+              <div className="sm:col-span-2"><dt className="text-[#8893A3]">Kecocokan direktori lokal</dt><dd className="mt-0.5 font-medium text-[#17345B]">{selectedAccount.school ? `${selectedAccount.school.name} · ${selectedAccount.school.npsn} · ${selectedAccount.school.kabupaten_kota}, ${selectedAccount.school.provinsi}` : "Tidak ditemukan pada snapshot lokal. Periksa NPSN dan kewenangan melalui sumber resmi; catat hasil pemeriksaan saat menyetujui."}</dd></div>
               {selectedAccount.verification_note && <div className="sm:col-span-2"><dt className="text-[#8893A3]">Catatan verifikasi sebelumnya</dt><dd className="mt-0.5 text-[#475467]">{selectedAccount.verification_note}</dd></div>}
             </dl>
             {selectedAccount.account_status !== "verified" && (
               <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-[#EEF0F3] pt-4">
                 <button type="button" disabled={updatingId === selectedAccount.id} onClick={() => updateStatus(selectedAccount, "rejected")} className="min-h-10 rounded-lg border border-rose-200 px-3 text-sm font-medium text-rose-700 disabled:opacity-50">Tolak</button>
                 <button type="button" disabled={updatingId === selectedAccount.id} onClick={() => updateStatus(selectedAccount, "revision_required")} className="min-h-10 rounded-lg border border-[#F3C58F] px-3 text-sm font-medium text-[#A4540B] disabled:opacity-50">Minta Perbaikan</button>
-                <button type="button" disabled={updatingId === selectedAccount.id || !selectedAccount.school} onClick={() => updateStatus(selectedAccount, "verified")} className="min-h-10 rounded-lg bg-[#17345B] px-4 text-sm font-semibold text-white disabled:opacity-50">Setujui Akun</button>
+                <button type="button" disabled={updatingId === selectedAccount.id} onClick={() => updateStatus(selectedAccount, "verified")} className="min-h-10 rounded-lg bg-[#17345B] px-4 text-sm font-semibold text-white disabled:opacity-50">Setujui Akun</button>
               </div>
             )}
           </section>

@@ -38,6 +38,24 @@ class AuthWorkflowTest extends TestCase
             ->assertJsonMissingPath('user.password');
     }
 
+    public function test_school_registration_accepts_a_valid_npsn_not_in_the_local_directory(): void
+    {
+        $this->postJson('/api/register', [
+            'name' => 'Perwakilan Sekolah',
+            'email' => 'unlisted-school@example.test',
+            'password' => 'strong-password',
+            'role' => 'sekolah',
+            'organization_name' => 'Sekolah Belum Ada di Direktori',
+            'npsn' => '87654321',
+            'phone' => '081234567890',
+        ])
+            ->assertCreated()
+            ->assertJsonPath('user.account_status', 'pending_verification')
+            ->assertJsonPath('user.npsn', '87654321')
+            ->assertJsonPath('user.organization_name', 'Sekolah Belum Ada di Direktori')
+            ->assertJsonPath('user.school_id', null);
+    }
+
     public function test_donor_registration_uses_the_existing_donor_role_without_profile_subtypes(): void
     {
         $response = $this->postJson('/api/register', [
@@ -139,7 +157,7 @@ class AuthWorkflowTest extends TestCase
         $this->assertSame($school->id, $auditLog->new_values['school_id']);
     }
 
-    public function test_admin_cannot_verify_school_with_unmatched_npsn(): void
+    public function test_admin_can_manually_verify_school_with_unmatched_npsn_and_must_record_evidence(): void
     {
         $account = $this->createSchoolAccount('99999999');
         $admin = $this->createUser('admin', 'admin@example.test');
@@ -148,12 +166,64 @@ class AuthWorkflowTest extends TestCase
             ->putJson("/api/admin/school-accounts/{$account->id}/status", [
                 'status' => 'verified',
             ])
-            ->assertUnprocessable();
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'NPSN tidak ditemukan pada direktori lokal. Periksa identitas sekolah melalui sumber resmi, lalu isi catatan verifikasi sebelum menyetujui akun.');
+
+        $this->actingAs($admin, 'sanctum')
+            ->putJson("/api/admin/school-accounts/{$account->id}/status", [
+                'status' => 'verified',
+                'note' => 'NPSN dan surat kewenangan diperiksa melalui sumber resmi.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('account_status', 'verified')
+            ->assertJsonPath('school_id', null)
+            ->assertJsonPath('verification_note', 'NPSN dan surat kewenangan diperiksa melalui sumber resmi.');
 
         $this->assertDatabaseHas('users', [
             'id' => $account->id,
-            'account_status' => 'pending_verification',
+            'account_status' => 'verified',
+            'school_id' => null,
         ]);
+    }
+
+    public function test_manually_verified_school_account_can_submit_for_review_without_a_local_school_record(): void
+    {
+        $account = $this->createSchoolAccount('99999999');
+        $account->organization_name = 'Sekolah di Luar Direktori';
+        $account->save();
+        $admin = $this->createUser('admin', 'admin@example.test');
+
+        $this->actingAs($admin, 'sanctum')
+            ->putJson("/api/admin/school-accounts/{$account->id}/status", [
+                'status' => 'verified',
+                'note' => 'NPSN dan surat kewenangan diperiksa melalui sumber resmi.',
+            ])
+            ->assertOk();
+
+        $account->refresh();
+        $this->actingAs($account, 'sanctum')
+            ->postJson('/api/campaigns', [
+                'school_npsn' => '99999999',
+                'school_name' => 'Nama yang tidak boleh menggantikan profil terverifikasi',
+                'school_jenjang' => 'SD',
+                'location' => 'Kabupaten Contoh, Papua',
+                'category' => 'Fasilitas',
+                'title' => 'Perbaikan ruang kelas',
+                'description' => 'Ruang kelas memerlukan perbaikan.',
+                'start_date' => now()->toDateString(),
+                'end_date' => now()->addMonth()->toDateString(),
+                'target_amount' => 10000000,
+                'urgency' => 3,
+                'facility_condition' => 3,
+                'access_score' => 3,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('school_id', null)
+            ->assertJsonPath('school_npsn', '99999999')
+            ->assertJsonPath('school_name', 'Sekolah di Luar Direktori')
+            ->assertJsonPath('school_jenjang', 'SD')
+            ->assertJsonPath('location', 'Kabupaten Contoh, Papua')
+            ->assertJsonPath('status', 'pending');
     }
 
     public function test_non_admin_cannot_list_school_accounts(): void

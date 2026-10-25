@@ -158,7 +158,7 @@ export default function Register() {
                   placeholder="8 digit NPSN"
                 />
                 <p className="mt-1 text-xs text-[#667085]">
-                  Akun sekolah menunggu pemeriksaan admin, meskipun NPSN cocok.
+                  NPSN harus terdiri dari 8 angka. Sekolah tidak harus ada di daftar lokal; admin akan memeriksa data dan kewenangan sekolah.
                 </p>
               </div>
               <div>

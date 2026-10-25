@@ -44,9 +44,9 @@ class SchoolAccountController extends Controller
         ]);
 
         $officialSchool = School::where('npsn', $user->npsn)->first();
-        if ($data['status'] === 'verified' && !$officialSchool) {
+        if ($data['status'] === 'verified' && ! $officialSchool && blank($data['note'] ?? null)) {
             return response()->json([
-                'message' => 'NPSN belum ditemukan pada data sekolah resmi. Minta sekolah memperbaiki data sebelum verifikasi.',
+                'message' => 'NPSN tidak ditemukan pada direktori lokal. Periksa identitas sekolah melalui sumber resmi, lalu isi catatan verifikasi sebelum menyetujui akun.',
             ], 422);
         }
 
@@ -59,7 +59,7 @@ class SchoolAccountController extends Controller
             ];
             $lockedUser->account_status = $data['status'];
             $lockedUser->verification_note = $data['note'] ?? null;
-            if ($data['status'] === 'verified') {
+            if ($data['status'] === 'verified' && $officialSchool) {
                 $lockedUser->school_id = $officialSchool->id;
             }
             $lockedUser->save();

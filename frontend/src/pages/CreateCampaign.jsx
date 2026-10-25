@@ -53,6 +53,10 @@ export default function CreateCampaign() {
   const editId = searchParams.get("edit");
   const isEditing = Boolean(editId);
   const isSchoolAccount = user?.role === "sekolah";
+  const hasOfficialSchool = Boolean(user?.school);
+  const needsManualSchoolLocation =
+    !isEditing && (!isSchoolAccount || !hasOfficialSchool);
+  const lockSchoolIdentity = isEditing || (isSchoolAccount && hasOfficialSchool);
   const submissionsPath =
     user?.role === "sekolah"
       ? "/dashboard-sekolah#pengajuan-saya"
@@ -62,7 +66,13 @@ export default function CreateCampaign() {
           ? "/dashboard-perusahaan"
           : "/dashboard-pemerintah";
   const [form, setForm] = useState(() => {
-    if (!user?.school) return initialForm;
+    if (!user?.school) {
+      return {
+        ...initialForm,
+        school_name: user?.organization_name || "",
+        school_npsn: user?.npsn || "",
+      };
+    }
     const school = user.school;
     return {
       ...initialForm,
@@ -85,7 +95,7 @@ export default function CreateCampaign() {
   const [loadingEdit, setLoadingEdit] = useState(isEditing);
 
   useEffect(() => {
-    if (isSchoolAccount || isEditing) return undefined;
+    if (!needsManualSchoolLocation) return undefined;
 
     let active = true;
     listRegions("provinces")
@@ -102,10 +112,10 @@ export default function CreateCampaign() {
     return () => {
       active = false;
     };
-  }, [isSchoolAccount, isEditing]);
+  }, [needsManualSchoolLocation]);
 
   useEffect(() => {
-    if (isSchoolAccount || isEditing || !regionCodes.province) return undefined;
+    if (!needsManualSchoolLocation || !regionCodes.province) return undefined;
 
     let active = true;
     listRegions("regencies", regionCodes.province)
@@ -122,7 +132,7 @@ export default function CreateCampaign() {
     return () => {
       active = false;
     };
-  }, [isSchoolAccount, isEditing, regionCodes.province]);
+  }, [needsManualSchoolLocation, regionCodes.province]);
 
   useEffect(() => {
     if (!editId) return undefined;
@@ -178,11 +188,7 @@ export default function CreateCampaign() {
     setError("");
     const province = regions.provinces.find((region) => region.code === regionCodes.province);
     const regency = regions.regencies.find((region) => region.code === regionCodes.regency);
-    if (isSchoolAccount && !form.school_id) {
-      setError("Akun sekolah belum terhubung dengan data sekolah. Hubungi admin.");
-      return;
-    }
-    if (!isSchoolAccount && !isEditing && (!province || !regency)) {
+    if (needsManualSchoolLocation && (!province || !regency)) {
       setError("Pilih provinsi dan kabupaten/kota dari daftar.");
       return;
     }
@@ -192,7 +198,7 @@ export default function CreateCampaign() {
       const payload = {
         ...form,
         school_id: isSchoolAccount || isEditing ? form.school_id || null : null,
-        location: !isSchoolAccount && !isEditing
+        location: needsManualSchoolLocation
           ? `${regency.name}, ${province.name}`
           : form.location,
         tags: [form.category.toLowerCase(), ...(categoryTags[form.category] || [])],
@@ -272,19 +278,23 @@ export default function CreateCampaign() {
           <Section
             number="1"
             title="Informasi Sekolah"
-            description={isSchoolAccount || isEditing
+            description={isEditing
               ? "Periksa kembali identitas dan lokasi sekolah pada pengajuan."
-              : "Isi identitas sekolah; pilih provinsi dan kabupaten/kota dari daftar."}
+              : isSchoolAccount
+                ? hasOfficialSchool
+                  ? "Periksa kembali identitas dan lokasi sekolah pada pengajuan."
+                  : "Identitas sekolah mengikuti data akun terverifikasi. Pilih jenjang dan lokasi sekolah."
+                : "Isi identitas sekolah; pilih provinsi dan kabupaten/kota dari daftar."}
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Nama sekolah" className="sm:col-span-2">
                 <input
                   required
                   maxLength={255}
-                  readOnly={isSchoolAccount || isEditing}
+                  readOnly={lockSchoolIdentity}
                   value={form.school_name}
                   onChange={(event) => update("school_name", event.target.value)}
-                  className={`form-control ${(isSchoolAccount || isEditing) ? "bg-[#F3F5F8]" : ""}`}
+                  className={`form-control ${lockSchoolIdentity ? "bg-[#F3F5F8]" : ""}`}
                   placeholder="Masukkan nama resmi sekolah"
                 />
               </Field>
@@ -296,10 +306,10 @@ export default function CreateCampaign() {
                   pattern="[0-9]{8}"
                   minLength={8}
                   maxLength={8}
-                  readOnly={isSchoolAccount || isEditing}
+                  readOnly={lockSchoolIdentity}
                   value={form.school_npsn}
                   onChange={(event) => update("school_npsn", event.target.value.replace(/\D/g, "").slice(0, 8))}
-                  className={`form-control ${(isSchoolAccount || isEditing) ? "bg-[#F3F5F8]" : ""}`}
+                  className={`form-control ${lockSchoolIdentity ? "bg-[#F3F5F8]" : ""}`}
                   placeholder="8 digit NPSN"
                   title="NPSN terdiri dari 8 angka."
                 />
@@ -309,7 +319,7 @@ export default function CreateCampaign() {
                 <select
                   required
                   value={form.school_jenjang}
-                  disabled={isSchoolAccount || isEditing}
+                  disabled={lockSchoolIdentity}
                   onChange={(event) => update("school_jenjang", event.target.value)}
                   className="form-control disabled:bg-[#F3F5F8]"
                 >
@@ -318,7 +328,7 @@ export default function CreateCampaign() {
                 </select>
               </Field>
 
-              {isSchoolAccount || isEditing ? (
+              {!needsManualSchoolLocation ? (
                 <Field label="Lokasi administratif" className="sm:col-span-2">
                   <input readOnly value={form.location} className="form-control bg-[#F3F5F8]" />
                 </Field>
@@ -358,7 +368,7 @@ export default function CreateCampaign() {
             </div>
             {regionError && <p role="alert" className="mt-3 text-sm text-rose-700">{regionError}</p>}
             <p className="mt-3 rounded-lg bg-[#EFF6FF] px-3 py-2.5 text-xs leading-5 text-[#345B83]">
-              Nama sekolah dan NPSN diisi oleh pengaju. Pilihan wilayah berasal dari layanan data wilayah, sedangkan admin memeriksa identitas dan bukti kewenangan sebelum kampanye dipublikasikan.
+              Nama sekolah dan NPSN tidak harus tersedia di direktori lokal. Pengaju memilih lokasi dari layanan data wilayah; admin tetap memeriksa identitas dan bukti kewenangan sebelum kampanye dipublikasikan.
             </p>
           </Section>
 

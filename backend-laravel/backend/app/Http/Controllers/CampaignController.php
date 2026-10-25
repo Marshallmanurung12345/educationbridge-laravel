@@ -83,13 +83,21 @@ class CampaignController extends Controller
     {
         $user = $request->user();
         $isSchool = $user->role === 'sekolah';
+        $officialSchool = $isSchool ? $user->school : null;
+        $manualSchoolAccount = $isSchool && ! $officialSchool;
+
+        if ($isSchool && $user->account_status !== 'verified') {
+            return response()->json([
+                'message' => 'Akun sekolah harus diverifikasi admin sebelum dapat mengajukan kebutuhan.',
+            ], 403);
+        }
 
         $data = $request->validate([
             'school_id' => 'nullable|integer|exists:schools,id',
-            'school_npsn' => $isSchool ? 'nullable|digits:8' : 'required_without:school_id|digits:8',
-            'school_jenjang' => $isSchool ? 'nullable|string|max:100' : 'required_without:school_id|string|max:100',
-            'school_name' => $isSchool ? 'nullable|string|max:255' : 'required_without:school_id|string|max:255',
-            'location' => $isSchool ? 'nullable|string|max:255' : 'required_without:school_id|string|max:255',
+            'school_npsn' => $manualSchoolAccount ? 'required|digits:8' : ($isSchool ? 'nullable|digits:8' : 'required_without:school_id|digits:8'),
+            'school_jenjang' => $manualSchoolAccount ? 'required|string|max:100' : ($isSchool ? 'nullable|string|max:100' : 'required_without:school_id|string|max:100'),
+            'school_name' => $manualSchoolAccount ? 'required|string|max:255' : ($isSchool ? 'nullable|string|max:255' : 'required_without:school_id|string|max:255'),
+            'location' => $manualSchoolAccount ? 'required|string|max:255' : ($isSchool ? 'nullable|string|max:255' : 'required_without:school_id|string|max:255'),
             'category' => 'required|string|max:100',
             'tags' => 'nullable|array',
             'title' => 'required|string|max:255',
@@ -108,15 +116,8 @@ class CampaignController extends Controller
             'image_url' => 'nullable|string',
         ]);
 
-        if ($isSchool && $user->account_status !== 'verified') {
-            return response()->json([
-                'message' => 'Akun sekolah harus diverifikasi admin sebelum dapat mengajukan kebutuhan.',
-            ], 403);
-        }
-
         if ($isSchool) {
-            $officialSchool = $user->school;
-            if (! $officialSchool || $officialSchool->npsn !== $user->npsn) {
+            if ($officialSchool && $officialSchool->npsn !== $user->npsn) {
                 return response()->json([
                     'message' => 'Data sekolah terverifikasi belum terhubung dengan akun ini.',
                 ], 422);
@@ -127,16 +128,16 @@ class CampaignController extends Controller
                 : School::where('npsn', $data['school_npsn'])->first();
         }
 
-        if (! $officialSchool && $isSchool) {
-            return response()->json(['message' => 'Sekolah yang dipilih tidak ditemukan.'], 422);
-        }
-
         if ($officialSchool) {
             $data['school_id'] = $officialSchool->id;
             $data['school_npsn'] = $officialSchool->npsn;
             $data['school_jenjang'] = $officialSchool->jenjang;
             $data['school_name'] = $officialSchool->name;
             $data['location'] = "{$officialSchool->kecamatan}, {$officialSchool->kabupaten_kota}, {$officialSchool->provinsi}";
+        } elseif ($manualSchoolAccount) {
+            $data['school_id'] = null;
+            $data['school_npsn'] = $user->npsn;
+            $data['school_name'] = $user->organization_name;
         } else {
             $data['school_id'] = null;
         }
