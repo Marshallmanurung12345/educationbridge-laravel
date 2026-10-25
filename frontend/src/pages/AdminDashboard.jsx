@@ -174,9 +174,15 @@ export default function AdminDashboard({ campaignQueue = false }) {
   }, [selectedCampaign?.id, selectedCampaign?.supporting_document]);
 
   const activeProofPreview =
-    proofPreview?.source === selectedCampaign?.supporting_document ? proofPreview.url : "";
+    proofPreview &&
+    proofPreview.source === selectedCampaign?.supporting_document
+      ? proofPreview.url
+      : "";
   const activeProofError =
-    proofError?.source === selectedCampaign?.supporting_document ? proofError.message : "";
+    proofError &&
+    proofError.source === selectedCampaign?.supporting_document
+      ? proofError.message
+      : "";
 
   const pendingAccounts = useMemo(
     () => accounts.filter((account) => account.account_status === "pending_verification"),

@@ -1,5 +1,4 @@
 import { Navigate, Routes, Route, useLocation } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/AdminLayout";
@@ -26,11 +25,7 @@ import PaymentStatus from "./pages/PaymentStatus";
 import AdminReports from "./pages/AdminReports";
 
 export default function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
+  return <AppContent />;
 }
 
 function AppContent() {

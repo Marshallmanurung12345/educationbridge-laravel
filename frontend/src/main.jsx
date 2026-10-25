@@ -4,13 +4,16 @@ import App from "./App.jsx";
 import "./index.css";
 import React from "react";
 import AppErrorBoundary from "./components/AppErrorBoundary.jsx";
+import { AuthProvider } from "./context/AuthContext.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <AppErrorBoundary>
+    <AuthProvider>
       <BrowserRouter>
-        <App />
+        <AppErrorBoundary>
+          <App />
+        </AppErrorBoundary>
       </BrowserRouter>
-    </AppErrorBoundary>
+    </AuthProvider>
   </React.StrictMode>
 );
