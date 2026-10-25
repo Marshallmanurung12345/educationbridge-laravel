@@ -129,7 +129,7 @@ export default function AdminDashboard({ campaignQueue = false }) {
     Promise.all([
       api.adminStats(),
       api.listSchoolAccounts(),
-      api.listCampaigns({ sort: "newest" }),
+      api.listAdminCampaigns({ sort: "newest" }),
     ])
       .then(([dashboardStats, schoolAccounts, campaignData]) => {
         if (!active) return;

@@ -117,6 +117,10 @@ export const api = {
     const qs = new URLSearchParams(params).toString();
     return request(`/campaigns${qs ? `?${qs}` : ""}`);
   },
+  listAdminCampaigns: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(`/admin/campaigns${qs ? `?${qs}` : ""}`);
+  },
   getCampaign: (id) => request(`/campaigns/${id}`),
   createCampaign: (data) =>
     request(`/campaigns`, { method: "POST", body: campaignFormData(data) }),

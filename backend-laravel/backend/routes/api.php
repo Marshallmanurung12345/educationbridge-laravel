@@ -40,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/school-account', [SchoolAccountController::class, 'updateOwnProfile']);
     Route::get('/admin/school-accounts', [SchoolAccountController::class, 'index'])->middleware('role:admin');
     Route::get('/admin/stats', [StatsController::class, 'adminDashboard'])->middleware('role:admin');
+    Route::get('/admin/campaigns', [CampaignController::class, 'index'])->middleware('role:admin');
     Route::get('/admin/campaigns/{campaign}/proof', [CampaignController::class, 'proof'])->middleware('role:admin');
     Route::put('/admin/school-accounts/{user}/status', [SchoolAccountController::class, 'updateStatus'])->middleware('role:admin');
     Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->middleware('role:admin');

@@ -37,6 +37,50 @@ class CampaignListingTest extends TestCase
             ->assertJsonPath('0.description', $campaign->description);
     }
 
+    public function test_admin_campaign_listing_includes_pending_campaigns_and_requires_admin(): void
+    {
+        $pendingCampaign = $this->createCampaign([
+            'title' => 'Kebutuhan menunggu verifikasi',
+            'status' => 'pending',
+        ]);
+        $verifiedCampaign = $this->createCampaign([
+            'title' => 'Kebutuhan yang sudah disetujui',
+            'status' => 'verified',
+        ]);
+        $admin = User::create([
+            'name' => 'Admin',
+            'email' => 'campaign-list-admin@example.test',
+            'password' => Hash::make('strong-password'),
+            'role' => 'admin',
+        ]);
+        $nonAdmin = $pendingCampaign->user;
+
+        $this->getJson('/api/admin/campaigns')
+            ->assertUnauthorized();
+
+        $this->actingAs($nonAdmin, 'sanctum')
+            ->getJson('/api/admin/campaigns')
+            ->assertForbidden();
+
+        $this->getJson('/api/campaigns')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.id', $verifiedCampaign->id);
+
+        $this->actingAs($admin, 'sanctum')
+            ->getJson('/api/admin/campaigns?sort=newest')
+            ->assertOk()
+            ->assertJsonCount(2)
+            ->assertJsonFragment([
+                'id' => $pendingCampaign->id,
+                'status' => 'pending',
+            ])
+            ->assertJsonFragment([
+                'id' => $verifiedCampaign->id,
+                'status' => 'verified',
+            ]);
+    }
+
     public function test_campaign_progress_preserves_one_decimal_for_small_percentages(): void
     {
         $campaign = $this->createCampaign([
