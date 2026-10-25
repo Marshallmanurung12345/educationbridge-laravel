@@ -1,4 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const REQUEST_TIMEOUT_MS = 20000;
 
 let authToken = null;
 export function setAuthToken(token) {
@@ -22,7 +23,19 @@ async function request(path, options = {}) {
       : authToken;
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE_URL}/api${path}`, { ...options, headers });
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}/api${path}`, {
+      ...options,
+      headers,
+      signal: options.signal || AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (error.name === "TimeoutError" || error.name === "AbortError") {
+      throw new Error("Server terlalu lama merespons. Periksa koneksi lalu coba lagi.");
+    }
+    throw new Error("Server tidak dapat dihubungi. Periksa koneksi lalu coba lagi.");
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -60,7 +73,18 @@ async function requestBlob(path) {
       : authToken;
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE_URL}/api${path}`, { headers });
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}/api${path}`, {
+      headers,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch (error) {
+    if (error.name === "TimeoutError" || error.name === "AbortError") {
+      throw new Error("Server terlalu lama merespons. Periksa koneksi lalu coba lagi.");
+    }
+    throw new Error("Server tidak dapat dihubungi. Periksa koneksi lalu coba lagi.");
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.message || `Request gagal (${res.status})`);

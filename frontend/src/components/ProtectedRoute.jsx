@@ -1,11 +1,19 @@
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import LoadingIndicator from "./LoadingIndicator";
 
 export default function ProtectedRoute({ roles, children }) {
   const { user, ready } = useAuth();
   const location = useLocation();
 
-  if (!ready) return null;
+  if (!ready) {
+    return (
+      <LoadingIndicator
+        label="Memeriksa sesi akun…"
+        className="min-h-[calc(100svh-68px)] px-5 py-12"
+      />
+    );
+  }
 
   if (!user) {
     return <Navigate to="/masuk" state={{ from: location.pathname }} replace />;
